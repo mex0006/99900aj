@@ -1,426 +1,163 @@
 
-(()=>{
-'use strict';
-const $ = (sel, el=document)=> el.querySelector(sel);
-const $$ = (sel, el=document)=> [...el.querySelectorAll(sel)];
+(()=>{'use strict';
+const VERSION='v10.3.0';
+const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
 
-const VERSION = 'v10.2.7';
+// State
+const state={selected:soD(new Date()), data:load(), editing:null, filter:'all'};
+function soD(d){const x=new Date(d); x.setHours(0,0,0,0); return x; }
+function keyOf(d){return d.toISOString().slice(0,10);}
+function load(){ try{return JSON.parse(localStorage.getItem('aj.data'))||{}}catch(e){return {}} }
+function save(){ localStorage.setItem('aj.data', JSON.stringify(state.data)); }
 
-const store = {
-  key:'ajanda_v10_records',
-  load(){ try{ return JSON.parse(localStorage.getItem(this.key))||[] }catch(e){ return [] } },
-  save(list){ localStorage.setItem(this.key, JSON.stringify(list)); }
-};
+// Header
+function setMonthLabel(d){ $('#monthLabel').textContent=d.toLocaleDateString('tr-TR',{month:'long', year:'numeric'}); }
 
-// --- State ---
-const today = new Date(); today.setHours(0,0,0,0);
-let state = {
-  selected: new Date(today),
-  records: store.load(),
-  cal: {y: today.getFullYear(), m: today.getMonth()},
-  panel: null
-};
+// Calendar
+let calMonth=new Date(state.selected.getFullYear(), state.selected.getMonth(), 1);
+function renderCalendar(){ 
+  $('#calTitle').textContent=calMonth.toLocaleDateString('tr-TR',{month:'long',year:'numeric'});
+  const g=$('#calGrid'); g.innerHTML='';
+  const dow=['Pzt','Sal','Çar','Per','Cum','Cmt','Paz'];
+  dow.forEach(d=>{const el=document.createElement('div'); el.className='dow'; el.textContent=d; g.appendChild(el);});
+  const first=((new Date(calMonth.getFullYear(), calMonth.getMonth(),1)).getDay()+6)%7; // Mon start
+  const days=new Date(calMonth.getFullYear(), calMonth.getMonth()+1,0).getDate();
+  const prev=new Date(calMonth.getFullYear(), calMonth.getMonth(),0).getDate();
+  for(let i=first;i>0;i--) add(prev-i+1,true);
+  for(let d=1; d<=days; d++) add(d,false);
+  const total=first+days, post=Math.ceil(total/7)*7-total; 
+  for(let i=1;i<=post;i++) add(i,true);
+  function add(day,muted){
+    const el=document.createElement('button'); el.className='cal-day'+(muted?' muted':'');
+    el.textContent=String(day);
+    const dt=new Date(calMonth.getFullYear(), calMonth.getMonth(), day);
+    if(+soD(dt)===+soD(new Date())) el.classList.add('today');
+    if(keyOf(dt)===keyOf(state.selected)) el.classList.add('selected');
+    el.addEventListener('pointerup',()=>{ state.selected=soD(dt); setMonthLabel(state.selected); renderTimeline(); $('#calendarDrawer').classList.remove('show'); });
+    g.appendChild(el);
+  }
+}
+$('#btnCalendar').addEventListener('pointerup',()=>{ const c=$('#calendarDrawer'); c.classList.toggle('show'); if(c.classList.contains('show')) renderCalendar(); });
+$('#calPrev').addEventListener('pointerup',()=>{ calMonth=new Date(calMonth.getFullYear(), calMonth.getMonth()-1,1); renderCalendar(); });
+$('#calNext').addEventListener('pointerup',()=>{ calMonth=new Date(calMonth.getFullYear(), calMonth.getMonth()+1,1); renderCalendar(); });
 
-// --- Utils ---
-const pad = n=> String(n).padStart(2,'0');
-const fmtDate = (d)=> d.toLocaleDateString('tr-TR', {year:'numeric', month:'long'});
-const fmtWeekday = (d)=> d.toLocaleDateString('tr-TR', {weekday:'long'});
-const ymd = (d)=> `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-const parseYMD = (s)=> { const [y,m,d]=s.split('-').map(Number); const dt = new Date(y, m-1, d); dt.setHours(0,0,0,0); return dt; };
-const atTime = (d, hhmm)=> { const [h,m]=hhmm.split(':').map(Number); const dt=new Date(d); dt.setHours(h||0,m||0,0,0); return dt; };
+// Timeline
+function renderTimeline(){ setMonthLabel(state.selected); const k=keyOf(state.selected); const list=state.data[k]||[]; const el=$('#timeline');
+  if(!list.length){ el.classList.add('empty'); el.innerHTML='<div class="empty-line"><span class="dot dot-note"></span> Bu gün için kayıt yok.</div>'; return; }
+  el.classList.remove('empty');
+  list.sort((a,b)=>(a.time||'').localeCompare(b.time||''));
+  el.innerHTML = list.map((it,i)=>row(it,i)).join('');
+  $$('#timeline .row-card').forEach((n,i)=> n.addEventListener('pointerup',()=> openEditor((state.data[k][i]||{}).type,i)));
+}
+function row(it,i){ const dot= it.type==='note' ? 'dot-note' : (it.type==='call' ? (it.subtype==='cevapsız'?'dot-missed':'dot-call') : 'dot-place');
+  const ttl = it.title || it.person || it.address || (it.type==='place'?'Konum': it.type==='call'?'Çağrı':'Not');
+  const tm = it.time || ''; return `<div class="row-card" data-idx="${i}"><span class="dot ${dot}"></span><div>${esc(ttl)}</div><div class="item_right">${tm}</div></div>`; }
+function esc(s){return (s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]);}
 
-// type colors
-const DOT = {
-  note: 'var(--purple)',
-  call: 'var(--green)',
-  call_missed: 'var(--red)',
-  location: 'var(--cyan)'
-};
+// FAB & Dock
+const dock=$('#actionDock'), scrim=$('#scrim');
+$('#btnFab').addEventListener('pointerup',toggleDock);
+scrim.addEventListener('pointerup',closeAll);
+function toggleDock(){ const show=!dock.classList.contains('show'); scrim.classList.toggle('show',show); dock.classList.toggle('show',show); }
+function closeDock(){ scrim.classList.remove('show'); dock.classList.remove('show'); }
+function closeAll(){ closeDock(); hide('#sheet'); hide('#sheetSearch'); hide('#sheetSettings'); }
 
-// --- Render root ---
-function renderHeader(){
-  $('#monthLabel').textContent = fmtDate(state.selected);
+// Dock actions
+dock.querySelectorAll('.tile').forEach(b=> b.addEventListener('pointerup',()=> openEditor(b.dataset.type)));
+
+// Sheets helpers
+function show(sel){ const s=$(sel); s.classList.add('show'); s.setAttribute('aria-hidden','false'); }
+function hide(sel){ const s=$(sel); s.classList.remove('show'); s.setAttribute('aria-hidden','true'); }
+document.addEventListener('pointerup',e=>{ const back=e.target.closest('[data-back]'); if(back) closeAll(); });
+
+// Editor
+function openEditor(type,index=null){ closeDock(); state.editing={type,index}; $('#btnDelete').classList.toggle('hide', index===null);
+  $('#panelTitle').textContent= index===null ? 'Yeni ' + label(type) : 'Düzenle';
+  $('#panelBody').innerHTML=formHtml(type,index);
+  show('#sheet');
+  if(type==='place') initLeafletPicker();
+}
+function label(t){return t==='note'?'Not':t==='call'?'Çağrı':'Konum';}
+function formHtml(type,index){ const k=keyOf(state.selected); const it=index!=null?(state.data[k][index]||{}):{type};
+  return `
+    <div class="field"><input class="input" id="fTitle" placeholder="Başlık (opsiyonel)" value="${att(it.title)}" /></div>
+    ${ type!=='call' ? '<div class="field"><textarea id="fText" placeholder="Not...">'+(esc(it.text))+'</textarea></div>' : '' }
+    ${ type==='call' ? callFields(it) : '' }
+    ${ type==='place' ? placeFields(it) : '' }
+    <div class="field"><input class="input" id="fTags" placeholder="Etiketler (virgülle)" value="${att((it.tags||[]).join(', '))}" /></div>
+    <div class="field"><input class="input" id="fTime" placeholder="Saat (örn. 14:30)" value="${att(it.time||'')}" inputmode="time" /></div>
+  `;
+}
+function callFields(it){ const sub=it.subtype||'genel';
+  return `
+  <div class="row"><div class="label">Tür</div><div class="field">
+    <select id="fSubtype" class="input">
+      <option value="genel" ${sub==='genel'?'selected':''}>Genel</option>
+      <option value="gelen" ${sub==='gelen'?'selected':''}>Gelen</option>
+      <option value="giden" ${sub==='giden'?'selected':''}>Giden</option>
+      <option value="cevapsız" ${sub==='cevapsız'?'selected':''}>Cevapsız</option>
+    </select></div></div>
+  <div class="field"><input class="input" id="fPerson" placeholder="Kim?" value="${att(it.person||'')}" /></div>
+  <div class="field"><input class="input" id="fDuration" placeholder="Süre (sn veya mm:ss)" value="${att(it.duration||'')}" inputmode="numeric"/></div>
+  <div class="field"><textarea id="fText" placeholder="Görüşme detayı...">${esc(it.text||'')}</textarea></div>`;
+}
+function placeFields(it){ return `
+  <div class="field"><input class="input" id="fAddress" placeholder="Adres" value="${att(it.address||'')}" /></div>
+  <div class="row" style="gap:8px">
+    <button id="btnPickMap" class="pill ghost" type="button">Haritadan Seç</button>
+    <button id="btnGeo" class="pill ghost" type="button">Mevcut Konum</button>
+  </div>
+  <div id="mapWrap" class="field hide">
+    <div id="map" style="height:260px; border-radius:18px;"></div>
+    <div class="row" style="justify-content:flex-end;"><button id="btnUsePoint" class="pill" type="button">Bu konumu kullan</button></div>
+  </div>
+  <input id="fLat" class="input hide" value="${att(it.lat||'')}"><input id="fLng" class="input hide" value="${att(it.lng||'')}">
+`; }
+function att(s){return (s||'').replace(/"/g,'&quot;');}
+
+// Save / Delete
+$('#btnSave').addEventListener('pointerup', saveCurrent);
+$('#btnDelete').addEventListener('pointerup',()=>{ if(state.editing.index==null) return; const k=keyOf(state.selected); state.data[k].splice(state.editing.index,1); save(); hide('#sheet'); renderTimeline(); });
+function saveCurrent(){ const k=keyOf(state.selected); const list = state.data[k] || (state.data[k]=[]); const t=state.editing.type;
+  const base={ type:t, title:$('#fTitle')?.value.trim()||'', text:$('#fText')?.value?.trim()||'', tags: ($('#fTags')?.value||'').split(',').map(s=>s.trim()).filter(Boolean), time: $('#fTime')?.value.trim()||'' };
+  if(t==='call'){ base.subtype=$('#fSubtype').value; base.person=$('#fPerson').value.trim(); base.duration=$('#fDuration').value.trim(); }
+  if(t==='place'){ base.address=$('#fAddress').value.trim(); base.lat=$('#fLat').value||null; base.lng=$('#fLng').value||null; }
+  if(state.editing.index==null) list.push(base); else list[state.editing.index]=base;
+  save(); hide('#sheet'); renderTimeline();
 }
 
-function renderTimeline(){
-  const list = $('#timeline'); list.innerHTML='';
-  const selKey = ymd(state.selected);
-  const dayRecords = state.records.filter(r=> r.date===selKey).sort((a,b)=> (a.time||'00:00').localeCompare(b.time||'00:00'));
-  if (!dayRecords.length){
-    const empty = document.createElement('div');
-    empty.className='item';
-    empty.innerHTML = `<span class="dot note"></span><div>Bu gün için kayıt yok.</div>`;
-    list.appendChild(empty); return;
-  }
-  dayRecords.forEach(rec=>{
-    const row = document.createElement('div');
-    row.className='item';
-    const dotClass = rec.type==='note'?'note': (rec.type==='call' && rec?.meta?.call?.kind==='cevapsız' ? 'call missed':'call');
-    row.innerHTML = `<span class="dot ${rec.type==='location'?'loc':dotClass}"></span>
-      <div>${escapeHTML(rec.title||'(Başlıksız)')}</div>
-      <div class="item_right">${rec.time||''}</div>`;
-    row.addEventListener('click', ()=> openDetail(rec.id));
-    list.appendChild(row);
+// Leaflet picker
+let map, marker;
+function initLeafletPicker(){
+  const wrap=$('#mapWrap'); const mdiv=$('#map');
+  $('#btnPickMap').addEventListener('pointerup',()=>{ wrap.classList.remove('hide'); setTimeout(initMap,0); });
+  $('#btnGeo').addEventListener('pointerup',()=> navigator.geolocation.getCurrentPosition((pos)=>{ wrap.classList.remove('hide'); setTimeout(()=>initMap([pos.coords.latitude,pos.coords.longitude]),0); },()=>alert('Konum alınamadı.')));
+  $('#btnUsePoint').addEventListener('pointerup', async ()=>{ if(!marker) return; const p=marker.getLatLng(); $('#fLat').value=p.lat.toFixed(6); $('#fLng').value=p.lng.toFixed(6);
+    try{ const r=await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${p.lat}&lon=${p.lng}`,{headers:{'Accept':'application/json'}}); const j=await r.json(); if(j?.display_name) $('#fAddress').value=j.display_name; }catch(e){}
+    wrap.classList.add('hide');
   });
+  function initMap(center){ if(!map){ map=L.map(mdiv).setView(center||[41.015137,28.97953],13); L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'&copy; OpenStreetMap'}).addTo(map); map.on('click',e=>setMarker(e.latlng)); } else { map.invalidateSize(); if(center) map.setView(center,13); } if(center) setMarker(L.latLng(center[0],center[1])); }
+  function setMarker(latlng){ if(marker) marker.setLatLng(latlng); else marker=L.marker(latlng).addTo(map); }
 }
 
-function escapeHTML(s=''){ return s.replace(/[&<>"]/g,c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])) }
-
-// --- Panels infra ---
-const panel = $('#panel'); const scrim = $('#scrim');
-function openPanel(content){
-  panel.innerHTML=''; panel.hidden=false; scrim.hidden=false;
-  panel.insertAdjacentHTML('beforeend', `<div class="sheet"><div class="panel-head">
-  <button class="panel-back" data-back aria-label="Geri">‹</button>
-  <div class="title"></div>
-  <span style="flex:1"></span>
-  <button class="panel-ok" data-ok aria-label="Tamam">✓</button>
-  </div><div class="panel-body"></div></div>`);
-  $('.panel-body', panel).appendChild(content);
-  // title is set by content.dataset.title if provided
-  const t = content.dataset?.title || '';
-  $('.title', panel).textContent = t;
-  requestAnimationFrame(()=>{
-    $('.sheet', panel).classList.add('show');
-    scrim.classList.add('show');
-  });
-}
-function closePanel(){
-  const sh = $('.sheet', panel);
-  if(!sh) return;
-  sh.classList.remove('show'); scrim.classList.remove('show');
-  setTimeout(()=>{ panel.hidden=true; scrim.hidden=true; panel.innerHTML=''; }, 180);
+// Search
+$('#btnSearch').addEventListener('pointerup',()=>{ show('#sheetSearch'); refreshSearch(); });
+$('#q').addEventListener('input', refreshSearch);
+$$('#sheetSearch .chip').forEach(ch=> ch.addEventListener('pointerup',()=>{ $$('#sheetSearch .chip').forEach(x=>x.classList.remove('active')); ch.classList.add('active'); state.filter=ch.dataset.filter; refreshSearch(); }));
+function refreshSearch(){ const q=($('#q').value||'').toLowerCase(); const list=[]; for(const [date,items] of Object.entries(state.data)){ items.forEach((it,i)=> list.push({date,index:i,...it})); }
+  const filtered=list.filter(it=> (state.filter==='all'||it.type===state.filter) && ((it.title||'').toLowerCase().includes(q) || (it.text||'').toLowerCase().includes(q) || (it.person||'').toLowerCase().includes(q) || (it.tags||[]).join(',').toLowerCase().includes(q)));
+  const el=$('#searchList');
+  el.innerHTML = filtered.map(it=>{ const dot= it.type==='note'?'dot-note':(it.type==='call'?(it.subtype==='cevapsız'?'dot-missed':'dot-call'):'dot-place'); const ttl=it.title||it.person||it.address||'Kayıt'; return `<div class="list-row"><span class="dot ${dot}"></span><div class="title">${esc(ttl)}</div><div class="date">${it.date} · ${it.time||''}</div></div>`; }).join('');
 }
 
-// Global back/ok handling
-document.addEventListener('pointerup', (e)=>{
-  const back = e.target.closest('[data-back]'); if(back){ e.preventDefault(); closePanel(); return; }
-  const ok = e.target.closest('[data-ok]'); if(ok){ e.preventDefault(); if(typeof state._onOk==='function'){ state._onOk(); } }
-});
+// Settings
+$('#btnSettings').addEventListener('pointerup',()=> show('#sheetSettings'));
+$('#btnExport').addEventListener('pointerup',()=>{ const blob=new Blob([JSON.stringify(state.data,null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='ajanda-data.json'; a.click(); });
+$('#fileImport').addEventListener('change',e=>{ const f=e.target.files[0]; if(!f) return; const fr=new FileReader(); fr.onload=()=>{ try{ state.data=JSON.parse(fr.result); save(); renderTimeline(); alert('İçe aktarıldı.'); }catch(e){ alert('Geçersiz JSON.'); } }; fr.readAsText(f); });
+$('#btnWipe').addEventListener('pointerup',()=>{ if(confirm('Tüm kayıtları sil?')){ state.data={}; save(); renderTimeline(); } });
+$('#btnClearCache').addEventListener('pointerup', async ()=>{ if('caches' in window){ const n=await caches.keys(); await Promise.all(n.map(x=>caches.delete(x))); alert('Önbellek temizlendi.'); location.reload(); } });
 
-scrim.addEventListener('click', ()=>{
-  if (state._fabOpen){ toggleFab(false); }
-  else closePanel();
-});
-
-// --- Calendar panel ---
-function openCalendar(){
-  const wrap = document.createElement('div');
-  wrap.dataset.title='Takvim';
-  wrap.className='calendar';
-  const head = document.createElement('div');
-  head.className='cal-head';
-  const lbl = document.createElement('div'); lbl.className='cal-label';
-  const prev = document.createElement('button'); prev.className='nav'; prev.textContent='‹';
-  const next = document.createElement('button'); next.className='nav'; next.textContent='›';
-  head.append(prev, lbl, next);
-  const grid = document.createElement('div'); grid.className='cal-grid';
-  wrap.append(head, grid);
-
-  function build(){
-    const y = state.cal.y, m = state.cal.m;
-    lbl.textContent = new Date(y, m, 1).toLocaleDateString('tr-TR', {year:'numeric', month:'long'});
-
-    grid.innerHTML='';
-    const dows = ['Pzt','Sal','Çar','Per','Cum','Cmt','Paz'];
-    dows.forEach(w=>{ const s=document.createElement('div'); s.className='dow'; s.textContent=w; grid.appendChild(s); });
-
-    const first = new Date(y, m, 1); first.setHours(0,0,0,0);
-    let startIndex = (first.getDay()+6)%7; // 0=Mon
-    const daysInMonth = new Date(y, m+1, 0).getDate();
-
-    // empty cells
-    for(let i=0;i<startIndex;i++){ const emp=document.createElement('div'); grid.appendChild(emp); }
-
-    for(let day=1; day<=daysInMonth; day++){
-      const b=document.createElement('button'); b.textContent=String(day);
-      const dt=new Date(y, m, day); dt.setHours(0,0,0,0);
-      if (ymd(dt)===ymd(today)) b.classList.add('today');
-      if (ymd(dt)===ymd(state.selected)) b.classList.add('selected');
-      b.addEventListener('click', ()=>{ state.selected = dt; renderHeader(); renderTimeline(); closePanel(); });
-      grid.appendChild(b);
-    }
-  }
-  build();
-  prev.onclick=()=>{ state.cal.m--; if(state.cal.m<0){ state.cal.m=11; state.cal.y--; } build(); };
-  next.onclick=()=>{ state.cal.m++; if(state.cal.m>11){ state.cal.m=0; state.cal.y++; } build(); };
-  openPanel(wrap);
-  state._onOk = ()=> closePanel();
-}
-
-// --- Forms ---
-function openForm(type, existingId=null){
-  const rec = existingId ? state.records.find(r=>r.id===existingId) : null;
-  const wrap = document.createElement('div'); wrap.dataset.title = rec? 'Düzenle' : 'Yeni ' + (type==='note'?'Not': type==='call'?'Çağrı':'Konum');
-  const body = document.createElement('div');
-  body.className='list';
-
-  const titleRow = rowField('Başlık', 'text', rec?.title || '');
-  const bodyRow = rowText('Not', rec?.body || '');
-  const tagsRow = rowField('Etiketler (virgülle)', 'text', (rec?.tags||[]).join(', '));
-
-  const timeRow = rowField('Saat', 'time', rec?.time || ''); 
-
-  body.append(titleRow, bodyRow, tagsRow);
-
-  if(type==='call'){
-    const kinds = ['genel','gelen','giden','cevapsız'];
-    const kindRow = rowSelect('Tür', kinds, rec?.meta?.call?.kind || 'genel');
-    const durRow = rowField('Süre (sn)', 'number', rec?.meta?.call?.durationSec || '');
-    body.append(kindRow, durRow);
-  }
-
-  if(type==='location'){
-    const addrRow = rowField('Adres', 'text', rec?.meta?.location?.address || '');
-    const coordRow = rowField('Koordinat', 'text', rec?.meta?.location?.lat && rec?.meta?.location?.lng ? `${rec.meta.location.lat}, ${rec.meta.location.lng}` : '');
-    const mapBtn = document.createElement('button'); mapBtn.className='pill'; mapBtn.textContent='Haritadan seç';
-    mapBtn.addEventListener('click', ()=> openMapPicker((lat,lng,addr)=>{
-      $('.field', coordRow).value = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
-      if(addr) $('.field', addrRow).value = addr;
-    }));
-    body.append(addrRow, coordRow, mapBtn);
-  }
-
-  body.append(timeRow);
-  wrap.append(body);
-  openPanel(wrap);
-
-  state._onOk = ()=>{
-    const title = $('.field', titleRow).value.trim();
-    const bodyTxt = $('.textarea', bodyRow).value.trim();
-    const tags = $('.field', tagsRow).value.split(',').map(s=>s.trim()).filter(Boolean);
-    const time = $('.field', timeRow).value || '';
-    const common = { title, body: bodyTxt, tags, time, date: ymd(state.selected) };
-
-    let meta = {};
-    if(type==='call'){
-      const kind = $('select', body).value;
-      const durationSec = parseInt($('.field', body, ).value)||undefined;
-      meta.call = {kind, durationSec};
-    }
-    if(type==='location'){
-      const address = $('.field', body.querySelectorAll('.row')[3]).value.trim(); // addr
-      const coordStr = $('.field', body.querySelectorAll('.row')[4]).value.trim();
-      let lat,lng; if(coordStr.includes(',')){ [lat,lng] = coordStr.split(',').map(s=>parseFloat(s)); }
-      meta.location = {lat,lng,address};
-    }
-
-    if(rec){
-      Object.assign(rec, common, {meta});
-    }else{
-      state.records.push({ id: crypto.randomUUID(), type, ...common, meta });
-    }
-    store.save(state.records);
-    renderTimeline();
-    closePanel();
-  };
-}
-
-function rowField(label, type='text', value=''){
-  const row = document.createElement('div'); row.className='row';
-  row.innerHTML = `<div class="label">${label}</div><input class="field" type="${type}" value="${escapeHTML(String(value))}">`;
-  return row;
-}
-function rowText(label, value=''){
-  const row = document.createElement('div'); row.className='row';
-  row.innerHTML = `<div class="label">${label}</div><textarea class="textarea" rows="4">${escapeHTML(String(value))}</textarea>`;
-  return row;
-}
-function rowSelect(label, options=[], value){
-  const row = document.createElement('div'); row.className='row';
-  const opts = options.map(o=> `<option value="${o}" ${o===value?'selected':''}>${o[0].toUpperCase()+o.slice(1)}</option>`).join('');
-  row.innerHTML = `<div class="label">${label}</div><select class="field">${opts}</select>`;
-  return row;
-}
-
-// --- Detail ---
-function openDetail(id){
-  const rec = state.records.find(r=> r.id===id); if(!rec) return;
-  const wrap = document.createElement('div'); wrap.dataset.title='Detay';
-  const list = document.createElement('div'); list.className='list';
-
-  const dot = document.createElement('span');
-  dot.className = 'dot ' + (rec.type==='note'?'note': rec.type==='call' && rec?.meta?.call?.kind==='cevapsız' ? 'call missed': (rec.type==='call'?'call':'loc'));
-
-  const row0 = document.createElement('div'); row0.className='row-card';
-  row0.append(dot);
-  const t = document.createElement('div'); t.className='title'; t.textContent = rec.title || '(Başlıksız)';
-  row0.append(t);
-  const tm = document.createElement('div'); tm.className='time'; tm.textContent = `${rec.date} • ${rec.time||''}`;
-  row0.append(tm);
-  list.append(row0);
-
-  const body = document.createElement('div'); body.className='row';
-  body.innerHTML = `<div class="label">Not</div><div class="value">${escapeHTML(rec.body||'')}</div>`;
-  list.append(body);
-
-  if(rec.tags?.length){
-    const tg = document.createElement('div'); tg.className='row';
-    tg.innerHTML = `<div class="label">Etiketler</div><div class="value">${rec.tags.map(x=>`<span class="pill">${escapeHTML(x)}</span>`).join(' ')}</div>`;
-    list.append(tg);
-  }
-
-  if(rec.type==='call'){
-    const k = rec?.meta?.call?.kind || 'genel';
-    const dur = rec?.meta?.call?.durationSec ? `${rec.meta.call.durationSec} sn` : '-';
-    const r = document.createElement('div'); r.className='row';
-    r.innerHTML = `<div class="label">Çağrı</div><div class="value">${k} • ${dur}</div>`;
-    list.append(r);
-  }
-  if(rec.type==='location'){
-    const loc = rec?.meta?.location || {};
-    const r = document.createElement('div'); r.className='row';
-    const addr = [loc.address, (loc.lat!=null && loc.lng!=null)?`(${loc.lat.toFixed(5)}, ${loc.lng.toFixed(5)})`:null].filter(Boolean).join(' ');
-    r.innerHTML = `<div class="label">Konum</div><div class="value">${escapeHTML(addr||'-')}</div>`;
-    list.append(r);
-  }
-
-  // actions
-  const actions = document.createElement('div'); actions.style.display='flex'; actions.style.gap='12px'; actions.style.justifyContent='space-around'; actions.style.padding='10px';
-  const edit = document.createElement('button'); edit.className='panel-ok'; edit.innerHTML='✎'; edit.title='Düzenle';
-  const del = document.createElement('button'); del.className='panel-back'; del.innerHTML='🗑'; del.title='Sil';
-  actions.append(edit, del);
-  list.append(actions);
-
-  edit.addEventListener('click', ()=>{ closePanel(); openForm(rec.type, rec.id); });
-  del.addEventListener('click', ()=>{
-    if(confirm('Silinsin mi?')){
-      state.records = state.records.filter(x=> x.id!==rec.id);
-      store.save(state.records); renderTimeline(); closePanel();
-    }
-  });
-
-  wrap.append(list);
-  openPanel(wrap);
-  // hide OK button in detail
-  $('[data-ok]', panel).style.display='none';
-}
-
-// --- Map picker (Leaflet) ---
-let mapRef, mapMarker;
-function openMapPicker(cb){
-  const wrap = document.createElement('div'); wrap.dataset.title='Konum Seç';
-  wrap.innerHTML = `<div id="map" style="width:min(900px,90vw);height:50vh;border-radius:18px;overflow:hidden;border:1px solid var(--stroke)"></div>
-  <div style="display:flex;gap:10px;margin-top:10px;">
-    <button class="pill" id="btnUse">Bu konumu kullan</button>
-    <button class="pill" id="btnLocate">Mevcut konum</button>
-  </div>`;
-  openPanel(wrap);
-  state._onOk = ()=> closePanel();
-
-  setTimeout(()=>{
-    mapRef = L.map('map', {zoomControl:false}).setView([41.015137,28.97953], 12);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19, attribution: '&copy; OSM'
-    }).addTo(mapRef);
-    mapRef.on('click', (e)=>{
-      if(mapMarker) mapRef.removeLayer(mapMarker);
-      mapMarker = L.marker(e.latlng).addTo(mapRef);
-    });
-    $('#btnLocate').onclick = ()=>{
-      if(navigator.geolocation){
-        navigator.geolocation.getCurrentPosition(pos=>{
-          const lat=pos.coords.latitude, lng=pos.coords.longitude;
-          mapRef.setView([lat,lng], 15);
-          if(mapMarker) mapRef.removeLayer(mapMarker);
-          mapMarker = L.marker([lat,lng]).addTo(mapRef);
-        });
-      }
-    };
-    $('#btnUse').onclick = async ()=>{
-      if(!mapMarker){ alert('Önce haritada bir nokta seçin.'); return; }
-      const {lat, lng} = mapMarker.getLatLng();
-      // reverse geocode (best-effort)
-      let addr = '';
-      try{
-        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`,
-          {headers:{'Accept-Language':'tr-TR'}});
-        if(res.ok){
-          const j = await res.json();
-          addr = j.display_name || '';
-        }
-      }catch(e){}
-      cb(lat, lng, addr);
-      closePanel();
-    };
-  }, 50);
-}
-
-// --- FAB ---
-const fabMain = $('#fabMain'), fabNote=$('#fabNote'), fabCall=$('#fabCall'), fabLoc=$('#fabLoc');
-function toggleFab(show){
-  state._fabOpen = show!==undefined? show : !state._fabOpen;
-  if(state._fabOpen){
-    scrim.hidden=false; scrim.classList.add('show');
-    [fabNote,fabCall,fabLoc].forEach((b,i)=>{
-      setTimeout(()=> b.classList.add('show'), 40*i);
-    });
-  }else{
-    [fabNote,fabCall,fabLoc].forEach(b=> b.classList.remove('show'));
-    scrim.classList.remove('show');
-    setTimeout(()=>{ scrim.hidden=true; }, 180);
-  }
-}
-fabMain.addEventListener('click', ()=> toggleFab());
-fabNote.addEventListener('click', ()=>{ toggleFab(false); openForm('note'); });
-fabCall.addEventListener('click', ()=>{ toggleFab(false); openForm('call'); });
-fabLoc.addEventListener('click', ()=>{ toggleFab(false); openForm('location'); });
-
-// --- Settings (export/import/cache clear) ---
-$('#btnSettings').addEventListener('click', openSettings);
-function openSettings(){
-  const wrap = document.createElement('div'); wrap.dataset.title='Ayarlar';
-  const body = document.createElement('div'); body.className='list';
-
-  const ver = document.createElement('div'); ver.className='row'; ver.innerHTML = `<div class="label">Sürüm</div><div class="value">${VERSION}</div>`;
-  const ex = document.createElement('button'); ex.className='pill'; ex.textContent='Verileri JSON olarak indir';
-  ex.onclick = ()=>{
-    const blob = new Blob([JSON.stringify(state.records,null,2)], {type:'application/json'});
-    const a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='ajanda-data.json'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href), 1000);
-  };
-  const im = document.createElement('button'); im.className='pill'; im.textContent='JSON içe aktar';
-  const input = document.createElement('input'); input.type='file'; input.accept='application/json'; input.style.display='none';
-  im.onclick = ()=> input.click();
-  input.onchange = async ()=>{
-    const f = input.files[0]; if(!f) return;
-    try{ const txt = await f.text(); const arr = JSON.parse(txt); if(Array.isArray(arr)){ state.records = arr; store.save(state.records); renderTimeline(); alert('Veriler içe aktarıldı.'); } }catch(e){ alert('Geçersiz JSON.'); }
-  };
-  const clear = document.createElement('button'); clear.className='pill'; clear.style.background='#3b82f6'; clear.textContent='Önbelleği Temizle (SW + Cache)';
-  clear.onclick = async ()=> { if('serviceWorker' in navigator){ const regs = await navigator.serviceWorker.getRegistrations(); await Promise.all(regs.map(r=>r.unregister())); caches && caches.keys().then(keys=> keys.forEach(k=>caches.delete(k))); alert('Önbellek temizlendi. Yenileyin.'); } };
-
-  const wipe = document.createElement('button'); wipe.className='pill danger'; wipe.textContent='Tüm Kayıtları Sil';
-  wipe.onclick=()=>{ if(confirm('Tüm kayıtlar silinsin mi?')){ state.records=[]; store.save(state.records); renderTimeline(); closePanel(); }};
-
-  body.append(ver, ex, im, input, clear, wipe);
-  wrap.append(body); openPanel(wrap); state._onOk = ()=> closePanel();
-}
-
-// --- Search (placeholder minimal) ---
-$('#btnSearch').addEventListener('click', ()=>{
-  const wrap = document.createElement('div'); wrap.dataset.title='Arama';
-  const body = document.createElement('div'); body.className='list';
-  const f = rowField('kelime, kişi...', 'search', '');
-  body.append(f);
-  const res = document.createElement('div'); body.append(res);
-  const doSearch = ()=>{
-    const q = $('.field', f).value.toLowerCase();
-    res.innerHTML='';
-    const filtered = state.records.filter(r=> [r.title, r.body, ...(r.tags||[])].join(' ').toLowerCase().includes(q));
-    filtered.forEach(rec=>{
-      const row = document.createElement('div'); row.className='row-card';
-      row.innerHTML = `<span class="dot ${rec.type==='note'?'note': rec.type==='call' && rec?.meta?.call?.kind==='cevapsız' ? 'call missed': (rec.type==='call'?'call':'loc')}"></span>
-        <div class="title">${escapeHTML(rec.title||'(Başlıksız)')}</div><div class="time">${rec.date} • ${rec.time||''}</div>`;
-      row.addEventListener('click', ()=> openDetail(rec.id));
-      body.append(row);
-    });
-  };
-  $('.field', f).addEventListener('input', doSearch);
-  doSearch();
-  wrap.append(body); openPanel(wrap); state._onOk = ()=> closePanel();
-});
-
-// --- Init ---
-$('#btnCalendar').addEventListener('click', openCalendar);
-renderHeader(); renderTimeline();
-
+// Init
+function init(){ setMonthLabel(state.selected); renderTimeline(); if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js'); }
+window.addEventListener('load', init);
 })();
