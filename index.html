@@ -1,105 +1,43 @@
 <!doctype html>
 <html lang="tr">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Ajanda</title>
-  <meta name="theme-color" content="#000000" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-  <link rel="stylesheet" href="css/main.css" />
+  <base href="./">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./icons/icon-192.png">
+  <link rel="apple-touch-icon" href="./icons/icon-192.png">
+  <meta name="theme-color" content="#000000">
+  <link rel="stylesheet" href="./css/main.css">
 </head>
 <body>
-  <div id="app">
-    <header class="app-header glass">
-      <div class="hdr-title">Ajanda</div>
-      <div class="hdr-indicators">
-        <div id="beam" class="beam beam-idle" title="Durum"></div>
+  <header class="header">
+    <h1>Ajanda</h1>
+  </header>
+
+  <main class="container">
+    <section class="card">
+      <h2>11 Ağustos Pazartesi</h2>
+      <div class="row">
+        <button id="toggle-cal" class="btn">Takvimi aç</button>
       </div>
-    </header>
+    </section>
 
-    <main id="content">
-      <section class="section glass">
-        <h1 id="currentDay" class="title"></h1>
-      </section>
+    <section class="card">
+      <h3>Günün Zaman Çizelgesi</h3>
+      <p id="empty">Bu gün için kayıt yok.</p>
+    </section>
+  </main>
 
-      <section class="section glass">
-        <div class="row between center">
-          <h2 class="subtitle">Ağustos 2025</h2>
-          <button id="btnToggleCal" class="btn btn-glass icon-btn">
-            <span class="icon">📅</span><span class="btn-text">Takvimi aç</span>
-          </button>
-        </div>
-        <div id="calendar" class="calendar" hidden></div>
-      </section>
+  <nav class="tabbar">
+    <button class="tab">🏠</button>
+    <button class="tab">🗺️</button>
+    <button class="tab">＋</button>
+    <button class="tab">🔎</button>
+    <button class="tab">⚙️</button>
+  </nav>
 
-      <section class="section glass">
-        <h2 class="subtitle">Günün Zaman Çizelgesi</h2>
-        <div id="timeline" class="timeline empty">Bu gün için kayıt yok.</div>
-      </section>
-    </main>
-
-    <nav class="tabbar glass">
-      <button class="tab active" data-tab="home" title="Ana">🏠</button>
-      <button class="tab" data-tab="map" title="Harita">🗺️</button>
-      <button id="fab" class="fab">+</button>
-      <button class="tab" data-tab="search" title="Ara">🔍</button>
-      <button class="tab" data-tab="settings" title="Ayarlar">⚙️</button>
-    </nav>
-
-    <!-- Speed Dial -->
-    <div id="speedDial" class="speed-dial" hidden>
-      <button class="dial dial-left" data-type="note" title="Not">📝</button>
-      <button class="dial dial-right" data-type="call" title="Çağrı">📞</button>
-      <button class="dial dial-top" data-type="place" title="Konum">📍</button>
-    </div>
-
-    <!-- Editor Overlay (type-specific content injected) -->
-    <div id="editorOverlay" class="overlay" hidden>
-      <div class="overlay-inner">
-        <div class="overlay-top">
-          <button id="editorBack" class="circle-btn glass" title="Geri">‹</button>
-          <div id="editorTitle" class="editor-title"></div>
-          <button id="editorSave" class="circle-btn circle-primary glass" title="Kaydet">✓</button>
-        </div>
-        <div id="editorBody" class="editor-body"></div>
-        <div id="mapPicker" class="map-picker" hidden>
-          <div id="leafletMap" class="leaflet-map"></div>
-          <div class="picker-actions">
-            <button id="mapCancel" class="circle-btn glass">‹</button>
-            <button id="mapConfirm" class="circle-btn circle-primary glass">✓</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Simple pages containers -->
-    <div id="pageMap" class="page glass" hidden>
-      <h2 class="subtitle">Harita</h2>
-      <div id="mapList" class="map-list">Henüz konum kaydı yok.</div>
-    </div>
-
-    <div id="pageSearch" class="page glass" hidden>
-      <h2 class="subtitle">Arama &amp; Filtre</h2>
-      <div class="search-row">
-        <input id="searchInput" class="input" placeholder="kelime, kişi, etiket..." />
-        <button id="searchBtn" class="btn btn-glass">Ara</button>
-      </div>
-      <div id="searchResults" class="timeline"></div>
-    </div>
-
-    <div id="pageSettings" class="page glass" hidden>
-      <h2 class="subtitle">Veri</h2>
-      <div class="row gap">
-        <button id="btnExport" class="btn btn-glass">CSV indir</button>
-        <label class="file-btn btn btn-glass">İçe Aktar
-          <input id="fileImport" type="file" accept=".json" hidden />
-        </label>
-        <button id="btnWipe" class="btn btn-danger">Tümünü Temizle</button>
-      </div>
-    </div>
-  </div>
-
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-  <script src="js/app.js"></script>
+  <script defer src="./js/app.js"></script>
 </body>
 </html>
