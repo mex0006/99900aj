@@ -12,7 +12,7 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <title>Ajanda</title>
   <style>
-    /* ===== AMOLED minimal theme ===== */
+    /* ===== AMOLED minimal + iOS-ish blur ===== */
     :root{
       --bg:#000; --panel:#0a0a0a; --ink:#e8ecf2; --muted:#a1a8b4; --edge:#141414;
       --tint:#5aa7ff; --ok:#22c55e; --bad:#ef4444; --note:#a78bfa;
@@ -26,60 +26,89 @@
       -webkit-font-smoothing:antialiased;
       min-height:100svh;
       padding-bottom:calc(var(--tabh) + env(safe-area-inset-bottom) + 12px);
+      scrollbar-width: none; /* Firefox */
+      -ms-overflow-style: none; /* IE/Edge */
+      overscroll-behavior-y: contain;
     }
+    body::-webkit-scrollbar{ display:none; } /* iOS/Safari/Chrome */
     .container{max-width:980px; margin:0 auto; padding: max(10px, calc(10px + env(safe-area-inset-top))) 12px 0 12px}
     /* Header */
-    .header{display:flex; align-items:center; justify-content:center; padding:12px 0 8px 0;}
+    .header{display:flex; align-items:center; justify-content:center; padding:12px 0 8px 0;
+      position:sticky; top:0; z-index:20; background:rgba(0,0,0,.35); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);}
     .brand{font-weight:900; letter-spacing:.2px; font-size:clamp(18px, 4vw, 22px)}
     /* Cards */
-    .card{background:linear-gradient(180deg,#0b0b0b, #070707); border:1px solid var(--edge); border-radius:var(--radius); padding:14px; margin-top:12px; box-shadow:0 10px 40px rgba(0,0,0,.4)}
+    .card{background:linear-gradient(180deg,#0b0b0b, #070707); border:1px solid var(--edge); border-radius:var(--radius); padding:14px; margin-top:12px; box-shadow:0 10px 40px rgba(0,0,0,.4); animation: cardIn .24s ease both}
+    @keyframes cardIn{ from{opacity:0; transform:translateY(8px)} to{opacity:1; transform:translateY(0)} }
     .title{font-weight:900; letter-spacing:.2px; font-size:clamp(15px,2.6vw,18px)}
     .sub{color:var(--muted); font-size:13px}
     .list{display:grid; gap:10px}
-    .item{background:#0a0a0a; border:1px solid var(--edge); border-radius:14px; padding:12px}
+    .item{background:#0a0a0a; border:1px solid var(--edge); border-radius:14px; padding:12px; transition:transform .12s ease, background .12s ease}
+    .item:active{transform:scale(.995); background:#0d0d0d}
     .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
-    .btn, input, select{appearance:none; border:1px solid var(--edge); background:#0a0a0a; color:var(--ink); padding:10px 12px; border-radius:12px; font-weight:700; cursor:pointer}
+    .btn, input, select{appearance:none; border:1px solid var(--edge); background:rgba(16,16,16,.9); color:var(--ink); padding:10px 12px; border-radius:12px; font-weight:700; cursor:pointer; backdrop-filter: blur(8px)}
     .btn:active{transform:translateY(1px)}
     .btn.primary{background:linear-gradient(180deg,#183022,#101a15); border-color:#254232}
     .btn.danger{background:linear-gradient(180deg,#341f1f,#241515); border-color:#3a2626}
     .hr{height:1px; background:#121212; margin:10px 0}
     .mono{font-family: ui-monospace, Menlo, Monaco, Consolas, 'Courier New', monospace; font-size:12px; color:#8f9aae}
-    .pill{background:#0a0a0a; border:1px solid var(--edge); padding:6px 10px; border-radius:999px; color:var(--muted)}
-    /* Calendar compact */
-    .month{display:grid; gap:8px}
+    .pill{background:rgba(15,15,15,.9); border:1px solid var(--edge); padding:6px 10px; border-radius:999px; color:var(--muted); backdrop-filter: blur(8px)}
+
+    /* Collapsible calendar */
     .month-head{display:flex; align-items:center; justify-content:space-between}
+    .cal-title{display:flex; align-items:center; gap:10px}
+    .cal-toggle{cursor:pointer; display:flex; align-items:center; gap:8px; padding:8px 10px; border:1px solid var(--edge); border-radius:12px; background:rgba(12,12,12,.8)}
     .grid{display:grid; grid-template-columns:repeat(7,1fr); gap:6px}
     .weekday{color:var(--muted); text-align:center; font-size:12px}
     .d{aspect-ratio:1/1; display:grid; place-items:center; border:1px solid var(--edge); border-radius:12px; background:#0d0d0d; font-weight:800; cursor:pointer; font-size:14px}
     .d.muted{opacity:.45} .d.sel{outline:2px solid var(--tint); outline-offset:-3px} .d.today{border-color:#2c2c2c}
+    .collapsible{overflow:hidden; transition:max-height .25s ease, opacity .2s ease; opacity:0; max-height:0}
+    .collapsible.open{opacity:1; max-height:1000px}
+
     /* Timeline */
     .timeline .event{display:grid; grid-template-columns:auto 1fr; gap:10px; align-items:flex-start}
     .dot{width:10px; height:10px; border-radius:50%; background:var(--tint); margin-top:7px}
     .dot.ok{background:var(--ok)} .dot.bad{background:var(--bad)} .dot.note{background:var(--note)}
+
     /* Map */
     #map{height:58vh; border-radius:14px; overflow:hidden; border:1px solid var(--edge); background:#0a0a0a}
     .legend{display:flex; gap:8px; align-items:center; color:var(--muted); font-size:12px}
     .chip{width:10px; height:10px; border-radius:50%} .chip.route{background:var(--tint)} .chip.visit{background:var(--ok)}
-    /* Bottom Tabs (iOS-like) */
+
+    /* Bottom Tabs */
     .tabbar{
       position:fixed; left:0; right:0; bottom:0;
       height:var(--tabh);
       padding-bottom:env(safe-area-inset-bottom);
-      background:#060606; border-top:1px solid var(--edge);
+      background:rgba(6,6,6,.8); border-top:1px solid var(--edge);
       display:grid; grid-template-columns:repeat(5,1fr); z-index:50;
+      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
     }
-    .tabbtn{display:grid; place-items:center; gap:4px; color:#7c8698; font-size:12px; text-decoration:none}
+    .tabbtn{display:grid; place-items:center; gap:4px; color:#7c8698; font-size:12px; text-decoration:none; transition:transform .12s ease, color .12s ease}
     .tabbtn.active{color:var(--ink)}
     .tabbtn svg{width:22px; height:22px; fill:currentColor}
     .tabbtn.center svg{width:28px; height:28px}
+    .tabbtn:active{transform:translateY(1px)}
+
+    /* Overlay for + */
+    .overlay{position:fixed; inset:0; background:rgba(0,0,0,.5); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+      display:none; align-items:center; justify-content:center; z-index:70; animation: fadeIn .2s ease both}
+    @keyframes fadeIn{from{opacity:0} to{opacity:1}}
+    .overlay.open{display:flex}
+    .overlay-card{background:rgba(12,12,12,.9); border:1px solid var(--edge); border-radius:20px; padding:18px; min-width:60%; display:grid; gap:12px}
+    .bigbtn{padding:16px; border-radius:14px; text-align:center; font-weight:900; border:1px solid var(--edge); background:linear-gradient(180deg,#101010,#0a0a0a);}
+    .bigbtn:active{transform:scale(.995)}
+
     /* Pages */
     .page{display:none}
     .page.active{display:block}
     .pad-bottom{height:calc(var(--tabh) + env(safe-area-inset-bottom) + 20px)}
-    /* Detail sheet */
-    .sheet{position:fixed; left:0; right:0; bottom:0; background:#0a0a0a; border-top:1px solid var(--edge); border-radius:16px 16px 0 0; transform:translateY(100%); transition:transform .25s ease; z-index:60; padding:14px}
+
+    /* Detail sheet (edit) */
+    .sheet{position:fixed; left:0; right:0; bottom:0; background:#0a0a0a; border-top:1px solid var(--edge);
+      border-radius:16px 16px 0 0; transform:translateY(100%); transition:transform .25s ease; z-index:80; padding:14px}
     .sheet.open{transform:translateY(0)}
     .sheet .title{margin-bottom:6px}
+    .sheet input, .sheet select, .sheet textarea{width:100%}
   </style>
 </head>
 <body>
@@ -94,13 +123,24 @@
           <div class="pill">Durum: <b id="statusText">Hazır</b></div>
         </div>
         <div class="hr"></div>
-        <div class="month">
-          <div class="month-head">
+
+        <div class="month-head">
+          <div class="cal-title">
+            <div class="title" id="monthLabel">—</div>
+          </div>
+          <button id="calToggle" class="cal-toggle" aria-expanded="false">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="#a1a8b4"><path d="M7 2h2v2h6V2h2v2h3a2 2 0 012 2v3H2V6a2 2 0 012-2h3V2zm15 8v10a2 2 0 01-2 2H4a2 2 0 01-2-2V10h20z"/></svg>
+            <span class="sub">Takvimi aç</span>
+          </button>
+        </div>
+
+        <div id="calWrap" class="collapsible">
+          <div class="row" style="justify-content:space-between; margin-top:8px">
             <button class="btn" id="prevMonth">‹</button>
-            <div class="title" id="calTitle">—</div>
+            <div class="sub">Ay seç</div>
             <button class="btn" id="nextMonth">›</button>
           </div>
-          <div class="grid" id="calWeekdays"></div>
+          <div class="grid" id="calWeekdays" style="margin-top:8px"></div>
           <div class="grid" id="calGrid"></div>
         </div>
       </section>
@@ -151,25 +191,6 @@
       <div class="pad-bottom"></div>
     </main>
 
-    <!-- Quick Add -->
-    <main id="pg-add" class="page">
-      <section class="card">
-        <div class="title">Hızlı Ekle</div>
-        <div class="hr"></div>
-        <div class="row">
-          <button id="noteBtn" class="btn">Not</button>
-          <button id="callBtn" class="btn">Arama</button>
-          <button id="wakeBtn" class="btn">Ekranı Açık Tut</button>
-        </div>
-      </section>
-      <section class="card">
-        <div class="title">Kalış Algılama</div>
-        <div>Yarıçap <input id="radiusInp" class="btn" type="number" min="30" max="300" step="10" value="120" style="width:90px"> m ·
-          Eşik <input id="dwellInp" class="btn" type="number" min="1" max="60" step="1" value="8" style="width:70px"> dk</div>
-      </section>
-      <div class="pad-bottom"></div>
-    </main>
-
     <!-- Search -->
     <main id="pg-search" class="page">
       <section class="card">
@@ -192,6 +213,11 @@
 
     <!-- Settings -->
     <main id="pg-settings" class="page">
+      <section class="card">
+        <div class="title">Kalış Algılama</div>
+        <div>Yarıçap <input id="radiusInp" class="btn" type="number" min="30" max="300" step="10" value="120" style="width:90px"> m ·
+          Eşik <input id="dwellInp" class="btn" type="number" min="1" max="60" step="1" value="8" style="width:70px"> dk</div>
+      </section>
       <section class="card">
         <div class="title">Veri</div>
         <div class="row">
@@ -224,6 +250,18 @@
     </a>
   </nav>
 
+  <!-- Overlay for + (Not / Çağrı) -->
+  <div id="quickOverlay" class="overlay" role="dialog" aria-modal="true">
+    <div class="overlay-card">
+      <div class="title">Yeni</div>
+      <div class="row">
+        <button id="ovNote" class="bigbtn" style="flex:1">Not</button>
+        <button id="ovCall" class="bigbtn" style="flex:1">Çağrı</button>
+      </div>
+      <button id="ovClose" class="btn">Vazgeç</button>
+    </div>
+  </div>
+
   <!-- Permission overlay -->
   <div id="permOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:80; align-items:center; justify-content:center; padding:20px">
     <div style="max-width:540px; width:100%; background:#0a0a0a; border:1px solid var(--edge); border-radius:20px; padding:16px">
@@ -233,23 +271,25 @@
     </div>
   </div>
 
-  <!-- Detail Sheet -->
+  <!-- Detail Sheet (edit) -->
   <div id="detailSheet" class="sheet">
     <div class="title" id="detailTitle">Detay</div>
     <div class="sub" id="detailSub">—</div>
     <div class="hr"></div>
-    <div class="row" id="detailActions">
+    <div id="detailForm" class="list"></div>
+    <div class="row" style="justify-content:flex-end">
+      <button id="saveBtn" class="btn">Kaydet</button>
       <button id="delBtn" class="btn danger">Sil</button>
       <button id="closeSheet" class="btn">Kapat</button>
     </div>
   </div>
 
   <script>
-    /* ===== Navigation (bottom tabs) ===== */
+    /* ===== Navigation ===== */
     const tabs = document.querySelectorAll('.tabbtn');
-    const pages = {home:document.getElementById('pg-home'), map:document.getElementById('pg-map'), add:document.getElementById('pg-add'), search:document.getElementById('pg-search'), settings:document.getElementById('pg-settings')};
+    const pages = {home:document.getElementById('pg-home'), map:document.getElementById('pg-map'), search:document.getElementById('pg-search'), settings:document.getElementById('pg-settings')};
     function showTab(name){ Object.values(pages).forEach(p=> p.classList.remove('active')); (pages[name]||pages.home).classList.add('active'); tabs.forEach(t=> t.classList.toggle('active', t.dataset.tab===name)); if(name==='map'){ setTimeout(initMapOnce,50); setTimeout(()=>{ if(window._map){ window._map.invalidateSize(); updateMap(); } },120); } }
-    tabs.forEach(t=> t.addEventListener('click', ()=> showTab(t.dataset.tab)));
+    tabs.forEach(t=> t.addEventListener('click', (e)=>{ const tab=t.dataset.tab; if(tab==='add'){ e.preventDefault(); openQuickOverlay(); return; } showTab(tab);}));
     showTab('home');
 
     const $ = (q)=>document.querySelector(q);
@@ -258,33 +298,33 @@
     const todayKey=()=> dateKey(Date.now());
     function fmtTime(ts){ const d=new Date(ts); return d.toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'}); }
     function fmtDateShort(ts){ const d=new Date(ts); return d.toLocaleDateString('tr-TR',{weekday:'short', day:'2-digit', month:'short'}); }
+    function fmtMonthYear(ts){ const d=new Date(ts); return d.toLocaleDateString('tr-TR',{month:'long',year:'numeric'}); }
     const startOfDay=(ts)=>{ const d=new Date(ts); d.setHours(0,0,0,0); return d.getTime(); };
     const endOfDay=(ts)=>{ const d=new Date(ts); d.setHours(23,59,59,999); return d.getTime(); };
     function haversine(a,b){ const R=6371000; const toRad=(x)=>x*Math.PI/180; const dLat=toRad(b.lat-a.lat), dLon=toRad(b.lon-a.lon);
       const s=Math.sin(dLat/2)**2 + Math.cos(toRad(a.lat))*Math.cos(toRad(b.lat))*Math.sin(dLon/2)**2; return 2*R*Math.asin(Math.sqrt(s)); }
 
-    /* ===== Store (migrate) ===== */
-    const Store = {
-      key:'agenda.v6',
-      data:{ points:[], visits:[], calls:[], notes:[], addrCache:{} },
-      load(){ try{ const old=localStorage.getItem('agenda.v5'); if(old && !localStorage.getItem(this.key)) localStorage.setItem(this.key, old); const raw=localStorage.getItem(this.key); if(raw){ this.data=JSON.parse(raw);} }catch{} renderAll(); },
+    /* ===== Store ===== */
+    const Store = { key:'agenda.v7', data:{ points:[], visits:[], calls:[], notes:[], addrCache:{} },
+      load(){ try{ const prev=localStorage.getItem('agenda.v6')||localStorage.getItem('agenda.v5'); if(prev && !localStorage.getItem(this.key)) localStorage.setItem(this.key, prev);
+        const raw=localStorage.getItem(this.key); if(raw){ this.data=JSON.parse(raw);} }catch{} renderAll(); },
       save(){ localStorage.setItem(this.key, JSON.stringify(this.data)); }
     };
 
     /* ===== State ===== */
-    let watchId=null, currentAnchor=null, lastPoint=null;
+    let watchId=null, currentAnchor=null, lastPoint=null, currentDetail=null;
     let selectedDay=todayKey();
     $('#dayText').textContent = fmtDateShort(Date.now());
-    const statusText=$('#statusText'), lastFix=$('#lastFix'), lastAddr=$('#lastAddr'), lastCoords=$('#lastCoords');
 
-    /* ===== Calendar ===== */
+    /* ===== Calendar (collapsible) ===== */
     const weekdays=['Pzt','Sal','Çar','Per','Cum','Cmt','Paz'];
     function buildWeekdays(){ const root=$('#calWeekdays'); root.innerHTML=''; for(const w of weekdays){ const d=document.createElement('div'); d.className='weekday'; d.textContent=w; root.appendChild(d);}}
     function daysInMonth(y,m){ return new Date(y,m+1,0).getDate(); }
     function firstWeekday(y,m){ const d=new Date(y,m,1).getDay(); return (d+6)%7; }
     let calYear=new Date().getFullYear(), calMonth=new Date().getMonth();
     function renderCalendar(){
-      $('#calTitle').textContent = new Date(calYear, calMonth, 1).toLocaleDateString('tr-TR',{month:'long',year:'numeric'});
+      const labelDate = new Date(calYear, calMonth, 1).getTime();
+      $('#monthLabel').textContent = new Date(labelDate).toLocaleDateString('tr-TR',{month:'long',year:'numeric'});
       const grid=$('#calGrid'); grid.innerHTML='';
       const days=daysInMonth(calYear,calMonth), offset=firstWeekday(calYear,calMonth), prevDays=daysInMonth(calYear,calMonth-1);
       for(let i=0;i<offset;i++) grid.appendChild(dayCell(prevDays-offset+i+1,true));
@@ -308,6 +348,11 @@
     $('#prevMonth').onclick=()=>{ calMonth--; if(calMonth<0){calMonth=11; calYear--;} renderCalendar(); };
     $('#nextMonth').onclick=()=>{ calMonth++; if(calMonth>11){calMonth=0; calYear++;} renderCalendar(); };
     buildWeekdays(); renderCalendar();
+    // Collapse/expand
+    const wrap=$('#calWrap'); const togg=$('#calToggle');
+    function setCal(open){ wrap.classList.toggle('open', open); togg.setAttribute('aria-expanded', open); togg.querySelector('span').textContent=open?'Takvimi gizle':'Takvimi aç'; }
+    setCal(false);
+    togg.onclick=()=> setCal(!wrap.classList.contains('open'));
 
     /* ===== Reverse Geocoding ===== */
     async function reverseGeocode(lat, lon){
@@ -317,12 +362,12 @@
 
     /* ===== Tracking ===== */
     function requestOneShotPermission(){ return new Promise((resolve,reject)=>{ if(!('geolocation' in navigator)) return reject(new Error('konum yok')); navigator.geolocation.getCurrentPosition(resolve, reject, {enableHighAccuracy:true, timeout:10000, maximumAge:0}); }); }
-    async function startTracking(){ try{ await requestOneShotPermission(); }catch(e){ if(e.code===1) $('#permOverlay').style.display='flex'; return; } const optSel=$('#accuracySel').value; const options={ enableHighAccuracy: optSel==='high', maximumAge: optSel==='low'?120000:30000, timeout:20000 }; watchId = navigator.geolocation.watchPosition(onPos, onErr, options); statusText.textContent='Takip Açık'; $('#toggleBtn').textContent='Durdur'; }
-    function stopTracking(){ if(watchId!==null){ navigator.geolocation.clearWatch(watchId); watchId=null; } statusText.textContent='Hazır'; $('#toggleBtn').textContent='Takibi Başlat'; finalizeAnchorIfNeeded(true); Store.save(); renderAll(); }
+    async function startTracking(){ try{ await requestOneShotPermission(); }catch(e){ if(e.code===1) $('#permOverlay').style.display='flex'; return; } const optSel=$('#accuracySel').value; const options={ enableHighAccuracy: optSel==='high', maximumAge: optSel==='low'?120000:30000, timeout:20000 }; watchId = navigator.geolocation.watchPosition(onPos, onErr, options); $('#statusText').textContent='Takip Açık'; $('#toggleBtn').textContent='Durdur'; }
+    function stopTracking(){ if(watchId!==null){ navigator.geolocation.clearWatch(watchId); watchId=null; } $('#statusText').textContent='Hazır'; $('#toggleBtn').textContent='Takibi Başlat'; finalizeAnchorIfNeeded(true); Store.save(); renderAll(); }
     function onErr(err){ if(err && err.code===1) $('#permOverlay').style.display='flex'; }
     async function onPos(pos){
       const {latitude:lat, longitude:lon, accuracy} = pos.coords; const ts=Date.now(); if(accuracy>150) return;
-      const p={lat,lon,acc:Math.round(accuracy),ts}; lastFix.textContent=`${fmtDateShort(ts)} • ${fmtTime(ts)} • ±${p.acc}m`; lastCoords.textContent=`${lat.toFixed(5)}, ${lon.toFixed(5)}`; lastAddr.textContent='adres aranıyor…'; reverseGeocode(lat,lon).then(s=> lastAddr.textContent=s);
+      const p={lat,lon,acc:Math.round(accuracy),ts}; $('#lastFix').textContent=`${fmtDateShort(ts)} • ${fmtTime(ts)} • ±${p.acc}m`; $('#lastCoords').textContent=`${lat.toFixed(5)}, ${lon.toFixed(5)}`; $('#lastAddr').textContent='adres aranıyor…'; reverseGeocode(lat,lon).then(s=> $('#lastAddr').textContent=s);
       if(!lastPoint || haversine(lastPoint,p)>15 || (ts-lastPoint.ts)>120000){ Store.data.points.push(p); lastPoint=p; }
       const R=Number($('#radiusInp').value||120), MIN=(Number($('#dwellInp').value||8))*60*1000;
       if(!currentAnchor){ currentAnchor={lat,lon,startedAt:ts,lastAt:ts}; } else { const d=haversine(currentAnchor,{lat,lon}); if(d<=R){ currentAnchor.lastAt=ts; } else { finalizeAnchorIfNeeded(false); currentAnchor={lat,lon,startedAt:ts,lastAt:ts}; } }
@@ -333,12 +378,16 @@
       if(force || dur>=MIN){ if(dur>=MIN){ Store.data.visits.push({ id:'v_'+currentAnchor.startedAt, lat:currentAnchor.lat, lon:currentAnchor.lon, start:currentAnchor.startedAt, end:currentAnchor.lastAt }); } currentAnchor=null; }
     }
 
-    /* ===== Quick Add ===== */
-    $('#noteBtn').onclick=()=>{ const t=prompt('Not:'); if(!t) return; const ts=Date.now(); Store.data.notes.push({id:'n_'+ts, ts, text:t}); Store.save(); renderAll(); };
-    $('#callBtn').onclick=()=>{ const who=prompt('Kim?'); if(who===null) return; const type=prompt('Tür: gelen / giden / cevapsız','gelen')||'gelen'; const notes=prompt('Not (opsiyonel)','')||''; const ts=Date.now(); Store.data.calls.push({id:'c_'+ts, ts, who, type, notes}); Store.save(); renderAll(); };
+    /* ===== Quick Overlay ===== */
+    const qOv=$('#quickOverlay');
+    function openQuickOverlay(){ qOv.classList.add('open'); }
+    function closeQuickOverlay(){ qOv.classList.remove('open'); }
+    $('#ovClose').onclick=closeQuickOverlay;
+    $('#quickOverlay').addEventListener('click', (e)=>{ if(e.target.id==='quickOverlay') closeQuickOverlay(); });
+    $('#ovNote').onclick=()=>{ closeQuickOverlay(); const t=prompt('Not:'); if(!t) return; const ts=Date.now(); Store.data.notes.push({id:'n_'+ts, ts, text:t}); Store.save(); renderAll(); };
+    $('#ovCall').onclick=()=>{ closeQuickOverlay(); const who=prompt('Kim?'); if(who===null) return; const type=prompt('Tür: gelen / giden / cevapsız','gelen')||'gelen'; const notes=prompt('Not (opsiyonel)','')||''; const ts=Date.now(); Store.data.calls.push({id:'c_'+ts, ts, who, type, notes}); Store.save(); renderAll(); };
 
-    /* ===== Timeline Render + Detail Sheet ===== */
-    let currentDetail=null;
+    /* ===== Timeline + Detail Edit ===== */
     function renderAll(){ renderTimeline(); if(window._map) updateMap(); }
     function renderTimeline(){
       const tl=$('#timelineList'); tl.innerHTML='';
@@ -361,25 +410,34 @@
       function label(ev){ if(ev.type==='visit') return 'Kalış'; if(ev.type==='call') return (ev.callType==='giden'?'Giden':ev.callType==='cevapsız'?'Cevapsız':'Gelen')+' arama'; return 'Not'; }
       function sub(ev){ if(ev.type==='note') return ev.text; if(ev.type==='call') return [ev.who||'Bilinmeyen', ev.notes||''].filter(Boolean).join(' • '); return 'adres alınıyor…'; }
     }
+
+    const sheet=$('#detailSheet'); let formState=null;
     function openDetail(ev){
-      currentDetail=ev;
-      const sheet=$('#detailSheet');
+      formState = JSON.parse(JSON.stringify(ev));
       $('#detailTitle').textContent = (ev.type==='visit'?'Kalış':ev.type==='call'?'Arama':'Not')+' — '+fmtTime(ev.ts);
-      $('#detailSub').textContent = ev.type==='note' ? ev.text : ev.type==='call' ? [ev.who||'Bilinmeyen', ev.callType, ev.notes||''].filter(Boolean).join(' • ')
-        : 'adres alınıyor…';
-      if(ev.type==='visit'){ reverseGeocode(ev.lat, ev.lon).then(s=> $('#detailSub').textContent = s + (ev.dur? ' • '+ev.dur+' dk':'')); }
+      $('#detailSub').textContent = ev.type==='visit' ? 'adres alınıyor…' : new Date(ev.ts).toLocaleDateString('tr-TR');
+      const form=$('#detailForm'); form.innerHTML='';
+      if(ev.type==='note'){
+        form.innerHTML = `<label class="sub">Not</label><textarea id="f_text" class="btn" rows="4">${ev.text||''}</textarea>`;
+      }else if(ev.type==='call'){
+        form.innerHTML = `<label class="sub">Kişi</label><input id="f_who" class="btn" value="${ev.who||''}"/>
+        <label class="sub">Tür</label><select id="f_type" class="btn"><option ${ev.callType==='gelen'?'selected':''} value="gelen">gelen</option><option ${ev.callType==='giden'?'selected':''} value="giden">giden</option><option ${ev.callType==='cevapsız'?'selected':''} value="cevapsız">cevapsız</option></select>
+        <label class="sub">Not</label><textarea id="f_notes" class="btn" rows="3">${ev.notes||''}</textarea>`;
+      }else{ // visit
+        form.innerHTML = `<div class="sub">Bu kalışa isim ekle (etiket gibi):</div><input id="f_vlabel" class="btn" placeholder="örn. Ev, İş, Spor"/>`;
+        reverseGeocode(ev.lat, ev.lon).then(s=> $('#detailSub').textContent = s + (ev.dur? ' • '+ev.dur+' dk':''));
+      }
       sheet.classList.add('open');
+      $('#delBtn').onclick=()=>{ if(!confirm('Silinsin mi?')) return; const S=Store.data; if(ev.type==='visit') S.visits=S.visits.filter(x=>x.id!==ev.id); if(ev.type==='note') S.notes=S.notes.filter(x=>x.id!==ev.id); if(ev.type==='call') S.calls=S.calls.filter(x=>x.id!==ev.id); Store.save(); renderAll(); sheet.classList.remove('open'); };
+      $('#saveBtn').onclick=()=>{
+        const S=Store.data;
+        if(ev.type==='note'){ const n=S.notes.find(x=>x.id===ev.id); if(n){ n.text=$('#f_text').value; } }
+        if(ev.type==='call'){ const c=S.calls.find(x=>x.id===ev.id); if(c){ c.who=$('#f_who').value; c.type=$('#f_type').value; c.notes=$('#f_notes').value; } }
+        if(ev.type==='visit'){ const v=S.visits.find(x=>x.id===ev.id); if(v){ v.label=$('#f_vlabel').value||''; } }
+        Store.save(); renderAll(); sheet.classList.remove('open');
+      };
     }
-    $('#closeSheet').onclick=()=> $('#detailSheet').classList.remove('open');
-    $('#delBtn').onclick=()=>{
-      if(!currentDetail) return;
-      if(!confirm('Silinsin mi?')) return;
-      const S=Store.data;
-      if(currentDetail.type==='visit') S.visits = S.visits.filter(x=> x.id!==currentDetail.id);
-      if(currentDetail.type==='note') S.notes = S.notes.filter(x=> x.id!==currentDetail.id);
-      if(currentDetail.type==='call') S.calls = S.calls.filter(x=> x.id!==currentDetail.id);
-      Store.save(); renderAll(); $('#detailSheet').classList.remove('open');
-    };
+    $('#closeSheet').onclick=()=> sheet.classList.remove('open');
 
     /* ===== Map (Leaflet) ===== */
     function initMapOnce(){ if(window._map) return; window._map=L.map('map',{zoomControl:true}).setView([39.93,32.86], 12);
@@ -399,7 +457,7 @@
       window._visitLayer.clearLayers();
       const bounds=[];
       for(const p of pts){ bounds.push([p.lat,p.lon]); }
-      for(const v of vs){ const m=L.circleMarker([v.lat,v.lon],{radius:6,color:'#22c55e',fill:true,fillOpacity:.95}).addTo(window._visitLayer); m.bindPopup('Kalış • '+new Date(v.start).toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'})+' — '+new Date(v.end).toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'})); bounds.push([v.lat,v.lon]); }
+      for(const v of vs){ const m=L.circleMarker([v.lat,v.lon],{radius:6,color:'#22c55e',fill:true,fillOpacity:.95}).addTo(window._visitLayer); m.bindPopup((v.label? v.label+' • ' : '')+'Kalış • '+new Date(v.start).toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'})+' — '+new Date(v.end).toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'})); bounds.push([v.lat,v.lon]); }
       if(bounds.length){ window._map.fitBounds(bounds, {padding:[20,20]}); }
       else if(lastPoint){ window._map.setView([lastPoint.lat,lastPoint.lon], 14); }
     }
@@ -408,7 +466,7 @@
     $('#searchBtn').onclick = ()=>{
       const q=$('#q').value.trim().toLowerCase(); const type=$('#typeSel').value; const out=$('#searchResults'); out.innerHTML='';
       function push(label, sub){ const el=document.createElement('div'); el.className='item'; el.innerHTML=`<div class="title">${label}</div><div class="sub">${sub}</div>`; out.appendChild(el); }
-      for(const v of Store.data.visits){ if(type && type!=='visit') continue; const addrKey=(v.lat.toFixed(5)+','+v.lon.toFixed(5)); const addr=Store.data.addrCache[addrKey]||''; const text=addr.toLowerCase(); if(!q || text.includes(q)) push('Kalış — '+new Date(v.start).toLocaleDateString('tr-TR'), addr); }
+      for(const v of Store.data.visits){ if(type && type!=='visit') continue; const addrKey=(v.lat.toFixed(5)+','+v.lon.toFixed(5)); const addr=Store.data.addrCache[addrKey]||''; const text=((v.label||'')+' '+addr).toLowerCase(); if(!q || text.includes(q)) push('Kalış — '+new Date(v.start).toLocaleDateString('tr-TR'), (v.label? v.label+' • ':'')+(addr||'')); }
       for(const c of Store.data.calls){ if(type && type!=='call') continue; const text=((c.who||'')+' '+(c.notes||'')).toLowerCase(); if(!q || text.includes(q)) push((c.type==='giden'?'Giden':c.type==='cevapsız'?'Cevapsız':'Gelen')+' arama — '+new Date(c.ts).toLocaleDateString('tr-TR'), (c.who||'Bilinmeyen')+(c.notes?' • '+c.notes:'')); }
       for(const n of Store.data.notes){ if(type && type!=='note') continue; const text=(n.text||'').toLowerCase(); if(!q || text.includes(q)) push('Not — '+new Date(n.ts).toLocaleDateString('tr-TR'), n.text); }
       if(!out.children.length) out.innerHTML='<div class="sub">Sonuç yok</div>';
@@ -419,7 +477,7 @@
       const day=selectedDay; const from=startOfDay(new Date(day).getTime()), to=endOfDay(new Date(day).getTime());
       const rows=[['time','type','title','details']];
       function addRow(t,ty,title,det){ rows.push([new Date(t).toISOString(), ty, title, (det||'').replaceAll(',',';')]); }
-      for(const v of Store.data.visits){ if(v.end<from||v.start>to) continue; addRow(v.start,'visit','Kalış', `${v.lat},${v.lon}`); }
+      for(const v of Store.data.visits){ if(v.end<from||v.start>to) continue; addRow(v.start,'visit', v.label? 'Kalış ('+v.label+')':'Kalış', `${v.lat},${v.lon}`); }
       for(const c of Store.data.calls){ if(c.ts<from||c.ts>to) continue; addRow(c.ts,'call',c.type,(c.who||'')+' '+(c.notes||'')); }
       for(const n of Store.data.notes){ if(n.ts<from||n.ts>to) continue; addRow(n.ts,'note','Not', n.text||''); }
       const csv = rows.map(r=> r.map(x=> `"${String(x).replaceAll('"','""')}"`).join(',')).join('\n');
@@ -431,7 +489,6 @@
 
     /* Track buttons */
     document.getElementById('toggleBtn').onclick = ()=> watchId ? stopTracking() : startTracking();
-    document.getElementById('wakeBtn')?.addEventListener('click',()=>{ if('wakeLock' in navigator){ navigator.wakeLock.request('screen').then(l=>{ $('#wakeInfo').textContent='Ekran uyanık tutuluyor'; l.addEventListener('release',()=> $('#wakeInfo').textContent=''); }).catch(()=> $('#wakeInfo').textContent='Wake Lock reddedildi'); } });
     document.getElementById('permOverlayClose').onclick = ()=>{ document.getElementById('permOverlay').style.display='none'; };
 
     /* Init */
