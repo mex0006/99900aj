@@ -1,323 +1,291 @@
-// Ajanda v10.1 — minimalist Liquid Glass PWA
-const $ = s => document.querySelector(s);
-const $$ = s => Array.from(document.querySelectorAll(s));
+
+// AJANDA v10.2 – TR calendar, safe FAB, liquid glass, 60fps animations
+
+const $ = sel => document.querySelector(sel);
+const $$ = sel => Array.from(document.querySelectorAll(sel));
 
 const state = {
-  current: new Date(),
-  monthCursor: new Date(),
-  entries: load('entries', []),
-  filters: new Set(['note','call','place'])
+  selected: todayLocal(),
+  monthCursor: curMonthStart(todayLocal()),
+  items: loadItems()
 };
 
-// ---- utils
-function save(key, v){ localStorage.setItem(key, JSON.stringify(v)); }
-function load(key, d){ try{ return JSON.parse(localStorage.getItem(key)) ?? d }catch(e){ return d }}
-function formatDate(d){ return new Intl.DateTimeFormat('tr-TR', { day:'2-digit', month:'long', weekday:'long', year:'numeric'}).format(d) }
-function monthText(d){ return new Intl.DateTimeFormat('tr-TR', { month:'long', year:'numeric'}).format(d) }
-function atStartOfDay(d){ const x = new Date(d); x.setHours(0,0,0,0); return x }
-function sameDay(a,b){ return atStartOfDay(a).getTime() === atStartOfDay(b).getTime() }
-function haptic(){ if (navigator.vibrate) navigator.vibrate(8); }
+// ---- Utils (timezone-safe, Monday-first calendar) ----
+function todayLocal(){
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+}
+function curMonthStart(d){ return new Date(d.getFullYear(), d.getMonth(), 1); }
+function daysInMonth(y,m){ return new Date(y, m+1, 0).getDate(); }
+function dowMon0(d){
+  // JS getDay: 0=Sun..6=Sat ; convert to Monday=0..Sunday=6
+  const g = d.getDay(); return (g+6)%7;
+}
+const TR_MONTHS = ["Ocak","Şubat","Mart","Nisan","Mayıs","Haziran","Temmuz","Ağustos","Eylül","Ekim","Kasım","Aralık"];
+const TR_DAYS = ["Pzt","Sal","Çar","Per","Cum","Cmt","Paz"];
 
-// ---- header & date
-const selectedDay = $('#selectedDay');
-const monthLabel = $('#monthLabel');
+// ---- Storage ----
+function loadItems(){
+  try{ return JSON.parse(localStorage.getItem("ajanda_items")||"[]"); }catch(e){ return []; }
+}
+function saveItems(){ localStorage.setItem("ajanda_items", JSON.stringify(state.items)); }
+
+// ---- Rendering ----
+function fmtDateLabel(d){
+  const day = d.getDate();
+  const month = TR_MONTHS[d.getMonth()];
+  const weekdayFull = ["Pazartesi","Salı","Çarşamba","Perşembe","Cuma","Cumartesi","Pazar"][ (d.getDay()+6)%7 ];
+  return `${day} ${month} ${d.getFullYear()} ${weekdayFull}`;
+}
 
 function refreshHeader(){
-  selectedDay.textContent = formatDate(state.current);
-  monthLabel.textContent = new Intl.DateTimeFormat('tr-TR',{ month:'long', year:'numeric'}).format(state.current);
+  $("#dateLabel").textContent = fmtDateLabel(state.selected);
+  $("#monthLabel").textContent = TR_MONTHS[state.selected.getMonth()] + " " + state.selected.getFullYear();
 }
-
-// ---- calendar (week starts Monday in TR)
-const cal = $('#calendar'), calGrid = $('#calGrid'), calMonthText = $('#calMonthText');
-$('#toggleCal').addEventListener('click', () => {
-  cal.classList.toggle('hidden');
-  if (!cal.classList.contains('hidden')) renderCalendar();
-});
-
-$('#calPrev').addEventListener('click', ()=>{ state.monthCursor.setMonth(state.monthCursor.getMonth()-1); renderCalendar(); });
-$('#calNext').addEventListener('click', ()=>{ state.monthCursor.setMonth(state.monthCursor.getMonth()+1); renderCalendar(); });
 
 function renderCalendar(){
-  calMonthText.textContent = monthText(state.monthCursor);
-  calGrid.innerHTML = '';
-  const dow = ['Pzt','Sal','Çar','Per','Cum','Cmt','Paz']; // Monday first
-  dow.forEach(d => {
-    const el = document.createElement('div'); el.textContent = d; el.className='dow'; calGrid.appendChild(el);
+  const wrap = $("#calendarWrap");
+  const grid = $("#calGrid");
+  const y = state.monthCursor.getFullYear();
+  const m = state.monthCursor.getMonth();
+  $("#calMonthTitle").textContent = `${TR_MONTHS[m]} ${y}`;
+
+  grid.innerHTML = "";
+  // headers Mon..Sun
+  TR_DAYS.forEach(txt=>{
+    const el = document.createElement("div");
+    el.className = "dow";
+    el.textContent = txt;
+    grid.appendChild(el);
   });
-  const y = state.monthCursor.getFullYear(), m = state.monthCursor.getMonth();
-  const first = new Date(y, m, 1);
-  // JS getDay: 0 Sun ... 6 Sat. For TR (Mon first) index = (getDay+6)%7
-  const offset = (first.getDay() + 6) % 7;
-  const daysInMonth = new Date(y, m+1, 0).getDate();
-  for(let i=0;i<offset;i++){ const sp = document.createElement('div'); calGrid.appendChild(sp); }
-  for(let d=1; d<=daysInMonth; d++){
-    const el = document.createElement('button'); el.className='day'; el.textContent = d;
-    const dt = new Date(y, m, d);
-    if (sameDay(dt, new Date())) el.classList.add('today');
-    if (sameDay(dt, state.current)) el.classList.add('selected');
-    el.addEventListener('click', () => {
-      state.current = dt; refreshHeader(); renderTimeline(); haptic();
-      $$('.day.selected').forEach(x=>x.classList.remove('selected')); el.classList.add('selected');
+
+  const dim = daysInMonth(y, m);
+  const first = new Date(y,m,1);
+  const pad = dowMon0(first); // blanks before 1st so that Monday is column 1
+
+  for(let i=0;i<pad;i++){
+    const b = document.createElement("div");
+    b.className="day blank";
+    grid.appendChild(b);
+  }
+  for(let d=1; d<=dim; d++){
+    const el = document.createElement("div");
+    el.className = "day";
+    el.textContent = d;
+    const cur = new Date(y,m,d);
+    if(sameDate(cur, todayLocal())) el.classList.add("today");
+    if(sameDate(cur, state.selected)) el.classList.add("selected");
+    el.addEventListener("click", ()=>{
+      state.selected = cur;
+      refreshHeader();
+      renderCalendar();
+      renderList();
+      vibrate(10);
     });
-    calGrid.appendChild(el);
+    grid.appendChild(el);
   }
 }
 
-// ---- entries
-function addEntry(e){
-  e.id = crypto.randomUUID();
-  state.entries.push(e);
-  save('entries', state.entries);
-  renderTimeline();
-}
-function entriesForDay(d){
-  const start = atStartOfDay(d).getTime(), end = start + 86400000;
-  return state.entries.filter(x => {
-    const t = new Date(x.time).getTime();
-    return t>=start && t<end;
-  }).sort((a,b)=> new Date(a.time)-new Date(b.time));
-}
+function sameDate(a,b){ return a.getFullYear()==b.getFullYear() && a.getMonth()==b.getMonth() && a.getDate()==b.getDate(); }
 
-const timeline = $('#timeline');
-
-function renderTimeline(){
-  const list = entriesForDay(state.current);
-  if (!list.length){
-    timeline.classList.add('empty');
-    timeline.innerHTML = `<div class="empty-card">Bu gün için kayıt yok.</div>`;
-    return;
-  }
-  timeline.classList.remove('empty');
-  timeline.innerHTML = list.map(item => {
-    const color = item.type;
-    const title = item.type==='note' ? (item.title || 'Not')
-                 : item.type==='call' ? (item.person || 'Çağrı')
-                 : item.name || 'Konum';
-    const meta = new Intl.DateTimeFormat('tr-TR',{ hour:'2-digit', minute:'2-digit'}).format(new Date(item.time))
-                 + (item.type==='call' && item.callType ? ` • ${item.callType[0].toUpperCase()+item.callType.slice(1)}` : '')
-                 + (item.type==='place' && item.address ? ` • ${item.address}` : '');
-    return `<button class="item" data-id="${item.id}">
-      <span class="dot ${color}"></span>
-      <div style="text-align:left">
-        <div style="font-weight:700">${title}</div>
-        <div class="meta">${meta}</div>
-      </div>
-    </button>`;
-  }).join('');
-
-  $$('#timeline .item').forEach(btn => btn.addEventListener('click', () => openDetail(btn.dataset.id)));
+function renderList(){
+  const list = $("#entries");
+  list.innerHTML = "";
+  const dayItems = state.items.filter(x=> sameDate(new Date(x.when), state.selected))
+                              .sort((a,b)=> new Date(a.when)-new Date(b.when));
+  $("#noEntries").style.display = dayItems.length? "none":"block";
+  dayItems.forEach(item=>{
+    const row = document.createElement("div");
+    row.className = "entry";
+    const dot = document.createElement("div");
+    dot.className = "dot " + item.type;
+    const text = document.createElement("div");
+    text.innerHTML = `<div><strong>${item.type==='note'?'Not':(item.type==='call'?'Çağrı':'Konum')}</strong></div>
+                      <div class="meta">${timeOf(new Date(item.when))}${item.type==='call'&&item.person? ' · '+item.person:''}${item.type==='place'&&item.address? ' · '+item.address:''}</div>`;
+    row.appendChild(dot); row.appendChild(text);
+    row.addEventListener("click", ()=> openDetail(item.id));
+    list.appendChild(row);
+  });
 }
 
-// ---- FAB quick actions
-const fab = $('#fab');
-const overlay = $('#overlay');
-const quick = $('#quick');
-
-function openQuick(){
-  overlay.classList.add('show'); overlay.classList.remove('hidden');
-  quick.classList.remove('hidden'); requestAnimationFrame(()=> quick.classList.add('show'));
+function timeOf(d){
+  return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
 }
-function closeQuick(){
-  quick.classList.remove('show'); setTimeout(()=> quick.classList.add('hidden'), 250);
-  overlay.classList.remove('show'); setTimeout(()=> overlay.classList.add('hidden'), 250);
-}
-fab.addEventListener('click', ()=>{openQuick(); haptic();});
-overlay.addEventListener('click', ()=>{ closeQuick(); });
 
-$$('#quick .quick-btn').forEach(b => b.addEventListener('click', () => {
-  closeQuick(); openEditor(b.dataset.open);
+// ---- Overlay / FAB ----
+const overlay = $("#overlay");
+$("#fab").addEventListener("click", ()=>{
+  overlay.classList.toggle("show");
+  overlay.classList.toggle("hidden");
+  vibrate(8);
+});
+overlay.addEventListener("click", (e)=>{
+  if(e.target === overlay) closeOverlay();
+});
+function closeOverlay(){ overlay.classList.remove("show"); setTimeout(()=>overlay.classList.add("hidden"), 180); }
+
+$$(".opt").forEach(btn=> btn.addEventListener("click", ()=>{
+  const type = btn.dataset.type;
+  closeOverlay();
+  openSheet(type);
 }));
 
-// ---- Editor
-const editorSheet = $('#editorSheet');
-const editTitle = $('#editTitle');
-const editBody = $('#editBody');
-$('#editBack').addEventListener('click', ()=> closeEditor());
-function openEditor(type, existing){
-  overlay.classList.add('show'); overlay.classList.remove('hidden');
-  editorSheet.classList.remove('hidden'); requestAnimationFrame(()=> editorSheet.classList.add('show'));
-  const isEdit = !!existing;
-  editTitle.textContent = isEdit ? 'Düzenle' : type==='note'?'Yeni Not': type==='call'?'Yeni Çağrı':'Yeni Konum';
-  editBody.innerHTML = '';
-  const now = new Date();
-  if (type==='note'){
-    editBody.innerHTML = `
-      <label>Başlık (opsiyonel)</label>
-      <input id="f_title" type="text" placeholder="örn. Fikir, yapılacak…">
-      <label>Not</label>
-      <textarea id="f_text" placeholder="Metni yaz…"></textarea>
-      <label>Etiketler (virgülle)</label>
-      <input id="f_tags" type="text" placeholder="iş, spor, aile">
-    `;
-    if (existing){ $('#f_title').value=existing.title||''; $('#f_text').value=existing.text||''; $('#f_tags').value=(existing.tags||[]).join(', '); }
-  }else if (type==='call'){
-    editBody.innerHTML = `
-      <label>Kişi adı</label>
-      <input id="c_person" type="text" placeholder="örn. Ayşe Yılmaz">
-      <label>Tür</label>
-      <div class="chips">
-        <button class="chip toggle" data-val="Gelen">Gelen</button>
-        <button class="chip toggle" data-val="Giden">Giden</button>
-        <button class="chip toggle" data-val="Cevapsız">Cevapsız</button>
-      </div>
-      <label>Not (opsiyonel)</label>
-      <input id="c_note" type="text" placeholder="Kısa not…">
-    `;
-    if (existing){ $('#c_person').value=existing.person||''; $('#c_note').value=existing.note||''; }
-  }else{ // place
-    editBody.innerHTML = `
-      <label>Yer adı</label>
-      <input id="p_name" type="text" placeholder="örn. Ev, İş, Kafe">
-      <label>Adres</label>
-      <input id="p_addr" type="text" placeholder="Cadde, No, ilçe…">
-      <label>Koordinat</label>
-      <input id="p_coord" type="text" placeholder="enlem, boylam">
-    `;
-    if (existing){ $('#p_name').value=existing.name||''; $('#p_addr').value=existing.address||''; $('#p_coord').value=existing.coords||''; }
-  }
-
-  $('#editSave').onclick = () => {
-    haptic();
-    if (type==='note'){
-      const title=$('#f_title').value.trim(), text=$('#f_text').value.trim(), tags=$('#f_tags').value.split(',').map(s=>s.trim()).filter(Boolean);
-      if (!title && !text){ alert('En azından başlık ya da not gir.'); return;}
-      if (existing){
-        Object.assign(existing, {title,text,tags, time: existing.time});
-        save('entries', state.entries);
-      }else{
-        addEntry({type:'note', title, text, tags, time: new Date().toISOString()});
-      }
-    }else if (type==='call'){
-      const person=$('#c_person').value.trim();
-      const selected = $$('#editorSheet .chip.toggle').find(x=>x.classList.contains('active'));
-      const callType = selected ? selected.dataset.val : 'Gelen';
-      const note=$('#c_note').value.trim();
-      if (!person){ alert('Kişi adı gir.'); return;}
-      if (existing){
-        Object.assign(existing, {person, callType, note});
-        save('entries', state.entries);
-      }else{
-        addEntry({type:'call', person, callType, note, time: new Date().toISOString()});
-      }
-    }else{
-      const name=$('#p_name').value.trim();
-      const address=$('#p_addr').value.trim();
-      const coords=$('#p_coord').value.trim();
-      if (!name && !address){ alert('En azından isim ya da adres gir.'); return;}
-      if (existing){
-        Object.assign(existing, {name,address,coords});
-        save('entries', state.entries);
-      }else{
-        addEntry({type:'place', name, address, coords, time: new Date().toISOString()});
-      }
-    }
-    closeEditor();
-  };
-
-  // toggle chips inside editor
-  $$('#editorSheet .chip.toggle').forEach(ch => ch.addEventListener('click', ()=>{
-    $$('#editorSheet .chip.toggle').forEach(x=>x.classList.remove('active')); ch.classList.add('active');
-  }));
+// ---- Sheets (forms) ----
+const sheet = $("#sheet");
+const sheetBody = $("#sheetBody");
+let editId = null;
+function openSheet(type, existing=null){
+  editId = existing? existing.id : null;
+  $("#sheetTitle").textContent = (existing? "Düzenle: " : "Yeni ") + (type==='note'?'Not': type==='call'?'Çağrı':'Konum');
+  sheetBody.innerHTML = buildForm(type, existing);
+  sheet.classList.remove("hidden");
+  requestAnimationFrame(()=>sheet.classList.add("show"));
+  sheet.dataset.type = type;
 }
-function closeEditor(){
-  editorSheet.classList.remove('show'); setTimeout(()=> editorSheet.classList.add('hidden'), 250);
-  overlay.classList.remove('show'); setTimeout(()=> overlay.classList.add('hidden'), 250);
+function closeSheet(){
+  sheet.classList.remove("show");
+  setTimeout(()=>sheet.classList.add("hidden"), 180);
 }
-
-// ---- Detail
-const detailSheet = $('#detailSheet');
-let detailId = null;
-function openDetail(id){
-  detailId=id;
-  const item = state.entries.find(x=>x.id===id);
-  if (!item) return;
-  overlay.classList.add('show'); overlay.classList.remove('hidden');
-  detailSheet.classList.remove('hidden'); requestAnimationFrame(()=> detailSheet.classList.add('show'));
-  $('#detailTitle').textContent = item.type==='note'?'Not': item.type==='call'?'Çağrı':'Konum';
-  $('#detailBody').innerHTML = renderDetail(item);
-  $('#detailEdit').onclick = ()=>{ closeDetail(); openEditor(item.type, item); };
-  $('#detailDelete').onclick = ()=>{
-    if (confirm('Silinsin mi?')){
-      state.entries = state.entries.filter(x=>x.id!==id);
-      save('entries', state.entries);
-      renderTimeline(); closeDetail();
-    }
-  };
-}
-function closeDetail(){ detailSheet.classList.remove('show'); setTimeout(()=> detailSheet.classList.add('hidden'), 250); overlay.classList.remove('show'); setTimeout(()=> overlay.classList.add('hidden'), 250); }
-$$('#detailSheet [data-close="detail"]').forEach(b=> b.addEventListener('click', closeDetail));
-
-function renderDetail(item){
-  const t = new Date(item.time);
-  const time = new Intl.DateTimeFormat('tr-TR',{ dateStyle:'medium', timeStyle:'short'}).format(t);
-  if (item.type==='note'){
-    return `<div class="row"><span class="dot note"></span><strong>${item.title||'Not'}</strong></div>
-    <p style="white-space:pre-wrap">${item.text || ''}</p>
-    <div class="meta">${time}</div>`;
-  }else if (item.type==='call'){
-    return `<div class="row"><span class="dot call"></span><strong>${item.person||'Çağrı'}</strong></div>
-    <div>${item.callType||''}</div>
-    <div class="meta">${time}${item.note? ' • '+item.note : ''}</div>`;
+$("#sheetBack").addEventListener("click", closeSheet);
+$("#sheetSave").addEventListener("click", ()=>{
+  const type = sheet.dataset.type;
+  const payload = readForm(type);
+  if(!payload) return;
+  if(editId){
+    const idx = state.items.findIndex(x=>x.id===editId);
+    state.items[idx] = {...state.items[idx], ...payload};
   }else{
-    return `<div class="row"><span class="dot place"></span><strong>${item.name||'Konum'}</strong></div>
-    <div>${item.address||''}</div>
-    <div class="meta">${time}${item.coords? ' • '+item.coords : ''}</div>`;
+    state.items.push({id:crypto.randomUUID(), type, when: new Date().toISOString(), ...payload});
   }
-}
-
-// ---- Search
-const searchSheet = $('#searchSheet');
-function openSearch(){
-  overlay.classList.add('show'); overlay.classList.remove('hidden');
-  searchSheet.classList.remove('hidden'); requestAnimationFrame(()=> searchSheet.classList.add('show'));
-  performSearch();
-}
-function closeSearch(){ searchSheet.classList.remove('show'); setTimeout(()=> searchSheet.classList.add('hidden'), 250); overlay.classList.remove('show'); setTimeout(()=> overlay.classList.add('hidden'), 250);}
-$('#btnSearch').addEventListener('click', openSearch);
-$('#floatingSearch').addEventListener('click', openSearch);
-$$('#searchSheet [data-close="search"]').forEach(b=> b.addEventListener('click', closeSearch));
-$('#searchInput').addEventListener('input', performSearch);
-$$('#searchSheet .chip.toggle').forEach(ch => ch.addEventListener('click', ()=>{
-  ch.classList.toggle('active');
-  const key = ch.dataset.filter;
-  if (ch.classList.contains('active')) state.filters.add(key); else state.filters.delete(key);
-  performSearch();
-}));
-function performSearch(){
-  const q = $('#searchInput').value?.toLowerCase() ?? '';
-  const list = state.entries.filter(x => state.filters.has(x.type)).filter(x => {
-    const hay = JSON.stringify(x).toLowerCase();
-    return hay.includes(q);
-  }).sort((a,b)=> new Date(b.time)-new Date(a.time));
-  $('#searchList').innerHTML = list.map(item => {
-    const title = item.type==='note'?(item.title||'Not') : item.type==='call'?(item.person||'Çağrı') : (item.name||'Konum');
-    const dot = `<span class="dot ${item.type}"></span>`;
-    const meta = new Intl.DateTimeFormat('tr-TR',{ dateStyle:'medium', timeStyle:'short'}).format(new Date(item.time));
-    return `<button class="item" data-id="${item.id}">${dot}<div><div style="font-weight:700">${title}</div><div class="meta">${meta}</div></div></button>`;
-  }).join('');
-  $$('#searchList .item').forEach(b=> b.addEventListener('click', ()=>{ closeSearch(); openDetail(b.dataset.id); }));
-}
-
-// ---- Settings (placeholder)
-$('#btnSettings').addEventListener('click', ()=>{
-  alert('Ayarlar: Beta — tema ve veri dışa/içe aktarımı yakında.');
+  saveItems(); renderList(); closeSheet(); vibrate(15);
 });
 
-// ---- Floating Search button also in list-head
-$('#floatingSearch').addEventListener('click', haptic);
+function buildForm(type, existing){
+  const v = existing||{};
+  if(type==='note'){
+    return `
+      <div class="field"><label>Başlık</label><input class="input" id="fTitle" placeholder="opsiyonel" value="${v.title||''}"></div>
+      <div class="field"><label>Not</label><textarea class="input" id="fText" rows="6" placeholder="Metni yaz...">${v.text||''}</textarea></div>
+      <div class="field"><label>Etiketler (virgülle)</label><input class="input" id="fTags" placeholder="iş, kişisel" value="${(v.tags||[]).join(', ')}"></div>`;
+  }
+  if(type==='call'){
+    return `
+      <div class="field"><label>Kişi</label><input class="input" id="fPerson" placeholder="örn. Ayşe" value="${v.person||''}"></div>
+      <div class="field"><label>Tür</label>
+        <div class="row">
+          ${["Gelen","Giden","Cevapsız"].map(kind=>{
+            const k = {Gelen:"in",Giden:"out",Cevapsız:"miss"}[kind];
+            const checked = (v.kind||"in")===(k) ? 'checked':'';
+            return `<label class="chip"><input type="radio" name="kind" value="${k}" ${checked}> ${kind}</label>`;
+          }).join("")}
+        </div>
+      </div>
+      <div class="field"><label>Kısa not</label><input class="input" id="fNote" placeholder="opsiyonel" value="${v.note||''}"></div>`;
+  }
+  // place
+  return `
+    <div class="field"><label>Yer adı</label><input class="input" id="fPlaceName" placeholder="örn. Ev, Ofis" value="${v.placeName||''}"></div>
+    <div class="field"><label>Adres</label><input class="input" id="fAddress" placeholder="Cadde, No, İlçe..." value="${v.address||''}"></div>
+    <div class="row">
+      <div class="field" style="flex:1"><label>Enlem</label><input class="input" id="fLat" placeholder="39.9" value="${v.lat||''}"></div>
+      <div class="field" style="flex:1"><label>Boylam</label><input class="input" id="fLng" placeholder="32.8" value="${v.lng||''}"></div>
+    </div>`;
+}
+function readForm(type){
+  if(type==='note'){
+    const title = $("#fTitle").value.trim();
+    const text = $("#fText").value.trim();
+    if(!title && !text){ alert("En azından bir başlık ya da not gir."); return null; }
+    const tags = $("#fTags").value.split(",").map(s=>s.trim()).filter(Boolean);
+    return {title, text, tags};
+  }
+  if(type==='call'){
+    const person = $("#fPerson").value.trim();
+    const kind = (document.querySelector('input[name="kind"]:checked')||{value:"in"}).value;
+    const note = $("#fNote").value.trim();
+    return {person, kind, note};
+  }
+  const placeName = $("#fPlaceName").value.trim();
+  const address = $("#fAddress").value.trim();
+  const lat = $("#fLat").value.trim();
+  const lng = $("#fLng").value.trim();
+  if(!placeName && !address){ alert("En azından isim ya da adres gir."); return null; }
+  return {placeName, address, lat, lng};
+}
 
-// ---- boot
-function boot(){
-  state.monthCursor = new Date(state.current);
-  refreshHeader();
-  renderTimeline();
+// ---- Details ----
+const ds = {
+  show:false, id:null
+};
+function openDetail(id){
+  ds.id = id;
+  const item = state.items.find(x=>x.id===id);
+  $("#detailTitle").textContent = item.type==='note'?'Not':item.type==='call'?'Çağrı':'Konum';
+  $("#detailBody").innerHTML = detailHtml(item);
+  $("#detail").classList.remove("hidden");
+  requestAnimationFrame(()=>$("#detail").classList.add("show"));
+}
+function closeDetail(){
+  $("#detail").classList.remove("show");
+  setTimeout(()=>$("#detail").classList.add("hidden"), 180);
+}
+$("#detailBack").addEventListener("click", closeDetail);
+$("#detailEdit").addEventListener("click", ()=>{
+  const it = state.items.find(x=>x.id===ds.id);
+  closeDetail();
+  openSheet(it.type, it);
+});
+$("#detailDelete").addEventListener("click", ()=>{
+  if(confirm("Silinsin mi?")){
+    state.items = state.items.filter(x=>x.id!==ds.id);
+    saveItems(); renderList(); closeDetail();
+  }
+});
+function detailHtml(it){
+  const when = new Date(it.when);
+  if(it.type==='note'){
+    return `<div class="field"><label>Başlık</label><div>${it.title||'—'}</div></div>
+            <div class="field"><label>Not</label><div>${(it.text||'—').replace(/\n/g,'<br>')}</div></div>
+            <div class="field"><label>Etiketler</label><div>${(it.tags||[]).join(', ')||'—'}</div></div>
+            <div class="field"><label>Saat</label><div>${timeOf(when)}</div></div>`;
+  }
+  if(it.type==='call'){
+    return `<div class="field"><label>Kişi</label><div>${it.person||'Bilinmiyor'}</div></div>
+            <div class="field"><label>Tür</label><div>${{in:'Gelen',out:'Giden',miss:'Cevapsız'}[it.kind||'in']}</div></div>
+            <div class="field"><label>Not</label><div>${it.note||'—'}</div></div>
+            <div class="field"><label>Saat</label><div>${timeOf(when)}</div></div>`;
+  }
+  return `<div class="field"><label>Yer</label><div>${it.placeName||'—'}</div></div>
+          <div class="field"><label>Adres</label><div>${it.address||'—'}</div></div>
+          <div class="field"><label>Koordinat</label><div>${(it.lat&&it.lng)? it.lat+', '+it.lng : '—'}</div></div>
+          <div class="field"><label>Saat</label><div>${timeOf(when)}</div></div>`;
+}
+
+// ---- Calendar controls ----
+$("#btnCalendar").addEventListener("click", ()=>{
+  $("#calendarWrap").classList.toggle("hidden");
+});
+$("#calPrev").addEventListener("click", ()=>{
+  const c = state.monthCursor; state.monthCursor = new Date(c.getFullYear(), c.getMonth()-1, 1);
   renderCalendar();
-  // Mark all chips active
-  $$('#searchSheet .chip.toggle').forEach(ch => ch.classList.add('active'));
-}
-boot();
+});
+$("#calNext").addEventListener("click", ()=>{
+  const c = state.monthCursor; state.monthCursor = new Date(c.getFullYear(), c.getMonth()+1, 1);
+  renderCalendar();
+});
 
-// ---- PWA
-if ('serviceWorker' in navigator){
-  window.addEventListener('load', ()=> navigator.serviceWorker.register('sw.js').catch(console.warn));
+// ---- Search (placeholder) ----
+$("#btnSearch").addEventListener("click", ()=>{
+  alert("Arama: kelime ve tür filtreleri (Not/Çağrı/Konum). v10.3'te tam ekran cam panel gelecektir.");
+});
+
+// ---- Haptics ----
+function vibrate(ms){ if(navigator.vibrate) navigator.vibrate(ms); }
+
+// ---- Init ----
+function init(){
+  refreshHeader();
+  renderCalendar();
+  renderList();
 }
+init();

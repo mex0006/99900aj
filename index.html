@@ -1,134 +1,107 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="theme-color" content="#0a0f1f">
-  <link rel="manifest" href="manifest.webmanifest">
-  <link rel="apple-touch-icon" href="icons/icon-192.png">
-  <title>Ajanda</title>
-  <link rel="stylesheet" href="css/main.css">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#0b0f1a" />
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-192.png"/>
+<title>Ajanda</title>
+<link rel="stylesheet" href="css/main.css">
 </head>
 <body>
   <div id="app">
+
+    <!-- HEADER (no container, left aligned) -->
     <header class="app-header">
       <h1 class="title">Ajanda</h1>
-      <button id="btnSettings" class="circle ghost" aria-label="Ayarlar">
-        <span class="gear"></span>
+      <button class="btn-glass round" aria-label="Ayarlar" id="btnSettings">
+        <!-- minimal cog svg -->
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06A2 2 0 1 1 7.04 3.2l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V2a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c0 .66.39 1.26 1 1.51.13.05.27.09.41.11H21a2 2 0 1 1 0 4h-.09c-.14.02-.28.06-.41.11-.61.25-1 .85-1 1.51z"/>
+        </svg>
       </button>
     </header>
 
-    <main class="content">
-      <section class="section">
-        <div class="date-head">
-          <div id="selectedDay" class="day-title">—</div>
-          <div class="month-row">
-            <div id="monthLabel" class="month-label">—</div>
-            <button id="toggleCal" class="chip">
-              <span class="i i-cal"></span>
-              <span>Takvimi aç</span>
-            </button>
-          </div>
-        </div>
+    <!-- DATE CARD (lighter glass, smaller scale) -->
+    <section class="card-glass compact" id="todayCard">
+      <div class="date-line">
+        <h2 id="dateLabel"></h2>
+      </div>
+      <div class="sub-line">
+        <span id="monthLabel"></span>
+        <button id="btnCalendar" class="btn-glass">
+          <span class="ico calendar"></span>
+          <span>Takvimi aç</span>
+        </button>
+      </div>
+    </section>
 
-        <div id="calendar" class="calendar hidden" aria-hidden="true">
-          <div class="cal-head">
-            <button id="calPrev" class="circle ghost" aria-label="Önceki Ay"><span class="i i-left"></span></button>
-            <div id="calMonthText" class="cal-title">—</div>
-            <button id="calNext" class="circle ghost" aria-label="Sonraki Ay"><span class="i i-right"></span></button>
-          </div>
-          <div class="cal-grid" id="calGrid"></div>
-        </div>
-      </section>
+    <!-- CALENDAR (collapsible) -->
+    <section class="calendar-wrap hidden" id="calendarWrap">
+      <div class="cal-header">
+        <button class="btn-icon" id="calPrev" aria-label="Önceki Ay">‹</button>
+        <div id="calMonthTitle"></div>
+        <button class="btn-icon" id="calNext" aria-label="Sonraki Ay">›</button>
+      </div>
+      <div class="cal-grid" id="calGrid"></div>
+    </section>
 
-      <section class="section">
-        <div class="list-head">
-          <h2>Günün Zaman Çizelgesi</h2>
-          <button id="btnSearch" class="circle ghost small" aria-label="Ara">
-            <span class="i i-search"></span>
-          </button>
-        </div>
-        <div id="timeline" class="timeline empty">
-          <div class="empty-card">Bu gün için kayıt yok.</div>
-        </div>
-      </section>
-    </main>
+    <!-- TIMELINE -->
+    <section class="card-glass compact" id="timeline">
+      <h3>Günün Zaman Çizelgesi</h3>
+      <div id="entries"></div>
+      <div id="noEntries" class="muted">Bu gün için kayıt yok.</div>
+    </section>
 
-    <!-- Floating Search Button (bottom-right) -->
-    <button id="floatingSearch" class="circle fab small" aria-label="Ara">
-      <span class="i i-search"></span>
+    <!-- Floating Search -->
+    <button id="btnSearch" class="btn-glass round floater search" aria-label="Arama">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="7"></circle>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+      </svg>
     </button>
 
     <!-- Center FAB -->
-    <button id="fab" class="fab" aria-label="Yeni">
-      <span class="plus">+</span>
+    <button id="fab" class="fab">
+      <div class="fab-core">+</div>
     </button>
 
-    <!-- Dim/blur overlay -->
-    <div id="overlay" class="overlay hidden"></div>
-
-    <!-- Quick actions -->
-    <div id="quick" class="quick hidden" role="dialog" aria-labelledby="quickTitle">
-      <div class="quick-row">
-        <button class="quick-btn" data-open="note">
-          <div class="quick-icon"><span class="i i-note"></span></div>
-          <div class="quick-label">Not</div>
-        </button>
-        <button class="quick-btn" data-open="call">
-          <div class="quick-icon"><span class="i i-call"></span></div>
-          <div class="quick-label">Çağrı</div>
-        </button>
-        <button class="quick-btn" data-open="place">
-          <div class="quick-icon"><span class="i i-pin"></span></div>
-          <div class="quick-label">Konum</div>
-        </button>
+    <!-- Plus overlay -->
+    <div id="overlay" class="overlay hidden">
+      <div class="sheet-options">
+        <button class="opt" data-type="note"><div class="opt-ico">•</div><div>Not</div></button>
+        <button class="opt" data-type="call"><div class="opt-ico">•</div><div>Çağrı</div></button>
+        <button class="opt" data-type="place"><div class="opt-ico">•</div><div>Konum</div></button>
       </div>
     </div>
 
-    <!-- Search Sheet -->
-    <div id="searchSheet" class="sheet hidden" role="dialog" aria-labelledby="searchTitle">
+    <!-- SHEETS -->
+    <div id="sheet" class="sheet hidden" aria-hidden="true">
       <div class="sheet-head">
-        <button class="circle ghost" data-close="search"><span class="i i-left"></span></button>
-        <div class="sheet-title" id="searchTitle">Arama</div>
-        <div style="width:40px"></div>
+        <button id="sheetBack" class="btn-glass round small" aria-label="Geri">‹</button>
+        <div id="sheetTitle">Yeni</div>
+        <button id="sheetSave" class="btn-ok round small" aria-label="Kaydet">✓</button>
       </div>
-      <div class="sheet-body">
-        <div class="input glass"><input id="searchInput" placeholder="kelime, kişi…" inputmode="search"></div>
-        <div class="chips">
-          <button class="chip toggle" data-filter="note">Not</button>
-          <button class="chip toggle" data-filter="call">Çağrı</button>
-          <button class="chip toggle" data-filter="place">Konum</button>
-        </div>
-        <div id="searchList" class="timeline"></div>
-      </div>
+      <div class="sheet-body" id="sheetBody"></div>
     </div>
 
-    <!-- Editor Sheet (Note/Call/Place) -->
-    <div id="editorSheet" class="sheet hidden" role="dialog">
+    <!-- DETAILS -->
+    <div id="detail" class="sheet hidden" aria-hidden="true">
       <div class="sheet-head">
-        <button id="editBack" class="circle ghost"><span class="i i-left"></span></button>
-        <div id="editTitle" class="sheet-title">Yeni</div>
-        <button id="editSave" class="circle primary"><span class="i i-check"></span></button>
-      </div>
-      <div class="sheet-body" id="editBody"></div>
-    </div>
-
-    <!-- Detail Sheet -->
-    <div id="detailSheet" class="sheet hidden">
-      <div class="sheet-head">
-        <button class="circle ghost" data-close="detail"><span class="i i-left"></span></button>
-        <div id="detailTitle" class="sheet-title">Detay</div>
-        <div class="right-actions">
-          <button id="detailEdit" class="circle ghost"><span class="i i-edit"></span></button>
-          <button id="detailDelete" class="circle danger"><span class="i i-trash"></span></button>
+        <button id="detailBack" class="btn-glass round small" aria-label="Geri">‹</button>
+        <div id="detailTitle">Detay</div>
+        <div class="detail-actions">
+          <button id="detailEdit" class="btn-glass round small" aria-label="Düzenle">✎</button>
+          <button id="detailDelete" class="btn-glass round small danger" aria-label="Sil">🗑</button>
         </div>
       </div>
       <div class="sheet-body" id="detailBody"></div>
     </div>
 
   </div>
-  <script src="js/app.js"></script>
+
+<script src="js/app.js"></script>
 </body>
 </html>
