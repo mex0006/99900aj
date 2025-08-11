@@ -4,430 +4,320 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Ajanda</title>
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Crect width='256' height='256' rx='56' fill='black'/%3E%3Cpath d='M64 64h128v128H64z' fill='%23b3e5fc'/%3E%3C/svg%3E">
 <style>
 :root{
   --bg:#000; /* AMOLED */
-  --glass: rgba(255,255,255,.06);
-  --glass-strong: rgba(255,255,255,.10);
-  --txt: #e9e9ea;
-  --sub:#a3a3a6;
-  --accent:#7aa7ff;
-  --success:#31d158;
-  --warning:#ffd426;
-  --danger:#ff453a;
-  --shadow: 0 10px 30px rgba(0,0,0,.6);
-  --radius: 20px;
+  --card:rgba(255,255,255,.06);
+  --card-2:rgba(255,255,255,.04);
+  --stroke:rgba(255,255,255,.08);
+  --text:#f6f6f6;
+  --text-dim:#bdbdbd;
+  --accent:#2f8cff;
+  --ok:#15c37e;
+  --warn:#f2c94c;
+  --nav-h:76px;
+  --blur:18px;
+  --radius:22px;
+  --shadow:0 14px 30px rgba(0,0,0,.45), 0 6px 18px rgba(0,0,0,.35);
+  -webkit-tap-highlight-color: transparent;
 }
-
 *{box-sizing:border-box}
 html,body{height:100%}
 body{
   margin:0;
-  font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
-  color:var(--txt);
-  background:var(--bg);
-  -webkit-tap-highlight-color: transparent;
-  overflow-x:hidden;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display","SF Pro Text", "Segoe UI", Roboto, Ubuntu, Arial, sans-serif;
+  color:var(--text);
+  background: var(--bg);
+  background-attachment: fixed;
 }
-
-.app{
-  padding: max(16px, env(safe-area-inset-top)) 16px 90px;
-  min-height:100%;
-  background:
-    radial-gradient(1200px 800px at 120% -10%, rgba(38,73,156,.22), transparent 60%),
-    radial-gradient(1000px 600px at -10% -20%, rgba(0,120,255,.15), transparent 60%);
-  background-blend-mode: screen;
+.header-plume{
+  position:fixed; inset:0 0 auto 0; height:180px;
+  background: radial-gradient(1200px 320px at 50% -80px, rgba(60,90,200,.18), transparent 60%);
+  pointer-events:none; z-index:0;
 }
-
-/* Header */
-.header{
-  position:sticky; top:0; z-index:10;
-  backdrop-filter:saturate(180%) blur(8px);
-  background:linear-gradient(to bottom, rgba(0,0,0,.7), rgba(0,0,0,.0));
-  margin:-16px -16px 8px; padding: 8px 16px 6px;
+.wrap{position:relative; z-index:1; padding:26px 18px calc(var(--nav-h) + 24px); max-width:820px; margin:0 auto;}
+h1{ margin:12px 4px 10px; font-size:38px; letter-spacing:.2px; font-weight:800;}
+.status-dot{
+  position:fixed; right:18px; top:16px;
+  width:16px; height:16px; border-radius:50%;
+  box-shadow: 0 0 0 3px rgba(0,0,0,.35), 0 0 10px 2px rgba(240,220,90,.65), 0 0 28px 10px rgba(240,220,90,.3);
+  background: radial-gradient(circle at 40% 40%, #ffe98a, #f2c94c 60%, #9a7a00 100%);
+  filter: saturate(110%);
 }
-.hrow{display:flex; align-items:center; justify-content:center; gap:12px}
-h1{margin:6px 0 4px; font-size:28px; letter-spacing:.3px; text-align:center}
-.glow{
-  margin-left:auto; margin-right:4px;
-  width:18px; height:18px; border-radius:50%;
-  background: radial-gradient(circle at 50% 50%, #ffd33d 0%, #f5c21a 35%, rgba(255,212,61,.6) 55%, rgba(255,212,61,.2) 70%, transparent 100%);
-  box-shadow: 0 0 14px rgba(255,212,61,.55), 0 0 30px rgba(255,212,61,.35);
-  flex-shrink:0;
-}
-.glow.on{
-  background: radial-gradient(circle at 50% 50%, #28ff6a 0%, #12d65f 35%, rgba(40,255,106,.6) 55%, rgba(40,255,106,.2) 70%, transparent 100%);
-  box-shadow: 0 0 14px rgba(40,255,106,.55), 0 0 30px rgba(40,255,106,.35);
-}
-
-/* Glass cards */
 .card{
-  background: var(--glass);
-  border:1px solid rgba(255,255,255,.08);
+  background: var(--card);
+  backdrop-filter: blur(var(--blur));
+  -webkit-backdrop-filter: blur(var(--blur));
+  border:1px solid var(--stroke);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
-  backdrop-filter: blur(14px) saturate(160%);
-  -webkit-backdrop-filter: blur(14px) saturate(160%);
-  padding:14px;
-  margin:12px 0;
+  padding:18px;
+  margin:16px 4px;
 }
-
-.section-title{font-size:22px; font-weight:700; margin:8px 6px 10px}
-
-/* Calendar toggle */
-.calendar-head{
-  display:flex; align-items:center; gap:10px; justify-content:space-between;
-  padding:4px 6px;
-}
+.card h2{margin:0 0 10px; font-weight:800; letter-spacing:.2px; font-size:28px}
+.sub{color:var(--text-dim); font-weight:600; margin:2px 0 8px; font-size:16px}
 .btn{
-  appearance:none; border:0; cursor:pointer;
-  color:var(--txt); background:var(--glass-strong);
-  border:1px solid rgba(255,255,255,.08);
-  padding:10px 14px; border-radius:14px; font-weight:600;
-  transition: transform .08s ease, background .2s ease, opacity .2s ease;
+  display:inline-flex; align-items:center; gap:10px;
+  border-radius:16px; padding:10px 14px;
+  border:1px solid var(--stroke);
+  background:var(--card-2);
+  color:var(--text); font-weight:700; font-size:16px;
 }
-.btn:active{ transform: scale(.98) }
-.badge{ font-weight:700; letter-spacing:.2px }
-.small{ font-size:13px; color:var(--sub) }
-
-.hidden{display:none}
-.calendar{ padding:10px}
-.grid-7{
-  display:grid; grid-template-columns:repeat(7,1fr); gap:8px;
-}
-.day{ aspect-ratio:1/1; display:flex; align-items:center; justify-content:center;
-  border-radius:14px; background:rgba(255,255,255,.04); font-weight:600; }
-.day.sel{outline:2px solid var(--accent);}
-
-/* Timeline list */
-.item{ background:rgba(0,0,0,.3); padding:12px 14px; border-radius:14px; border:1px solid rgba(255,255,255,.08); margin:12px 0 }
-.row{ display:flex; align-items:center; gap:10px }
-.dot{ width:10px; height:10px; border-radius:50%; background:#9b9b9b; box-shadow:0 0 6px rgba(155,155,155,.6) }
-.dot.note{background:#9b7cff}
-.dot.call{background:#5ac8f5}
-.dot.loc{background:#30d158}
-.time{ font-weight:800; letter-spacing:.2px }
-.title{ font-weight:700 }
-.muted{ color:var(--sub) }
-
-/* Bottom nav */
-.nav{
-  position:fixed; left:0; right:0; bottom:0; z-index:20;
-  padding: 10px max(16px, env(safe-area-inset-left)) calc(10px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-right));
-  display:flex; gap:14px; justify-content:space-between; align-items:center;
-  background: rgba(255,255,255,.05);
-  backdrop-filter: blur(16px) saturate(160%);
-  -webkit-backdrop-filter: blur(16px) saturate(160%);
-  border-top:1px solid rgba(255,255,255,.08);
-}
-.ico{ font-size:22px; line-height:1; padding:10px 12px; border-radius:14px; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.08) }
-#fab{ font-size:26px; padding:12px 16px; border-radius:16px; background:linear-gradient(180deg,#1f6fff,#174aff); box-shadow:0 10px 22px rgba(31,111,255,.45) }
-
-/* Quick add radial */
-.qwrap{ position:fixed; bottom:82px; left:50%; transform:translateX(-50%); width:0; height:0; pointer-events:none; }
-.qbtn{ position:absolute; width:56px; height:56px; border-radius:28px; display:flex; align-items:center; justify-content:center; font-size:22px;
-  background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.12); box-shadow:var(--shadow);
-  opacity:0; transform:translate(-50%,0) scale(.6); transition: all .18s cubic-bezier(.2,.8,.2,1); backdrop-filter: blur(12px) saturate(160%);
-}
-.qwrap.show .qbtn{ opacity:1; transform:translate(-50%,-20px) scale(1); pointer-events:auto }
-.qbtn.left{ left:-64px }
-.qbtn.right{ left:64px }
-
-/* Modal (sheet) */
-.sheet{
-  position:fixed; inset:0; display:none; z-index:40;
-}
-.sheet.show{ display:block }
-.sheet .mask{ position:absolute; inset:0; background:rgba(0,0,0,.44); backdrop-filter: blur(2px); }
-.panel{
-  position:absolute; left:0; right:0; top:0;
-  transform: translateY(-8%); opacity:0;
-  margin: 10px 10px 0; padding: 6px 10px 14px;
-  background: rgba(20,20,22,.72);
-  border:1px solid rgba(255,255,255,.08);
-  border-radius: 22px;
-  box-shadow: var(--shadow);
-  backdrop-filter: blur(20px) saturate(160%);
-  -webkit-backdrop-filter: blur(20px) saturate(160%);
-  transition: transform .22s cubic-bezier(.2,.8,.2,1), opacity .22s ease;
-}
-.sheet.show .panel{ transform: translateY(0); opacity:1 }
-.toolbar{ display:flex; align-items:center; justify-content:space-between; gap:8px; padding:6px 4px 10px }
-.tbtn{ width:38px; height:38px; border-radius:19px; display:flex; align-items:center; justify-content:center; background: rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.14) }
-.tbtn svg{ width:20px; height:20px; stroke:#fff; stroke-width:2.4; fill:none }
-.tlbl{ font-size:20px; font-weight:800 }
-
-.field{ margin:12px 6px }
-label{ display:block; font-weight:700; margin:0 0 6px; color:var(--sub) }
-input[type="text"], textarea{
-  width:100%; padding:14px 12px; border-radius:14px; border:1px solid rgba(255,255,255,.12);
-  background: rgba(255,255,255,.06); color:var(--txt); font-size:16px;
-}
-textarea{ min-height:110px; resize:vertical }
-
-/* Map area */
-.mapbox{ height:260px; border-radius:16px; overflow:hidden; border:1px solid rgba(255,255,255,.12); margin-top:8px }
-.mapbox iframe{ width:100%; height:100%; border:0 }
-
-/* helpers */
-.center{ text-align:center }
-.spacer{ height:6px }
+.btn svg{width:18px; height:18px}
+#calWrap{overflow:hidden; transition:max-height .36s cubic-bezier(.2,.8,.2,1)}
+.cal-grid{ display:grid; grid-template-columns: repeat(7,1fr); gap:10px; padding-top:12px;}
+.day{border-radius:16px; padding:10px 0; text-align:center; border:1px solid var(--stroke); background:var(--card-2); font-weight:700; color:var(--text-dim)}
+.day.active{outline:2px solid var(--accent); color:var(--text)}
+.empty{color:var(--text-dim); background:var(--card-2); padding:16px; border-radius:16px; border:1px solid var(--stroke); font-weight:600}
+.nav{ position:fixed; left:0; right:0; bottom:0; height:var(--nav-h); display:flex; align-items:center; justify-content:space-around; background: rgba(255,255,255,.06); backdrop-filter: blur(24px) saturate(140%); -webkit-backdrop-filter: blur(24px) saturate(140%); border-top:1px solid var(--stroke); z-index:50;}
+.icon-btn{ width:58px; height:58px; border-radius:20px; display:grid; place-items:center; border:1px solid var(--stroke); background:var(--card-2); box-shadow: var(--shadow);}
+.icon-btn svg{width:24px; height:24px}
+.fab{ width:64px; height:64px; border-radius:22px; background:linear-gradient(180deg,#2f8cff,#1660ff); border:1px solid rgba(255,255,255,.18); display:grid; place-items:center; box-shadow: 0 10px 30px rgba(47,140,255,.45); transform: translateY(-10px);}
+.fab svg{width:28px; height:28px; color:white}
+.scrim{ position:fixed; inset:0; background:rgba(0,0,0,.35); backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); opacity:0; pointer-events:none; transition: opacity .25s ease; z-index:99;}
+.scrim.show{opacity:1; pointer-events:auto}
+.fab-menu{ position:fixed; left:50%; bottom: calc(var(--nav-h) + 14px); transform: translate(-50%, 20px) scale(.96); display:flex; gap:12px; padding:10px; border-radius:26px; background: rgba(20,20,20,.7); border:1px solid var(--stroke); backdrop-filter: blur(18px) saturate(130%); -webkit-backdrop-filter: blur(18px) saturate(130%); box-shadow: var(--shadow); opacity:0; pointer-events:none; transition: all .28s cubic-bezier(.2,.8,.2,1); z-index:100;}
+.fab-menu.show{opacity:1; pointer-events:auto; transform: translate(-50%, 0) scale(1)}
+.fab-action{ width:60px; height:60px; border-radius:18px; display:grid; place-items:center; border:1px solid var(--stroke); background:var(--card);}
+.fab-action svg{width:26px; height:26px}
+.sheet{ position:fixed; left:0; right:0; bottom:0; top:10%; transform: translateY(110%); background: rgba(16,16,16,.86); border-top-left-radius:26px; border-top-right-radius:26px; border:1px solid var(--stroke); border-bottom:none; backdrop-filter: blur(18px) saturate(140%); -webkit-backdrop-filter: blur(18px) saturate(140%); z-index:120; transition: transform .42s cubic-bezier(.2,.8,.2,1); display:flex; flex-direction:column;}
+.sheet.open{transform: translateY(0)}
+.sheet-head{position:relative; padding:16px 18px 6px}
+.sheet-title{font-size:24px; font-weight:800}
+.round{ position:absolute; top:10px; width:44px; height:44px; display:grid; place-items:center; border-radius:50%; background: rgba(255,255,255,.08); border:1px solid var(--stroke);}
+.round svg{width:22px; height:22px}
+.round.left{left:12px}
+.round.right{right:12px}
+.sheet-body{padding:4px 18px 18px; overflow:auto}
+.label{font-size:14px; color:var(--text-dim); margin:14px 2px 6px}
+.input, textarea, select{ width:100%; border-radius:16px; padding:14px 14px; font-size:16px; border:1px solid var(--stroke); background:rgba(255,255,255,.04); color:var(--text);}
+textarea{min-height:120px; resize:vertical}
+.row{display:flex; gap:12px}
+.tag{padding:8px 12px; border-radius:12px; background:var(--card-2); border:1px solid var(--stroke); font-weight:700}
+.small{font-size:13px; color:var(--text-dim)}
 </style>
 </head>
 <body>
-<div class="app" id="app">
-  <div class="header">
-    <div class="hrow">
-      <div style="width:18px"></div>
-      <h1>Ajanda</h1>
-      <div id="statusGlow" class="glow" title="Durum"></div>
-    </div>
-  </div>
+<div class="header-plume"></div>
+<div class="wrap">
+  <h1>Ajanda</h1>
+  <div class="status-dot" id="statusDot" title="Durum"></div>
 
-  <div class="card" id="todayCard">
-    <div class="section-title" id="dayTitle">—</div>
-    <div class="calendar-head">
-      <div class="badge small" id="monthTitle">Ağustos 2025</div>
-      <button class="btn" id="calToggle">📅 Takvimi aç</button>
+  <section class="card">
+    <h2 id="dayTitle">—</h2>
+    <div class="row" style="justify-content:space-between; align-items:center">
+      <div class="sub" id="monthTitle">—</div>
+      <button id="toggleCal" class="btn" type="button" aria-expanded="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4" width="18" height="18" rx="4" ry="4" stroke-width="1.6"/><line x1="16" y1="2" x2="16" y2="6" stroke-width="1.6"/><line x1="8" y1="2" x2="8" y2="6" stroke-width="1.6"/><line x1="3" y1="10" x2="21" y2="10" stroke-width="1.6"/></svg>
+        <span>Takvimi aç</span>
+      </button>
     </div>
-    <div id="calendar" class="calendar hidden"></div>
-  </div>
+    <div id="calWrap" style="max-height:0">
+      <div class="cal-grid" id="calGrid"></div>
+    </div>
+  </section>
 
-  <div class="card">
-    <div class="section-title">Günün Zaman Çizelgesi</div>
+  <section class="card">
+    <h2>Günün Zaman Çizelgesi</h2>
     <div id="timeline">
-      <div class="item muted">Bu gün için kayıt yok.</div>
+      <div class="empty">Bu gün için kayıt yok.</div>
     </div>
+  </section>
+</div>
+
+<nav class="nav" aria-label="Alt menü">
+  <button class="icon-btn" title="Ana"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 10.5 12 3l9 7.5" stroke-width="1.6"/><path d="M5 10v10h14V10" stroke-width="1.6"/></svg></button>
+  <button class="icon-btn" title="Harita"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 6l7-3 4 3 7-3v14l-7 3-4-3-7 3z" stroke-width="1.6"/><path d="M10 3v14" stroke-width="1.2"/><path d="M14 6v14" stroke-width="1.2"/></svg></button>
+  <button class="icon-btn fab" id="fab" aria-expanded="false" title="Ekle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14M5 12h14" stroke="white" stroke-width="2.2" stroke-linecap="round"/></svg></button>
+  <button class="icon-btn" title="Ara"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="11" cy="11" r="7" stroke-width="1.6"/><path d="M20 20l-4-4" stroke-width="1.6" stroke-linecap="round"/></svg></button>
+  <button class="icon-btn" title="Ayarlar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3" stroke-width="1.6"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06A2 2 0 1 1 7.04 3.3l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c0 .66.39 1.26 1 1.51H21a2 2 0 1 1 0 4h-.09c-.66 0-1.26.39-1.51 1z" stroke-width=".9"/></svg></button>
+</nav>
+
+<div class="scrim" id="scrim"></div>
+<div class="fab-menu" id="fabMenu" role="menu" aria-label="Hızlı ekle">
+  <button class="fab-action" data-action="note" title="Not">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 4h12a2 2 0 0 1 2 2v12l-4-4H6a2 2 0 0 1-2-2z" stroke-width="1.6"/></svg>
+  </button>
+  <button class="fab-action" data-action="call" title="Çağrı">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.63A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.66 12.66 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8 9a16 16 0 0 0 6 6l.36-.36a2 2 0 0 1 2.11-.45 12.66 12.66 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" stroke-width="1.6"/></svg>
+  </button>
+  <button class="fab-action" data-action="place" title="Konum">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 21s-6-5.33-6-10a6 6 0 0 1 12 0c0 4.67-6 10-6 10z" stroke-width="1.6"/><circle cx="12" cy="11" r="2.5" stroke-width="1.6"/></svg>
+  </button>
+</div>
+
+<section class="sheet" id="sheet-note" aria-hidden="true">
+  <div class="sheet-head">
+    <div class="round left" data-close="sheet-note" title="Geri">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M15 6l-6 6 6 6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <div class="round right" data-save="note" title="Kaydet">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 6l-11 11-5-5" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <div class="sheet-title">Yeni Not</div>
   </div>
-</div>
-
-<!-- Bottom nav -->
-<div class="nav">
-  <div class="ico" title="Zaman">🏠</div>
-  <div class="ico" title="Harita">🗺️</div>
-  <button id="fab" class="ico" aria-label="Ekle">＋</button>
-  <div class="ico" title="Ara">🔎</div>
-  <div class="ico" title="Ayarlar">⚙️</div>
-</div>
-
-<!-- Quick add -->
-<div class="qwrap" id="qwrap">
-  <button class="qbtn left" id="qNote" title="Not">📝</button>
-  <button class="qbtn right" id="qCall" title="Çağrı">📞</button>
-  <button class="qbtn" style="left:0" id="qLoc" title="Konum">📍</button>
-</div>
-
-<!-- NOTE SHEET -->
-<div class="sheet" id="sheet-note" aria-hidden="true">
-  <div class="mask"></div>
-  <div class="panel">
-    <div class="toolbar">
-      <button class="tbtn" data-close="#sheet-note" aria-label="Geri">
-        <svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>
-      </button>
-      <div class="tlbl">Yeni Not</div>
-      <button class="tbtn" data-save="note" aria-label="Kaydet">
-        <svg viewBox="0 0 24 24"><path d="M5 12l4 4 10-10"/></svg>
-      </button>
-    </div>
-    <div class="field"><label>Başlık (opsiyonel)</label><input id="nTitle" type="text" placeholder="örn. Fikir, yapılacak..."></div>
-    <div class="field"><label>Not</label><textarea id="nText" placeholder="Metni yaz..."></textarea></div>
-    <div class="field"><label>Etiketler (virgülle)</label><input id="nTags" type="text" placeholder="iş, spor, aile"></div>
+  <div class="sheet-body">
+    <label class="label">Başlık (opsiyonel)</label>
+    <input class="input" id="noteTitle" placeholder="örn. Fikir, yapılacak..." />
+    <label class="label">Not</label>
+    <textarea id="noteText" placeholder="Metni yaz..."></textarea>
+    <label class="label">Etiketler (virgülle)</label>
+    <input class="input" id="noteTags" placeholder="iş, spor, aile" />
   </div>
-</div>
+</section>
 
-<!-- CALL SHEET -->
-<div class="sheet" id="sheet-call" aria-hidden="true">
-  <div class="mask"></div>
-  <div class="panel">
-    <div class="toolbar">
-      <button class="tbtn" data-close="#sheet-call" aria-label="Geri"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button>
-      <div class="tlbl">Yeni Çağrı</div>
-      <button class="tbtn" data-save="call" aria-label="Kaydet"><svg viewBox="0 0 24 24"><path d="M5 12l4 4 10-10"/></svg></button>
+<section class="sheet" id="sheet-call" aria-hidden="true">
+  <div class="sheet-head">
+    <div class="round left" data-close="sheet-call" title="Geri">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M15 6l-6 6 6 6" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
     </div>
-    <div class="field"><label>Kişi adı</label><input id="cName" type="text" placeholder="örn. Ayşe Yılmaz"></div>
-    <div class="field"><label>Tür</label>
-      <div class="row">
-        <label><input type="radio" name="ctype" value="Gelen" checked> Gelen</label>
-        <label style="margin-left:14px"><input type="radio" name="ctype" value="Giden"> Giden</label>
-        <label style="margin-left:14px"><input type="radio" name="ctype" value="Cevapsız"> Cevapsız</label>
-      </div>
+    <div class="round right" data-save="call" title="Kaydet">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 6l-11 11-5-5" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
     </div>
-    <div class="field"><label>Not (opsiyonel)</label><input id="cNote" type="text" placeholder="Kısa not..."></div>
+    <div class="sheet-title">Yeni Çağrı</div>
   </div>
-</div>
+  <div class="sheet-body">
+    <label class="label">Kişi adı</label>
+    <input class="input" id="callWho" placeholder="örn. Ayşe Yılmaz" />
+    <label class="label">Tür</label>
+    <div class="row">
+      <button class="tag" data-calltype="Gelen">Gelen</button>
+      <button class="tag" data-calltype="Giden">Giden</button>
+      <button class="tag" data-calltype="Cevapsız">Cevapsız</button>
+    </div>
+    <label class="label">Not (opsiyonel)</label>
+    <input class="input" id="callNote" placeholder="Kısa not..." />
+  </div>
+</section>
 
-<!-- LOCATION SHEET -->
-<div class="sheet" id="sheet-loc" aria-hidden="true">
-  <div class="mask"></div>
-  <div class="panel">
-    <div class="toolbar">
-      <button class="tbtn" data-close="#sheet-loc" aria-label="Geri"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button>
-      <div class="tlbl">Yeni Konum</div>
-      <button class="tbtn" data-save="loc" aria-label="Kaydet"><svg viewBox="0 0 24 24"><path d="M5 12l4 4 10-10"/></svg></button>
+<section class="sheet" id="sheet-place" aria-hidden="true">
+  <div class="sheet-head">
+    <div class="round left" data-close="sheet-place" title="Geri">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M15 6l-6 6 6 6" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
     </div>
-    <div class="field"><label>Yer adı</label><input id="lName" type="text" placeholder="örn. Ev, İş, Kafe"></div>
-    <div class="field"><label>Adres</label><input id="lAddr" type="text" placeholder="Cadde, No, ilçe..."></div>
-    <div class="field"><label>Koordinat</label><input id="lCoord" type="text" placeholder="enlem, boylam"></div>
-    <div class="field"><button class="btn" id="pickOnMap">Haritada seç</button>
-      <div class="mapbox hidden" id="mapbox">
-        <!-- lightweight map via leaflet -->
-        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-        <div id="map" style="height:100%"></div>
-        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-      </div>
+    <div class="round right" data-save="place" title="Kaydet">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 6l-11 11-5-5" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
     </div>
+    <div class="sheet-title">Yeni Konum</div>
   </div>
-</div>
+  <div class="sheet-body">
+    <label class="label">Yer adı</label>
+    <input class="input" id="placeName" placeholder="örn. Ev, İş, Kafe" />
+    <label class="label">Adres</label>
+    <input class="input" id="placeAddr" placeholder="Cadde, No, İlçe..." />
+    <label class="label">Koordinat</label>
+    <input class="input" id="placeCoord" placeholder="enlem, boylam" />
+    <div class="small">Harita seçimi yakında eklenecek.</div>
+  </div>
+</section>
 
 <script>
-// ===== Utilities =====
-const months = ["Ocak","Şubat","Mart","Nisan","Mayıs","Haziran","Temmuz","Ağustos","Eylül","Ekim","Kasım","Aralık"];
-const days = ["Pazar","Pazartesi","Salı","Çarşamba","Perşembe","Cuma","Cumartesi"];
-const $ = s=>document.querySelector(s);
-const $$ = s=>Array.from(document.querySelectorAll(s));
-
-function todayStr(d=new Date()){
-  return `${d.getDate()} ${months[d.getMonth()]} ${days[d.getDay()]}`;
+const $ = sel => document.querySelector(sel);
+const $$ = sel => Array.from(document.querySelectorAll(sel));
+const formatTR = d => new Intl.DateTimeFormat('tr-TR', {dateStyle:'full'}).format(d);
+const monthTR = d => new Intl.DateTimeFormat('tr-TR',{month:'long', year:'numeric'}).format(d);
+let current = new Date();
+const dayTitle = $('#dayTitle');
+const monthTitle = $('#monthTitle');
+const calWrap = $('#calWrap');
+const calGrid = $('#calGrid');
+const toggleCal = $('#toggleCal');
+const scrim = $('#scrim');
+const fab = $('#fab');
+const fabMenu = $('#fabMenu');
+function setHeaderDate(d){
+  dayTitle.textContent = formatTR(d);
+  monthTitle.textContent = monthTR(d).replace(/(^\w)/, c=>c.toLocaleUpperCase('tr-TR'));
 }
-function ymd(d=new Date()){
-  return d.toISOString().slice(0,10);
-}
-function saveEvents(arr){ localStorage.setItem("aj_events", JSON.stringify(arr)); }
-function loadEvents(){ try{ return JSON.parse(localStorage.getItem("aj_events"))||[] }catch{ return [] } }
-function haptic(){ if(navigator.vibrate) navigator.vibrate(10); }
-
-// ===== State =====
-let events = loadEvents();
-let selDate = ymd(new Date());
-
-function renderHeader(){
-  $("#dayTitle").textContent = todayStr(new Date(selDate));
-  const d = new Date(selDate);
-  $("#monthTitle").textContent = `${months[d.getMonth()]} ${d.getFullYear()}`;
-}
-function renderTimeline(){
-  const box = $("#timeline"); box.innerHTML="";
-  const list = events.filter(e=>e.date===selDate).sort((a,b)=>a.time.localeCompare(b.time));
-  if(list.length===0){ box.innerHTML = '<div class="item muted">Bu gün için kayıt yok.</div>'; return; }
-  for(const e of list){
-    const wrap = document.createElement("div"); wrap.className="item";
-    wrap.innerHTML = `
-      <div class="row">
-        <span class="dot ${e.type==='note'?'note':e.type==='call'?'call':'loc'}"></span>
-        <div class="time">${e.time}</div>
-        <div class="title" style="margin-left:8px">${e.title||e.kind||e.name||''}</div>
-      </div>
-      ${e.text?`<div class="muted" style="margin-top:6px">${e.text}</div>`:''}
-      ${e.addr?`<div class="muted" style="margin-top:6px">${e.addr}</div>`:''}
-    `;
-    box.appendChild(wrap);
+setHeaderDate(current);
+function buildCalendar(d){
+  calGrid.innerHTML='';
+  const year = d.getFullYear();
+  const month = d.getMonth();
+  const first = new Date(year, month, 1);
+  const last = new Date(year, month+1, 0);
+  const offset = (first.getDay()+6)%7;
+  const days = last.getDate();
+  for(let i=0;i<offset;i++){
+    const ph=document.createElement('div'); ph.className='day'; ph.style.visibility='hidden'; calGrid.appendChild(ph);
   }
-}
-
-function buildCalendar(){
-  const out = $("#calendar"); out.innerHTML="";
-  const d=new Date(selDate); const y=d.getFullYear(), m=d.getMonth();
-  const first = new Date(y,m,1); const start = (first.getDay()+6)%7; // Mon=0
-  const daysIn = new Date(y,m+1,0).getDate();
-  const grid = document.createElement("div"); grid.className="grid-7";
-  // weekdays
-  ["Pzt","Sal","Çar","Per","Cum","Cmt","Paz"].forEach(w=>{
-    const el=document.createElement("div"); el.textContent=w; el.className="small center muted"; grid.appendChild(el);
-  });
-  for(let i=0;i<start;i++){ const sp=document.createElement("div"); grid.appendChild(sp); }
-  for(let dnum=1; dnum<=daysIn; dnum++){
-    const el = document.createElement("button"); el.className="day btn"; el.textContent=dnum;
-    const dstr = new Date(y,m,dnum).toISOString().slice(0,10);
-    if(dstr===selDate) el.classList.add("sel");
-    el.onclick=()=>{ selDate=dstr; $("#calToggle").textContent="📅 Takvimi kapat"; $("#calendar").classList.remove("hidden"); renderHeader(); renderTimeline(); $$(".day").forEach(x=>x.classList.remove("sel")); el.classList.add("sel"); };
-    grid.appendChild(el);
-  }
-  out.appendChild(grid);
-}
-
-// ===== Quick add =====
-$("#fab").addEventListener("click",()=>{
-  haptic();
-  $("#qwrap").classList.toggle("show");
-});
-$("#qNote").onclick=()=>{ openSheet("#sheet-note"); };
-$("#qCall").onclick=()=>{ openSheet("#sheet-call"); };
-$("#qLoc").onclick=()=>{ openSheet("#sheet-loc"); };
-
-function openSheet(sel){
-  haptic();
-  $("#qwrap").classList.remove("show");
-  const sh = $(sel); sh.classList.add("show");
-  sh.querySelector(".mask").onclick=()=>closeSheet(sel);
-}
-function closeSheet(sel){ const sh=$(sel); sh.classList.remove("show"); }
-
-$$(".tbtn[data-close]").forEach(b=>b.addEventListener("click", e=>closeSheet(b.dataset.close)));
-
-// Save handlers
-$$(".tbtn[data-save]").forEach(b=>b.addEventListener("click", ()=>{
-  const type=b.dataset.save;
-  const now=new Date();
-  const base={ id:crypto.randomUUID(), type, date:selDate, time: now.toTimeString().slice(0,5) };
-  if(type==="note"){
-    const title=$("#nTitle").value.trim(), text=$("#nText").value.trim(), tags=$("#nTags").value.trim();
-    if(!title && !text){ alert("Lütfen bir şey yaz."); return; }
-    events.push({...base, title, text, tags});
-    closeSheet("#sheet-note");
-    $("#nTitle").value=""; $("#nText").value=""; $("#nTags").value="";
-  }else if(type==="call"){
-    const name=$("#cName").value.trim();
-    const kind=document.querySelector('input[name="ctype"]:checked').value;
-    const text=$("#cNote").value.trim();
-    if(!name){ alert("Kişi adı gir."); return; }
-    events.push({...base, type:"call", title:name, kind, text});
-    closeSheet("#sheet-call"); $("#cName").value=""; $("#cNote").value="";
-  }else if(type==="loc"){
-    const name=$("#lName").value.trim(), addr=$("#lAddr").value.trim(), coord=$("#lCoord").value.trim();
-    if(!name && !addr){ alert("En azından isim ya da adres gir."); return; }
-    events.push({...base, type:"loc", name, addr, coord, title:name, text:coord});
-    closeSheet("#sheet-loc"); $("#lName").value=""; $("#lAddr").value=""; $("#lCoord").value="";
-  }
-  saveEvents(events); renderTimeline(); haptic();
-}));
-
-// Map select
-let map, mapInit=false, pin;
-$("#pickOnMap").addEventListener("click", ()=>{
-  $("#mapbox").classList.toggle("hidden");
-  if(!mapInit){
-    map = L.map('map',{zoomControl:true}).setView([39.925,32.85], 13);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19, attribution: '&copy; OpenStreetMap'
-    }).addTo(map);
-    map.on('click', async (e)=>{
-      const {lat,lng}=e.latlng;
-      if(!pin){ pin = L.marker([lat,lng]).addTo(map); } else { pin.setLatLng([lat,lng]); }
-      $("#lCoord").value = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
-      try{
-        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`);
-        const js = await res.json();
-        if(js && js.display_name) $("#lAddr").value = js.display_name;
-      }catch(e){ console.log(e); }
+  for(let i=1;i<=days;i++){
+    const el=document.createElement('button'); el.className='day'; el.textContent=i;
+    if(i===d.getDate()) el.classList.add('active');
+    el.addEventListener('click',()=>{
+      current = new Date(year, month, i);
+      setHeaderDate(current);
+      $$('.day.active').forEach(x=>x.classList.remove('active'));
+      el.classList.add('active');
     });
-    mapInit=true;
+    calGrid.appendChild(el);
+  }
+}
+buildCalendar(current);
+toggleCal.addEventListener('click',()=>{
+  const open = calWrap.style.maxHeight && calWrap.style.maxHeight !== '0px';
+  if(open){
+    calWrap.style.maxHeight = '0px';
+    toggleCal.setAttribute('aria-expanded','false');
+  }else{
+    calWrap.style.maxHeight = calGrid.scrollHeight + 12 + 'px';
+    toggleCal.setAttribute('aria-expanded','true');
   }
 });
-
-// Calendar toggle
-$("#calToggle").addEventListener("click",()=>{
-  const c=$("#calendar"); c.classList.toggle("hidden");
-  $("#calToggle").textContent = c.classList.contains("hidden") ? "📅 Takvimi aç" : "📅 Takvimi kapat";
-});
-
-// Init
-function init(){
-  renderHeader(); buildCalendar(); renderTimeline();
+function openMenu(){
+  scrim.classList.add('show');
+  fabMenu.classList.add('show');
+  fab.setAttribute('aria-expanded','true');
 }
-init();
+function closeMenu(){
+  scrim.classList.remove('show');
+  fabMenu.classList.remove('show');
+  fab.setAttribute('aria-expanded','false');
+}
+fab.addEventListener('click', e=>{
+  const open = fab.getAttribute('aria-expanded')==='true';
+  if(open) closeMenu(); else openMenu();
+});
+scrim.addEventListener('click', ()=>{
+  closeMenu();
+  $$('.sheet.open').forEach(s=>s.classList.remove('open'));
+});
+const sheets = { note: $('#sheet-note'), call: $('#sheet-call'), place: $('#sheet-place') };
+function openSheet(key){ sheets[key].classList.add('open'); scrim.classList.add('show'); }
+function closeSheetById(id){ const el=document.getElementById(id); if(el) el.classList.remove('open'); scrim.classList.remove('show'); }
+$$('.fab-action').forEach(btn=> btn.addEventListener('click', ()=>{ closeMenu(); openSheet(btn.dataset.action); }));
+$$('.round.left').forEach(b=> b.addEventListener('click', ()=>{ b.closest('.sheet').classList.remove('open'); scrim.classList.remove('show'); }));
+const timeline = $('#timeline');
+function addItem(type, title, sub){
+  const item = document.createElement('div');
+  item.className='card';
+  item.innerHTML = '<div class="sub">'+type+'</div><div style="font-weight:800;font-size:18px">'+(title||'—')+'</div><div class="small" style="margin-top:6px">'+(sub||'')+'</div>';
+  if(timeline.querySelector('.empty')) timeline.innerHTML='';
+  timeline.prepend(item);
+}
+$$('[data-save="note"]').forEach(b=> b.addEventListener('click', ()=>{
+  addItem('Not', $('#noteTitle').value || 'Yeni not', $('#noteText').value.slice(0,140));
+  closeSheetById('sheet-note');
+}));
+$$('[data-save="call"]').forEach(b=> b.addEventListener('click', ()=>{
+  addItem('Çağrı', $('#callWho').value || 'Bilinmeyen', $('#callNote').value.slice(0,140));
+  closeSheetById('sheet-call');
+}));
+$$('[data-save="place"]').forEach(b=> b.addEventListener('click', ()=>{
+  const t = $('#placeName').value || 'Konum';
+  const s = $('#placeAddr').value || $('#placeCoord').value;
+  addItem('Konum', t, s);
+  closeSheetById('sheet-place');
+}));
+const dot = $('#statusDot'); let on=false;
+setInterval(()=>{
+  on=!on;
+  dot.style.background = on ? 'radial-gradient(circle at 40% 40%, #b6ffcc, #15c37e 60%, #0b6a47 100%)' :
+    'radial-gradient(circle at 40% 40%, #ffe98a, #f2c94c 60%, #9a7a00 100%)';
+  dot.style.boxShadow = on ? "0 0 0 3px rgba(0,0,0,.35), 0 0 10px 2px rgba(21,195,126,.65), 0 0 28px 10px rgba(21,195,126,.3)" :
+    "0 0 0 3px rgba(0,0,0,.35), 0 0 10px 2px rgba(240,220,90,.65), 0 0 28px 10px rgba(240,220,90,.3)";
+}, 4000);
 </script>
 </body>
 </html>
