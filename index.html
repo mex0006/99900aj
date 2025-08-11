@@ -4,40 +4,122 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Ajanda</title>
-  <base href="./">
+  <meta name="theme-color" content="#000000">
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="icon" href="./icons/icon-192.png">
   <link rel="apple-touch-icon" href="./icons/icon-192.png">
-  <meta name="theme-color" content="#000000">
-  <link rel="stylesheet" href="./css/main.css">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+  <link rel="stylesheet" href="./css/main.css?v=9.4">
+  <!-- Leaflet (CDN) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
 </head>
 <body>
-  <header class="header">
-    <h1>Ajanda</h1>
+  <header class="app-header">
+    <div class="app-title">Ajanda</div>
+    <div class="status-dot" id="statusDot" title="Durum"></div>
   </header>
 
-  <main class="container">
-    <section class="card">
-      <h2>11 Ağustos Pazartesi</h2>
-      <div class="row">
-        <button id="toggle-cal" class="btn">Takvimi aç</button>
-      </div>
+  <main id="screen-home" class="screen visible">
+    <section class="glass-card center-title" id="dayTitleWrap">
+      <div id="dayTitle">—</div>
     </section>
 
-    <section class="card">
-      <h3>Günün Zaman Çizelgesi</h3>
-      <p id="empty">Bu gün için kayıt yok.</p>
+    <section class="glass-card">
+      <div class="row between">
+        <div class="h2">Ağustos 2025</div>
+        <button id="btnToggleCal" class="chip"><span class="ico">📅</span>Takvimi aç</button>
+      </div>
+      <div id="calendarWrap" class="calendar hidden"></div>
+    </section>
+
+    <section class="glass-card">
+      <div class="h2">Günün Zaman Çizelgesi</div>
+      <div id="timeline" class="timeline empty">Bu gün için kayıt yok.</div>
     </section>
   </main>
 
+  <!-- Note Form -->
+  <section id="form-note" class="sheet">
+    <div class="sheet-header">
+      <button class="circle-btn" data-close aria-label="Geri">‹</button>
+      <div class="sheet-title"><span class="sheet-ico">📝</span> Yeni Not</div>
+      <button class="circle-btn approve" data-save="note" aria-label="Kaydet">✓</button>
+    </div>
+    <div class="sheet-body">
+      <label>Başlık (opsiyonel)</label>
+      <input id="noteTitle" type="text" placeholder="örn. Fikir, yapılacak…">
+      <label>Not</label>
+      <textarea id="noteBody" rows="6" placeholder="Metni yaz…"></textarea>
+      <label>Etiketler (virgülle)</label>
+      <input id="noteTags" type="text" placeholder="iş, spor, aile">
+    </div>
+  </section>
+
+  <!-- Call Form -->
+  <section id="form-call" class="sheet">
+    <div class="sheet-header">
+      <button class="circle-btn" data-close aria-label="Geri">‹</button>
+      <div class="sheet-title"><span class="sheet-ico">📞</span> Yeni Çağrı</div>
+      <button class="circle-btn approve" data-save="call" aria-label="Kaydet">✓</button>
+    </div>
+    <div class="sheet-body">
+      <label>Kişi adı</label>
+      <input id="callName" type="text" placeholder="örn. Ayşe Yılmaz">
+      <label>Tür</label>
+      <div class="seg">
+        <button data-val="in"  class="seg-btn active">Gelen</button>
+        <button data-val="out" class="seg-btn">Giden</button>
+        <button data-val="miss" class="seg-btn">Cevapsız</button>
+      </div>
+      <input id="callType" type="hidden" value="in">
+      <label>Not (opsiyonel)</label>
+      <textarea id="callNote" rows="3" placeholder="Kısa not…"></textarea>
+    </div>
+  </section>
+
+  <!-- Place Form (with map) -->
+  <section id="form-place" class="sheet">
+    <div class="sheet-header">
+      <button class="circle-btn" data-close aria-label="Geri">‹</button>
+      <div class="sheet-title"><span class="sheet-ico">📍</span> Yeni Konum</div>
+      <button class="circle-btn approve" data-save="place" aria-label="Kaydet">✓</button>
+    </div>
+    <div class="sheet-body">
+      <label>Yer adı</label>
+      <input id="placeName" type="text" placeholder="örn. Ev, İş, Kafe">
+      <label>Adres</label>
+      <input id="placeAddr" type="text" placeholder="Cadde, No, İlçe…">
+      <label>Koordinat</label>
+      <input id="placeCoord" type="text" placeholder="enlem, boylam" readonly>
+      <div id="mapWrap" class="map-wrap">
+        <div id="map" class="map"></div>
+        <div class="map-hint">Haritadan bir nokta seç</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAB & radial menu -->
   <nav class="tabbar">
-    <button class="tab">🏠</button>
-    <button class="tab">🗺️</button>
-    <button class="tab">＋</button>
-    <button class="tab">🔎</button>
-    <button class="tab">⚙️</button>
+    <button class="tab" data-nav="home" aria-label="Ana sayfa">🏠</button>
+    <button class="tab" data-nav="map" aria-label="Harita">🗺️</button>
+    <button id="fab" class="fab" aria-label="Ekle">＋</button>
+    <button class="tab" data-nav="search" aria-label="Arama">🔎</button>
+    <button class="tab" data-nav="settings" aria-label="Ayarlar">⚙️</button>
   </nav>
 
-  <script defer src="./js/app.js"></script>
+  <div id="radial" class="radial hidden">
+    <button class="radial-btn" data-open="note" title="Not">📝</button>
+    <button class="radial-btn" data-open="call" title="Çağrı">📞</button>
+    <button class="radial-btn" data-open="place" title="Konum">📍</button>
+  </div>
+
+  <div id="backdrop" class="backdrop hidden"></div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script defer src="./js/app.js?v=9.4"></script>
 </body>
 </html>
