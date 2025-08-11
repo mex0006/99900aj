@@ -1,5 +1,4 @@
-
-const VERSION = 'v10.2.3';
+const VERSION = 'v10.2.4';
 const dom = sel => document.querySelector(sel);
 const domAll = sel => Array.from(document.querySelectorAll(sel));
 const fmt2 = n => n.toString().padStart(2,'0');
@@ -24,7 +23,8 @@ function normalizeDate(d){ return new Date(d.getFullYear(), d.getMonth(), d.getD
 
 function renderHeader(){
   const d = state.date;
-  const dayName = ['Pazar','Pazartesi','Salı','Çarşamba','Perşembe','Cuma','Cumartesi'][d.getDay()];
+  const wd = d.toLocaleDateString('tr-TR', { weekday:'long' });
+  const dayName = wd.charAt(0).toUpperCase() + wd.slice(1);
   dom('#dayText').textContent = `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()} ${dayName}`;
   dom('#monthText').textContent = `${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
 }
@@ -54,7 +54,10 @@ function renderCalendar(){
     const btn = document.createElement('button');
     btn.className='other';
     btn.textContent = (prevMonthDays - firstDay + 1 + i);
-    btn.addEventListener('click', () => { state.date = new Date(view.getFullYear(), view.getMonth()-1, parseInt(btn.textContent)); updateAll(); });
+    btn.addEventListener('click', () => {
+      state.date = new Date(view.getFullYear(), view.getMonth()-1, parseInt(btn.textContent));
+      updateAll();
+    });
     grid.appendChild(btn);
   }
   // month days
@@ -75,7 +78,10 @@ function renderCalendar(){
     const btn = document.createElement('button');
     btn.className='other';
     btn.textContent = i;
-    btn.addEventListener('click', () => { state.date = new Date(view.getFullYear(), view.getMonth()+1, i); updateAll(); });
+    btn.addEventListener('click', () => {
+      state.date = new Date(view.getFullYear(), view.getMonth()+1, i);
+      updateAll();
+    });
     grid.appendChild(btn);
   }
 }
@@ -117,7 +123,7 @@ function dateKey(d){
 function openBackdrop(show){
   const bd = dom('#backdrop');
   bd.classList.toggle('hidden', !show);
-  if(show){ setTimeout(()=>bd.classList.add('show'), 0); }
+  if(show){ requestAnimationFrame(()=>bd.classList.add('show')); }
   else{ bd.classList.remove('show'); }
 }
 function openSheet(id, show=true){
@@ -126,15 +132,23 @@ function openSheet(id, show=true){
   el.classList.toggle('hidden', !show);
   openBackdrop(show);
 }
+// Backdrop click -> hepsini kapat
 dom('#backdrop').addEventListener('click', ()=>{
   ['sheetPlus','sheetSearch','sheetForm','sheetDetail','sheetSettings'].forEach(id=>openSheet(id,false));
 });
 
+// Global back (çalışmıyordu → düzeltildi)
+document.addEventListener('pointerup', (e)=>{
+  const backBtn = e.target.closest('[data-close]');
+  if(!backBtn) return;
+  e.preventDefault();
+  const id = backBtn.getAttribute('data-close');
+  if(id) openSheet(id, false);
+});
+
 // ---- Event wiring
 dom('#btnPlus').addEventListener('click', ()=> openSheet('sheetPlus', true));
-dom('#btnSearch').addEventListener('click', ()=>{
-  renderSearch(); openSheet('sheetSearch', true);
-});
+dom('#btnSearch').addEventListener('click', ()=>{ renderSearch(); openSheet('sheetSearch', true); });
 dom('#btnSettings').addEventListener('click', ()=> openSheet('sheetSettings', true));
 dom('#btnOpenCalendar').addEventListener('click', ()=>{
   const cal = dom('#calendar');
@@ -144,7 +158,7 @@ dom('#btnOpenCalendar').addEventListener('click', ()=>{
 dom('#calPrev').addEventListener('click', ()=>{ state.date = new Date(state.date.getFullYear(), state.date.getMonth()-1, 1); renderCalendar();});
 dom('#calNext').addEventListener('click', ()=>{ state.date = new Date(state.date.getFullYear(), state.date.getMonth()+1, 1); renderCalendar();});
 
-// plus menu actions
+// PLUS menü
 domAll('#sheetPlus .action').forEach(btn=> btn.addEventListener('click', ()=>{
   const kind = btn.dataset.action;
   buildForm(kind);
@@ -152,7 +166,7 @@ domAll('#sheetPlus .action').forEach(btn=> btn.addEventListener('click', ()=>{
   setTimeout(()=>openSheet('sheetForm', true), 50);
 }));
 
-// form save
+// Form kaydet
 dom('#formSave').addEventListener('click', ()=>{
   const body = dom('#formBody');
   const kind = body.dataset.kind;
@@ -176,7 +190,7 @@ dom('#formSave').addEventListener('click', ()=>{
   updateTimeline();
 });
 
-// details
+// Detay
 function openDetail(id){
   const rec = load().find(x=>x.id===id);
   if(!rec) return;
@@ -200,7 +214,7 @@ function detailHTML(r){
   return rows.join('');
 }
 
-// build form
+// Form builder
 function input(label, id, placeholder=''){
   return `<div class="row"><div class="label">${label}</div><input id="${id}" class="field" placeholder="${placeholder}"/></div>`;
 }
@@ -269,8 +283,8 @@ function renderSearch(){
 domAll('.filter').forEach(b=> b.addEventListener('click', ()=>{ state.filterType = b.dataset.type; renderSearch(); }));
 dom('#searchInput').addEventListener('input', renderSearch);
 
-// Settings handlers
-dom('#appVersion').textContent = 'v10.2.3';
+// Settings
+dom('#appVersion').textContent = VERSION;
 dom('#btnExport').addEventListener('click', ()=>{
   const blob = new Blob([localStorage.getItem(DBKEY) || '[]'], {type:'application/json'});
   const a = document.createElement('a');
