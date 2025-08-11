@@ -1,448 +1,323 @@
-// Ajanda v10 beta - core
-(() => {
-  const $ = (sel, el=document) => el.querySelector(sel);
-  const $$ = (sel, el=document) => [...el.querySelectorAll(sel)];
-  const el = {
-    fullDate: $("#fullDate"),
-    monthLabel: $("#monthLabel"),
-    btnCalendar: $("#btnCalendar"),
-    calendarSheet: $("#calendarSheet"),
-    calGrid: $("#calGrid"),
-    calPrev: $("#calPrev"),
-    calNext: $("#calNext"),
-    calTitle: $("#calMonthTitle"),
-    timelineList: $("#timelineList"),
-    fabAdd: $("#fabAdd"),
-    addMenu: $("#addMenu"),
-    addBackdrop: $("#addMenuBackdrop"),
-    panelBackdrop: $("#panelBackdrop"),
-    searchFab: $("#btnSearch"),
-    searchPanel: $("#searchPanel"),
-    searchInput: $("#searchInput"),
-    searchResults: $("#searchResults"),
-    editPanel: $("#editPanel"),
-    editForm: $("#editForm"),
-    editTitle: $("#editTitle"),
-    btnBackEdit: $("#btnBackEdit"),
-    btnSaveEdit: $("#btnSaveEdit"),
-    detailPanel: $("#detailPanel"),
-    detailTitle: $("#detailTitle"),
-    detailBody: $("#detailBody"),
-    btnEditDetail: $("#btnEditDetail"),
-    btnDeleteDetail: $("#btnDeleteDetail"),
-    settingsPanel: $("#settingsPanel"),
-    btnSettings: $("#btnSettings"),
-    chReducedMotion: $("#chReducedMotion"),
-    chHaptics: $("#chHaptics"),
-    btnExportCSV: $("#btnExportCSV"),
-    btnExportJSON: $("#btnExportJSON"),
-    fileImport: $("#fileImport"),
-    btnClearAll: $("#btnClearAll"),
+// Ajanda v10.1 — minimalist Liquid Glass PWA
+const $ = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+
+const state = {
+  current: new Date(),
+  monthCursor: new Date(),
+  entries: load('entries', []),
+  filters: new Set(['note','call','place'])
+};
+
+// ---- utils
+function save(key, v){ localStorage.setItem(key, JSON.stringify(v)); }
+function load(key, d){ try{ return JSON.parse(localStorage.getItem(key)) ?? d }catch(e){ return d }}
+function formatDate(d){ return new Intl.DateTimeFormat('tr-TR', { day:'2-digit', month:'long', weekday:'long', year:'numeric'}).format(d) }
+function monthText(d){ return new Intl.DateTimeFormat('tr-TR', { month:'long', year:'numeric'}).format(d) }
+function atStartOfDay(d){ const x = new Date(d); x.setHours(0,0,0,0); return x }
+function sameDay(a,b){ return atStartOfDay(a).getTime() === atStartOfDay(b).getTime() }
+function haptic(){ if (navigator.vibrate) navigator.vibrate(8); }
+
+// ---- header & date
+const selectedDay = $('#selectedDay');
+const monthLabel = $('#monthLabel');
+
+function refreshHeader(){
+  selectedDay.textContent = formatDate(state.current);
+  monthLabel.textContent = new Intl.DateTimeFormat('tr-TR',{ month:'long', year:'numeric'}).format(state.current);
+}
+
+// ---- calendar (week starts Monday in TR)
+const cal = $('#calendar'), calGrid = $('#calGrid'), calMonthText = $('#calMonthText');
+$('#toggleCal').addEventListener('click', () => {
+  cal.classList.toggle('hidden');
+  if (!cal.classList.contains('hidden')) renderCalendar();
+});
+
+$('#calPrev').addEventListener('click', ()=>{ state.monthCursor.setMonth(state.monthCursor.getMonth()-1); renderCalendar(); });
+$('#calNext').addEventListener('click', ()=>{ state.monthCursor.setMonth(state.monthCursor.getMonth()+1); renderCalendar(); });
+
+function renderCalendar(){
+  calMonthText.textContent = monthText(state.monthCursor);
+  calGrid.innerHTML = '';
+  const dow = ['Pzt','Sal','Çar','Per','Cum','Cmt','Paz']; // Monday first
+  dow.forEach(d => {
+    const el = document.createElement('div'); el.textContent = d; el.className='dow'; calGrid.appendChild(el);
+  });
+  const y = state.monthCursor.getFullYear(), m = state.monthCursor.getMonth();
+  const first = new Date(y, m, 1);
+  // JS getDay: 0 Sun ... 6 Sat. For TR (Mon first) index = (getDay+6)%7
+  const offset = (first.getDay() + 6) % 7;
+  const daysInMonth = new Date(y, m+1, 0).getDate();
+  for(let i=0;i<offset;i++){ const sp = document.createElement('div'); calGrid.appendChild(sp); }
+  for(let d=1; d<=daysInMonth; d++){
+    const el = document.createElement('button'); el.className='day'; el.textContent = d;
+    const dt = new Date(y, m, d);
+    if (sameDay(dt, new Date())) el.classList.add('today');
+    if (sameDay(dt, state.current)) el.classList.add('selected');
+    el.addEventListener('click', () => {
+      state.current = dt; refreshHeader(); renderTimeline(); haptic();
+      $$('.day.selected').forEach(x=>x.classList.remove('selected')); el.classList.add('selected');
+    });
+    calGrid.appendChild(el);
+  }
+}
+
+// ---- entries
+function addEntry(e){
+  e.id = crypto.randomUUID();
+  state.entries.push(e);
+  save('entries', state.entries);
+  renderTimeline();
+}
+function entriesForDay(d){
+  const start = atStartOfDay(d).getTime(), end = start + 86400000;
+  return state.entries.filter(x => {
+    const t = new Date(x.time).getTime();
+    return t>=start && t<end;
+  }).sort((a,b)=> new Date(a.time)-new Date(b.time));
+}
+
+const timeline = $('#timeline');
+
+function renderTimeline(){
+  const list = entriesForDay(state.current);
+  if (!list.length){
+    timeline.classList.add('empty');
+    timeline.innerHTML = `<div class="empty-card">Bu gün için kayıt yok.</div>`;
+    return;
+  }
+  timeline.classList.remove('empty');
+  timeline.innerHTML = list.map(item => {
+    const color = item.type;
+    const title = item.type==='note' ? (item.title || 'Not')
+                 : item.type==='call' ? (item.person || 'Çağrı')
+                 : item.name || 'Konum';
+    const meta = new Intl.DateTimeFormat('tr-TR',{ hour:'2-digit', minute:'2-digit'}).format(new Date(item.time))
+                 + (item.type==='call' && item.callType ? ` • ${item.callType[0].toUpperCase()+item.callType.slice(1)}` : '')
+                 + (item.type==='place' && item.address ? ` • ${item.address}` : '');
+    return `<button class="item" data-id="${item.id}">
+      <span class="dot ${color}"></span>
+      <div style="text-align:left">
+        <div style="font-weight:700">${title}</div>
+        <div class="meta">${meta}</div>
+      </div>
+    </button>`;
+  }).join('');
+
+  $$('#timeline .item').forEach(btn => btn.addEventListener('click', () => openDetail(btn.dataset.id)));
+}
+
+// ---- FAB quick actions
+const fab = $('#fab');
+const overlay = $('#overlay');
+const quick = $('#quick');
+
+function openQuick(){
+  overlay.classList.add('show'); overlay.classList.remove('hidden');
+  quick.classList.remove('hidden'); requestAnimationFrame(()=> quick.classList.add('show'));
+}
+function closeQuick(){
+  quick.classList.remove('show'); setTimeout(()=> quick.classList.add('hidden'), 250);
+  overlay.classList.remove('show'); setTimeout(()=> overlay.classList.add('hidden'), 250);
+}
+fab.addEventListener('click', ()=>{openQuick(); haptic();});
+overlay.addEventListener('click', ()=>{ closeQuick(); });
+
+$$('#quick .quick-btn').forEach(b => b.addEventListener('click', () => {
+  closeQuick(); openEditor(b.dataset.open);
+}));
+
+// ---- Editor
+const editorSheet = $('#editorSheet');
+const editTitle = $('#editTitle');
+const editBody = $('#editBody');
+$('#editBack').addEventListener('click', ()=> closeEditor());
+function openEditor(type, existing){
+  overlay.classList.add('show'); overlay.classList.remove('hidden');
+  editorSheet.classList.remove('hidden'); requestAnimationFrame(()=> editorSheet.classList.add('show'));
+  const isEdit = !!existing;
+  editTitle.textContent = isEdit ? 'Düzenle' : type==='note'?'Yeni Not': type==='call'?'Yeni Çağrı':'Yeni Konum';
+  editBody.innerHTML = '';
+  const now = new Date();
+  if (type==='note'){
+    editBody.innerHTML = `
+      <label>Başlık (opsiyonel)</label>
+      <input id="f_title" type="text" placeholder="örn. Fikir, yapılacak…">
+      <label>Not</label>
+      <textarea id="f_text" placeholder="Metni yaz…"></textarea>
+      <label>Etiketler (virgülle)</label>
+      <input id="f_tags" type="text" placeholder="iş, spor, aile">
+    `;
+    if (existing){ $('#f_title').value=existing.title||''; $('#f_text').value=existing.text||''; $('#f_tags').value=(existing.tags||[]).join(', '); }
+  }else if (type==='call'){
+    editBody.innerHTML = `
+      <label>Kişi adı</label>
+      <input id="c_person" type="text" placeholder="örn. Ayşe Yılmaz">
+      <label>Tür</label>
+      <div class="chips">
+        <button class="chip toggle" data-val="Gelen">Gelen</button>
+        <button class="chip toggle" data-val="Giden">Giden</button>
+        <button class="chip toggle" data-val="Cevapsız">Cevapsız</button>
+      </div>
+      <label>Not (opsiyonel)</label>
+      <input id="c_note" type="text" placeholder="Kısa not…">
+    `;
+    if (existing){ $('#c_person').value=existing.person||''; $('#c_note').value=existing.note||''; }
+  }else{ // place
+    editBody.innerHTML = `
+      <label>Yer adı</label>
+      <input id="p_name" type="text" placeholder="örn. Ev, İş, Kafe">
+      <label>Adres</label>
+      <input id="p_addr" type="text" placeholder="Cadde, No, ilçe…">
+      <label>Koordinat</label>
+      <input id="p_coord" type="text" placeholder="enlem, boylam">
+    `;
+    if (existing){ $('#p_name').value=existing.name||''; $('#p_addr').value=existing.address||''; $('#p_coord').value=existing.coords||''; }
+  }
+
+  $('#editSave').onclick = () => {
+    haptic();
+    if (type==='note'){
+      const title=$('#f_title').value.trim(), text=$('#f_text').value.trim(), tags=$('#f_tags').value.split(',').map(s=>s.trim()).filter(Boolean);
+      if (!title && !text){ alert('En azından başlık ya da not gir.'); return;}
+      if (existing){
+        Object.assign(existing, {title,text,tags, time: existing.time});
+        save('entries', state.entries);
+      }else{
+        addEntry({type:'note', title, text, tags, time: new Date().toISOString()});
+      }
+    }else if (type==='call'){
+      const person=$('#c_person').value.trim();
+      const selected = $$('#editorSheet .chip.toggle').find(x=>x.classList.contains('active'));
+      const callType = selected ? selected.dataset.val : 'Gelen';
+      const note=$('#c_note').value.trim();
+      if (!person){ alert('Kişi adı gir.'); return;}
+      if (existing){
+        Object.assign(existing, {person, callType, note});
+        save('entries', state.entries);
+      }else{
+        addEntry({type:'call', person, callType, note, time: new Date().toISOString()});
+      }
+    }else{
+      const name=$('#p_name').value.trim();
+      const address=$('#p_addr').value.trim();
+      const coords=$('#p_coord').value.trim();
+      if (!name && !address){ alert('En azından isim ya da adres gir.'); return;}
+      if (existing){
+        Object.assign(existing, {name,address,coords});
+        save('entries', state.entries);
+      }else{
+        addEntry({type:'place', name, address, coords, time: new Date().toISOString()});
+      }
+    }
+    closeEditor();
   };
 
-  const state = {
-    selectedDate: new Date(),
-    monthCursor: new Date(),
-    data: loadData(),
-    editingId: null,
-    filter: null,
-    reducedMotion: localStorage.getItem('aj_reduced') === '1',
-    haptics: localStorage.getItem('aj_haptics') !== '0',
+  // toggle chips inside editor
+  $$('#editorSheet .chip.toggle').forEach(ch => ch.addEventListener('click', ()=>{
+    $$('#editorSheet .chip.toggle').forEach(x=>x.classList.remove('active')); ch.classList.add('active');
+  }));
+}
+function closeEditor(){
+  editorSheet.classList.remove('show'); setTimeout(()=> editorSheet.classList.add('hidden'), 250);
+  overlay.classList.remove('show'); setTimeout(()=> overlay.classList.add('hidden'), 250);
+}
+
+// ---- Detail
+const detailSheet = $('#detailSheet');
+let detailId = null;
+function openDetail(id){
+  detailId=id;
+  const item = state.entries.find(x=>x.id===id);
+  if (!item) return;
+  overlay.classList.add('show'); overlay.classList.remove('hidden');
+  detailSheet.classList.remove('hidden'); requestAnimationFrame(()=> detailSheet.classList.add('show'));
+  $('#detailTitle').textContent = item.type==='note'?'Not': item.type==='call'?'Çağrı':'Konum';
+  $('#detailBody').innerHTML = renderDetail(item);
+  $('#detailEdit').onclick = ()=>{ closeDetail(); openEditor(item.type, item); };
+  $('#detailDelete').onclick = ()=>{
+    if (confirm('Silinsin mi?')){
+      state.entries = state.entries.filter(x=>x.id!==id);
+      save('entries', state.entries);
+      renderTimeline(); closeDetail();
+    }
   };
+}
+function closeDetail(){ detailSheet.classList.remove('show'); setTimeout(()=> detailSheet.classList.add('hidden'), 250); overlay.classList.remove('show'); setTimeout(()=> overlay.classList.add('hidden'), 250); }
+$$('#detailSheet [data-close="detail"]').forEach(b=> b.addEventListener('click', closeDetail));
 
-  // Apply saved prefs
-  if (state.reducedMotion) el.chReducedMotion.checked = true;
-  if (state.haptics) el.chHaptics.checked = true;
+function renderDetail(item){
+  const t = new Date(item.time);
+  const time = new Intl.DateTimeFormat('tr-TR',{ dateStyle:'medium', timeStyle:'short'}).format(t);
+  if (item.type==='note'){
+    return `<div class="row"><span class="dot note"></span><strong>${item.title||'Not'}</strong></div>
+    <p style="white-space:pre-wrap">${item.text || ''}</p>
+    <div class="meta">${time}</div>`;
+  }else if (item.type==='call'){
+    return `<div class="row"><span class="dot call"></span><strong>${item.person||'Çağrı'}</strong></div>
+    <div>${item.callType||''}</div>
+    <div class="meta">${time}${item.note? ' • '+item.note : ''}</div>`;
+  }else{
+    return `<div class="row"><span class="dot place"></span><strong>${item.name||'Konum'}</strong></div>
+    <div>${item.address||''}</div>
+    <div class="meta">${time}${item.coords? ' • '+item.coords : ''}</div>`;
+  }
+}
 
-  // ---------- Utilities ----------
-  const tr = {
-    months: ["Ocak","Şubat","Mart","Nisan","Mayıs","Haziran","Temmuz","Ağustos","Eylül","Ekim","Kasım","Aralık"],
-    days: ["Paz","Pzt","Sal","Çar","Per","Cum","Cmt"],
-    longDays: ["Pazar","Pazartesi","Salı","Çarşamba","Perşembe","Cuma","Cumartesi"],
-  };
-  const fmtDateKey = d => d.toISOString().slice(0,10);
-  const parseKey = s => new Date(s+"T00:00:00");
-  const pad = n => (n<10?"0":"")+n;
+// ---- Search
+const searchSheet = $('#searchSheet');
+function openSearch(){
+  overlay.classList.add('show'); overlay.classList.remove('hidden');
+  searchSheet.classList.remove('hidden'); requestAnimationFrame(()=> searchSheet.classList.add('show'));
+  performSearch();
+}
+function closeSearch(){ searchSheet.classList.remove('show'); setTimeout(()=> searchSheet.classList.add('hidden'), 250); overlay.classList.remove('show'); setTimeout(()=> overlay.classList.add('hidden'), 250);}
+$('#btnSearch').addEventListener('click', openSearch);
+$('#floatingSearch').addEventListener('click', openSearch);
+$$('#searchSheet [data-close="search"]').forEach(b=> b.addEventListener('click', closeSearch));
+$('#searchInput').addEventListener('input', performSearch);
+$$('#searchSheet .chip.toggle').forEach(ch => ch.addEventListener('click', ()=>{
+  ch.classList.toggle('active');
+  const key = ch.dataset.filter;
+  if (ch.classList.contains('active')) state.filters.add(key); else state.filters.delete(key);
+  performSearch();
+}));
+function performSearch(){
+  const q = $('#searchInput').value?.toLowerCase() ?? '';
+  const list = state.entries.filter(x => state.filters.has(x.type)).filter(x => {
+    const hay = JSON.stringify(x).toLowerCase();
+    return hay.includes(q);
+  }).sort((a,b)=> new Date(b.time)-new Date(a.time));
+  $('#searchList').innerHTML = list.map(item => {
+    const title = item.type==='note'?(item.title||'Not') : item.type==='call'?(item.person||'Çağrı') : (item.name||'Konum');
+    const dot = `<span class="dot ${item.type}"></span>`;
+    const meta = new Intl.DateTimeFormat('tr-TR',{ dateStyle:'medium', timeStyle:'short'}).format(new Date(item.time));
+    return `<button class="item" data-id="${item.id}">${dot}<div><div style="font-weight:700">${title}</div><div class="meta">${meta}</div></div></button>`;
+  }).join('');
+  $$('#searchList .item').forEach(b=> b.addEventListener('click', ()=>{ closeSearch(); openDetail(b.dataset.id); }));
+}
 
-  const haptic = (light=true) => {
-    try{
-      if(!state.haptics) return;
-      if (navigator.vibrate) navigator.vibrate(light?[8]:[12,40,12]);
-    }catch(e){}
-  };
+// ---- Settings (placeholder)
+$('#btnSettings').addEventListener('click', ()=>{
+  alert('Ayarlar: Beta — tema ve veri dışa/içe aktarımı yakında.');
+});
 
-  function loadData(){
-    try{
-      const j = localStorage.getItem("ajanda-data");
-      return j ? JSON.parse(j) : [];
-    }catch(e){ return []; }
-  }
-  function saveData(){ localStorage.setItem("ajanda-data", JSON.stringify(state.data)); }
+// ---- Floating Search button also in list-head
+$('#floatingSearch').addEventListener('click', haptic);
 
-  // ---------- Header & Date ----------
-  function renderHeader(){
-    const d = state.selectedDate;
-    const label = `${d.getDate()} ${tr.months[d.getMonth()]} ${d.getFullYear()} ${tr.longDays[d.getDay()]}`;
-    el.fullDate.textContent = label;
-    el.monthLabel.textContent = `${tr.months[d.getMonth()]} ${d.getFullYear()}`;
-  }
+// ---- boot
+function boot(){
+  state.monthCursor = new Date(state.current);
+  refreshHeader();
+  renderTimeline();
+  renderCalendar();
+  // Mark all chips active
+  $$('#searchSheet .chip.toggle').forEach(ch => ch.classList.add('active'));
+}
+boot();
 
-  // ---------- Calendar ----------
-  function buildCalendar(){
-    const c = new Date(state.monthCursor.getFullYear(), state.monthCursor.getMonth(), 1);
-    el.calTitle.textContent = `${tr.months[c.getMonth()]} ${c.getFullYear()}`;
-    el.calGrid.innerHTML = "";
-    // DOW row
-    tr.days.forEach(d => {
-      const s = document.createElement("div");
-      s.textContent = d;
-      s.className = "dow";
-      el.calGrid.appendChild(s);
-    });
-    const start = new Date(c);
-    const offset = (start.getDay()+6)%7 + 1; // start with Monday? adjust; we want Mon..Sun
-    const daysInMonth = new Date(c.getFullYear(), c.getMonth()+1, 0).getDate();
-    for(let i=1;i<offset;i++){
-      const b = document.createElement("div"); el.calGrid.appendChild(b);
-    }
-    for(let d=1; d<=daysInMonth; d++){
-      const btn = document.createElement("button");
-      btn.textContent = d;
-      const cur = new Date(c.getFullYear(), c.getMonth(), d);
-      const today = fmtDateKey(new Date());
-      const isToday = fmtDateKey(cur) === today;
-      const isSel = fmtDateKey(cur) === fmtDateKey(state.selectedDate);
-      if (isToday) btn.classList.add("today");
-      if (isSel) btn.classList.add("selected");
-      btn.addEventListener("click", () => {
-        state.selectedDate = cur;
-        renderHeader();
-        renderTimeline();
-        buildCalendar();
-        toggleCalendar(false);
-        haptic();
-      });
-      el.calGrid.appendChild(btn);
-    }
-  }
-  function toggleCalendar(show){
-    el.calendarSheet.classList.toggle("hidden", !show);
-  }
-
-  // ---------- Timeline ----------
-  function renderTimeline(){
-    const key = fmtDateKey(state.selectedDate);
-    const list = state.data.filter(x => x.date===key).sort((a,b)=> (a.time||"") < (b.time||"") ? -1:1);
-    el.timelineList.innerHTML = "";
-    if (!list.length){
-      el.timelineList.classList.add("empty");
-      el.timelineList.innerHTML = `<div class="empty-state">Bu gün için kayıt yok.</div>`;
-      return;
-    }
-    el.timelineList.classList.remove("empty");
-    list.forEach(item => {
-      const row = document.createElement("div");
-      row.className = "item";
-      row.dataset.id = item.id;
-      row.innerHTML = `
-        <div class="icon">${iconFor(item.type, 22)}</div>
-        <div style="flex:1">
-          <div class="title">${titleFor(item)}</div>
-          <div class="meta">${metaFor(item)}</div>
-        </div>
-      `;
-      row.addEventListener("click", ()=> openDetail(item.id));
-      el.timelineList.appendChild(row);
-    });
-  }
-  function iconFor(type, size=18){
-    if (type==="note") return `<svg viewBox="0 0 24 24" width="${size}" height="${size}"><path d="M4 3h12l4 4v14H4V3zm12 1.5V7h3.5" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg>`;
-    if (type==="call") return `<svg viewBox="0 0 24 24" width="${size}" height="${size}"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.6 19.6 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.2 1.2.5 2.3.9 3.4a2 2 0 0 1-.5 2L8.7 10a16 16 0 0 0 6 6l.9-1.8a2 2 0 0 1 2-1c1.1.4 2.2.7 3.4.9a2 2 0 0 1 1.8 1.8Z" fill="currentColor"/></svg>`;
-    return `<svg viewBox="0 0 24 24" width="${size}" height="${size}"><path d="M12 21s7-5.3 7-11a7 7 0 0 0-14 0c0 5.7 7 11 7 11zM12 11a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg>`;
-  }
-  function titleFor(item){
-    if (item.type==="note") return item.title || "Not";
-    if (item.type==="call") return item.person || "Çağrı";
-    if (item.type==="place") return item.name || "Konum";
-  }
-  function metaFor(item){
-    const t = item.time ? `${item.time} • ` : "";
-    if (item.type==="note") return `${t}${(item.tags||[]).join(", ")}` || t;
-    if (item.type==="call") return `${t}${item.kind||"Bilinmeyen"}`;
-    if (item.type==="place") return `${t}${item.address||""}`;
-  }
-
-  // ---------- Add Menu ----------
-  function toggleAddMenu(show){
-    el.addBackdrop.classList.toggle("show", show);
-    el.addMenu.classList.toggle("show", show);
-    el.addBackdrop.classList.toggle("hidden", !show);
-    el.addMenu.classList.toggle("hidden", !show);
-  }
-  el.fabAdd.addEventListener("click", ()=>{ toggleAddMenu(true); haptic(); });
-  el.addBackdrop.addEventListener("click", ()=> toggleAddMenu(false));
-  $$(".add-item").forEach(b => b.addEventListener("click", ()=>{
-    toggleAddMenu(false);
-    openEdit(b.dataset.type);
-  }));
-
-  // ---------- Panels helpers ----------
-  function openPanel(p){
-    el.panelBackdrop.classList.add("show"); el.panelBackdrop.classList.remove("hidden");
-    p.classList.add("show"); p.classList.remove("hidden");
-  }
-  function closePanel(p){
-    p.classList.remove("show"); setTimeout(()=>p.classList.add("hidden"), 180);
-    el.panelBackdrop.classList.remove("show"); setTimeout(()=>el.panelBackdrop.classList.add("hidden"), 180);
-  }
-  el.panelBackdrop.addEventListener("click", ()=> {
-    [el.searchPanel, el.editPanel, el.detailPanel, el.settingsPanel].forEach(p=>{
-      if (!p.classList.contains("hidden")) closePanel(p);
-    });
-  });
-
-  // ---------- Search ----------
-  el.searchFab.addEventListener("click", ()=> { openPanel(el.searchPanel); el.searchInput.focus(); });
-  $$(".chip", el.searchPanel).forEach(ch => ch.addEventListener("click", ()=>{
-    if (state.filter===ch.dataset.filter){ state.filter=null; ch.classList.remove("active");}
-    else { state.filter = ch.dataset.filter; $$(".chip", el.searchPanel).forEach(c=>c.classList.remove("active")); ch.classList.add("active"); }
-    runSearch();
-  }));
-  el.searchInput.addEventListener("input", runSearch);
-  function runSearch(){
-    const q = el.searchInput.value.trim().toLowerCase();
-    let list = state.data;
-    if (state.filter) list = list.filter(x => x.type===state.filter);
-    if (q){
-      list = list.filter(x => JSON.stringify(x).toLowerCase().includes(q));
-    }
-    renderList(list, el.searchResults);
-  }
-  function renderList(list, container){
-    container.innerHTML = "";
-    if (!list.length){ container.innerHTML = `<div class="empty-state">Sonuç yok.</div>`; return; }
-    list.sort((a,b)=> (a.date+a.time) < (b.date+b.time) ? 1:-1);
-    list.forEach(item => {
-      const row = document.createElement("div");
-      row.className = "item";
-      row.dataset.id = item.id;
-      row.innerHTML = `
-        <div class="icon">${iconFor(item.type, 20)}</div>
-        <div style="flex:1">
-          <div class="title">${titleFor(item)}</div>
-          <div class="meta">${item.date} ${item.time||""}</div>
-        </div>
-      `;
-      row.addEventListener("click", ()=>{ openDetail(item.id); });
-      container.appendChild(row);
-    });
-  }
-
-  // ---------- Edit/Create ----------
-  function openEdit(typeOrId){
-    el.editPanel.dataset.mode = "create";
-    state.editingId = null;
-    let type = typeOrId;
-    let data = null;
-    if (typeof typeOrId === "string" && typeOrId.startsWith("id:")){
-      const id = typeOrId.slice(3);
-      state.editingId = id;
-      data = state.data.find(x=>x.id===id);
-      type = data.type;
-      el.editPanel.dataset.mode = "edit";
-    }
-    buildForm(type, data);
-    el.editTitle.textContent = (data? "Düzenle — " : "Yeni ") + (type==="note"?"Not": type==="call"?"Çağrı":"Konum");
-    openPanel(el.editPanel);
-  }
-  function buildForm(type, data){
-    const d = data || {date: fmtDateKey(state.selectedDate), time: `${pad(new Date().getHours())}:${pad(new Date().getMinutes())}`};
-    let html = `<div class="form">`;
-    html += fieldTimeDate(d);
-    if (type==="note"){
-      html += field("Başlık (opsiyonel)", `<input class="input" id="fTitle" value="${esc(d.title||"")}">`);
-      html += field("Not", `<textarea class="textarea" id="fBody" placeholder="Metni yaz...">${esc(d.body||"")}</textarea>`);
-      html += field("Etiketler (virgülle)", `<input class="input" id="fTags" value="${esc((d.tags||[]).join(", "))}" placeholder="iş, spor, aile">`);
-    } else if (type==="call"){
-      html += field("Kişi adı", `<input class="input" id="fPerson" value="${esc(d.person||"")}" placeholder="örn. Ayşe Yılmaz">`);
-      html += field("Tür", `<div class="chip-row">
-          ${chipSelect("kind","Gelen", d.kind==="Gelen")}
-          ${chipSelect("kind","Giden", d.kind==="Giden")}
-          ${chipSelect("kind","Cevapsız", d.kind==="Cevapsız")}
-        </div>`);
-      html += field("Not (opsiyonel)", `<input class="input" id="fNote" value="${esc(d.note||"")}" placeholder="Kısa not...">`);
-    } else {
-      html += field("Yer adı", `<input class="input" id="fName" value="${esc(d.name||"")}" placeholder="örn. Ev, İş, Kafe">`);
-      html += field("Adres", `<input class="input" id="fAddress" value="${esc(d.address||"")}" placeholder="Cadde, No, ilçe...">`);
-      html += field("Koordinat", `<input class="input" id="fCoord" value="${esc(d.coord||"")}" placeholder="enlem, boylam">`);
-    }
-    html += `</div>`;
-    el.editForm.innerHTML = html;
-    // chip behavior
-    $$(".chip", el.editForm).forEach(ch=>ch.addEventListener("click", ()=>{
-      $$(".chip[data-name='"+ch.dataset.name+"']", el.editForm).forEach(c=>c.classList.remove("active"));
-      ch.classList.add("active");
-    }));
-    el.editForm.dataset.type = type;
-  }
-  function field(label, inner){ return `<div><div class="label">${label}</div>${inner}</div>`; }
-  function chipSelect(name, label, active){ return `<button class="chip ${active?"active":""}" data-name="${name}" data-value="${label}">${label}</button>`; }
-  function fieldTimeDate(d){
-    return `<div class="row" style="gap:10px">
-      <div style="flex:1">${field("Tarih", `<input class="input" id="fDate" type="date" value="${d.date||fmtDateKey(new Date())}">`)}</div>
-      <div style="width:140px">${field("Saat", `<input class="input" id="fTime" type="time" value="${d.time||""}">`)}</div>
-    </div>`;
-  }
-  function esc(s){ return (s||"").toString().replace(/[&<>"']/g, m=>({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" }[m])); }
-
-  el.btnBackEdit.addEventListener("click", ()=> closePanel(el.editPanel));
-  el.btnSaveEdit.addEventListener("click", onSaveEdit);
-  function onSaveEdit(){
-    const type = el.editForm.dataset.type;
-    const val = {
-      type,
-      date: $("#fDate", el.editForm)?.value || fmtDateKey(new Date()),
-      time: $("#fTime", el.editForm)?.value || "",
-    };
-    if (type==="note"){
-      val.title = $("#fTitle", el.editForm).value.trim();
-      val.body = $("#fBody", el.editForm).value.trim();
-      val.tags = $("#fTags", el.editForm).value.split(",").map(s=>s.trim()).filter(Boolean);
-      if (!val.title && !val.body){ alert("En azından başlık veya not girin."); return; }
-    } else if (type==="call"){
-      val.person = $("#fPerson", el.editForm).value.trim();
-      const active = $(".chip.active[data-name='kind']", el.editForm);
-      val.kind = active ? active.dataset.value : "Bilinmeyen";
-    } else {
-      val.name = $("#fName", el.editForm).value.trim();
-      val.address = $("#fAddress", el.editForm).value.trim();
-      val.coord = $("#fCoord", el.editForm).value.trim();
-      if (!val.name && !val.address){ alert("En az isim ya da adres girin."); return; }
-    }
-    if (state.editingId){
-      const idx = state.data.findIndex(x=>x.id===state.editingId);
-      state.data[idx] = {...state.data[idx], ...val};
-    } else {
-      val.id = cryptoRandomId();
-      state.data.push(val);
-    }
-    saveData();
-    closePanel(el.editPanel);
-    renderTimeline();
-    haptic(false);
-  }
-
-  function cryptoRandomId(){
-    if (window.crypto?.randomUUID) return window.crypto.randomUUID();
-    return "id-"+Math.random().toString(36).slice(2);
-  }
-
-  // ---------- Detail ----------
-  function openDetail(id){
-    const it = state.data.find(x=>x.id===id);
-    if (!it) return;
-    el.detailTitle.textContent = titleFor(it);
-    const rows = [`<div class="field"><div class="label">Tarih</div>${it.date} ${it.time||""}</div>`];
-    if (it.type==="note"){
-      if (it.title) rows.push(`<div class="field"><div class="label">Başlık</div>${esc(it.title)}</div>`);
-      rows.push(`<div class="field"><div class="label">Not</div>${esc(it.body||"")}</div>`);
-      if (it.tags?.length) rows.push(`<div class="field"><div class="label">Etiketler</div>${it.tags.join(", ")}</div>`);
-    } else if (it.type==="call"){
-      if (it.person) rows.push(`<div class="field"><div class="label">Kişi</div>${esc(it.person)}</div>`);
-      if (it.kind) rows.push(`<div class="field"><div class="label">Tür</div>${esc(it.kind)}</div>`);
-      if (it.note) rows.push(`<div class="field"><div class="label">Not</div>${esc(it.note)}</div>`);
-    } else {
-      if (it.name) rows.push(`<div class="field"><div class="label">Yer adı</div>${esc(it.name)}</div>`);
-      if (it.address) rows.push(`<div class="field"><div class="label">Adres</div>${esc(it.address)}</div>`);
-      if (it.coord) rows.push(`<div class="field"><div class="label">Koordinat</div>${esc(it.coord)}</div>`);
-    }
-    el.detailBody.innerHTML = rows.join("");
-    el.btnEditDetail.onclick = ()=> { closePanel(el.detailPanel); state.editingId = it.id; openEdit("id:"+it.id); };
-    el.btnDeleteDetail.onclick = ()=> {
-      if (!confirm("Bu kaydı silmek istiyor musun?")) return;
-      state.data = state.data.filter(x=>x.id!==it.id);
-      saveData(); closePanel(el.detailPanel); renderTimeline();
-    };
-    openPanel(el.detailPanel);
-  }
-
-  // ---------- Settings ----------
-  el.btnSettings.addEventListener("click", ()=> openPanel(el.settingsPanel));
-  $$(".swatch").forEach(sw=> sw.addEventListener("click", ()=>{
-    document.documentElement.style.setProperty("--accent", sw.dataset.accent);
-    localStorage.setItem("aj_accent", sw.dataset.accent);
-  }));
-  const savedAccent = localStorage.getItem("aj_accent");
-  if (savedAccent) document.documentElement.style.setProperty("--accent", savedAccent);
-
-  el.chReducedMotion.addEventListener("change", ()=>{
-    state.reducedMotion = el.chReducedMotion.checked; localStorage.setItem("aj_reduced", state.reducedMotion?'1':'0');
-    document.body.style.setProperty("scroll-behavior", state.reducedMotion? "auto" : "smooth");
-  });
-  el.chHaptics.addEventListener("change", ()=>{
-    state.haptics = el.chHaptics.checked; localStorage.setItem("aj_haptics", state.haptics?'1':'0');
-  });
-
-  // Export / Import / Clear
-  el.btnExportCSV.addEventListener("click", ()=>{
-    const csv = toCSV(state.data);
-    downloadFile("ajanda.csv", "text/csv", csv);
-  });
-  el.btnExportJSON.addEventListener("click", ()=>{
-    downloadFile("ajanda.json", "application/json", JSON.stringify(state.data, null, 2));
-  });
-  el.fileImport.addEventListener("change", async (e)=>{
-    const file = e.target.files[0]; if(!file) return;
-    const text = await file.text();
-    try{
-      const arr = JSON.parse(text);
-      if (Array.isArray(arr)){ state.data = arr; saveData(); renderTimeline(); alert("Veriler içe aktarıldı."); }
-      else alert("Geçersiz JSON.");
-    }catch(err){ alert("İçe aktarma hatası"); }
-    e.target.value = "";
-  });
-  el.btnClearAll.addEventListener("click", ()=>{
-    if (confirm("Tüm veriler silinsin mi?")){ localStorage.removeItem("ajanda-data"); state.data=[]; renderTimeline(); }
-  });
-
-  function toCSV(rows){
-    const headers = ["id","type","date","time","title","body","tags","person","kind","note","name","address","coord"];
-    const esc = v => {
-      if (Array.isArray(v)) v = v.join("|");
-      v = (v==null?"":String(v)).replace(/"/g,'""');
-      return `"${v}"`;
-    };
-    const all = [headers.join(",")].concat(
-      rows.map(r => headers.map(h => esc(r[h])).join(","))
-    );
-    return all.join("\n");
-  }
-  function downloadFile(name, mime, content){
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(new Blob([content], {type:mime}));
-    a.download = name; a.click(); setTimeout(()=> URL.revokeObjectURL(a.href), 5000);
-  }
-
-  // ---------- Events for calendar toggle ----------
-  el.btnCalendar.addEventListener("click", ()=> { const show = el.calendarSheet.classList.contains("hidden"); toggleCalendar(show); if (show) buildCalendar(); haptic(); });
-  el.calPrev.addEventListener("click", ()=>{ state.monthCursor.setMonth(state.monthCursor.getMonth()-1); buildCalendar(); });
-  el.calNext.addEventListener("click", ()=>{ state.monthCursor.setMonth(state.monthCursor.getMonth()+1); buildCalendar(); });
-
-  // General close buttons
-  $$("[data-close]").forEach(b=> b.addEventListener("click", ()=>{
-    const p = $(b.dataset.close);
-    if (p) closePanel(p);
-  }));
-
-  // ---------- Init ----------
-  function init(){
-    renderHeader();
-    renderTimeline();
-    // register SW
-    if ("serviceWorker" in navigator){
-      navigator.serviceWorker.register("sw.js").catch(()=>{});
-    }
-  }
-  init();
-
-})(); 
+// ---- PWA
+if ('serviceWorker' in navigator){
+  window.addEventListener('load', ()=> navigator.serviceWorker.register('sw.js').catch(console.warn));
+}

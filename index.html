@@ -2,181 +2,133 @@
 <html lang="tr">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
-  <meta name="theme-color" content="#000000">
-  <title>Ajanda</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#0a0f1f">
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="apple-touch-icon" href="icons/ios-180.png">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <title>Ajanda</title>
   <link rel="stylesheet" href="css/main.css">
 </head>
 <body>
   <div id="app">
-    <!-- Header -->
-    <header class="app-header glass">
+    <header class="app-header">
       <h1 class="title">Ajanda</h1>
-      <button id="btnSettings" class="icon-btn glass circle" aria-label="Ayarlar">
-        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
-          <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM19.4 12a7.4 7.4 0 0 0-.1-1l2-1.5-1.4-2.5-2.4.6a7.7 7.7 0 0 0-1.6-1l-.2-2.5H9.3l-.2 2.5c-.6.2-1.1.5-1.6.9l-2.4-.6L3.7 9.5l2 1.5a7.4 7.4 0 0 0 0 2.1l-2 1.5 1.4 2.5 2.4-.6c.5.4 1 .7 1.6 1l.2 2.5h4.6l.2-2.5c.6-.2 1.1-.5 1.6-.9l2.4.6 1.4-2.5-2-1.5c.1-.3.1-.7.1-1z" fill="currentColor"/>
-        </svg>
+      <button id="btnSettings" class="circle ghost" aria-label="Ayarlar">
+        <span class="gear"></span>
       </button>
     </header>
 
-    <!-- Date Card -->
-    <section class="card glass" id="dateCard">
-      <div class="date-head">
-        <h2 id="fullDate">11 Ağustos 2025 Pazartesi</h2>
-      </div>
-      <div class="date-actions">
-        <span id="monthLabel" class="muted">Ağustos 2025</span>
-        <button id="btnCalendar" class="chip ghost">
-          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M7 2h2v3H7V2m8 0h2v3h-2V2M3 8h18v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8m18-3h-3V2h-2v3H8V2H6v3H3v3h18V5Z"/></svg>
-          <span>Takvimi aç</span>
+    <main class="content">
+      <section class="section">
+        <div class="date-head">
+          <div id="selectedDay" class="day-title">—</div>
+          <div class="month-row">
+            <div id="monthLabel" class="month-label">—</div>
+            <button id="toggleCal" class="chip">
+              <span class="i i-cal"></span>
+              <span>Takvimi aç</span>
+            </button>
+          </div>
+        </div>
+
+        <div id="calendar" class="calendar hidden" aria-hidden="true">
+          <div class="cal-head">
+            <button id="calPrev" class="circle ghost" aria-label="Önceki Ay"><span class="i i-left"></span></button>
+            <div id="calMonthText" class="cal-title">—</div>
+            <button id="calNext" class="circle ghost" aria-label="Sonraki Ay"><span class="i i-right"></span></button>
+          </div>
+          <div class="cal-grid" id="calGrid"></div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="list-head">
+          <h2>Günün Zaman Çizelgesi</h2>
+          <button id="btnSearch" class="circle ghost small" aria-label="Ara">
+            <span class="i i-search"></span>
+          </button>
+        </div>
+        <div id="timeline" class="timeline empty">
+          <div class="empty-card">Bu gün için kayıt yok.</div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Floating Search Button (bottom-right) -->
+    <button id="floatingSearch" class="circle fab small" aria-label="Ara">
+      <span class="i i-search"></span>
+    </button>
+
+    <!-- Center FAB -->
+    <button id="fab" class="fab" aria-label="Yeni">
+      <span class="plus">+</span>
+    </button>
+
+    <!-- Dim/blur overlay -->
+    <div id="overlay" class="overlay hidden"></div>
+
+    <!-- Quick actions -->
+    <div id="quick" class="quick hidden" role="dialog" aria-labelledby="quickTitle">
+      <div class="quick-row">
+        <button class="quick-btn" data-open="note">
+          <div class="quick-icon"><span class="i i-note"></span></div>
+          <div class="quick-label">Not</div>
+        </button>
+        <button class="quick-btn" data-open="call">
+          <div class="quick-icon"><span class="i i-call"></span></div>
+          <div class="quick-label">Çağrı</div>
+        </button>
+        <button class="quick-btn" data-open="place">
+          <div class="quick-icon"><span class="i i-pin"></span></div>
+          <div class="quick-label">Konum</div>
         </button>
       </div>
-    </section>
+    </div>
 
-    <!-- Calendar Sheet -->
-    <section id="calendarSheet" class="sheet hidden">
+    <!-- Search Sheet -->
+    <div id="searchSheet" class="sheet hidden" role="dialog" aria-labelledby="searchTitle">
       <div class="sheet-head">
-        <button class="icon-btn circle" id="calPrev" aria-label="Önceki ay"><svg viewBox="0 0 24 24" width="22" height="22"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-        <div id="calMonthTitle" class="sheet-title">Ağustos 2025</div>
-        <button class="icon-btn circle" id="calNext" aria-label="Sonraki ay"><svg viewBox="0 0 24 24" width="22" height="22"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <button class="circle ghost" data-close="search"><span class="i i-left"></span></button>
+        <div class="sheet-title" id="searchTitle">Arama</div>
+        <div style="width:40px"></div>
       </div>
-      <div class="cal-grid" id="calGrid"></div>
-    </section>
-
-    <!-- Timeline -->
-    <section class="card glass" id="timelineCard">
-      <h3>Günün Zaman Çizelgesi</h3>
-      <div id="timelineList" class="list empty">
-        <div class="empty-state">Bu gün için kayıt yok.</div>
+      <div class="sheet-body">
+        <div class="input glass"><input id="searchInput" placeholder="kelime, kişi…" inputmode="search"></div>
+        <div class="chips">
+          <button class="chip toggle" data-filter="note">Not</button>
+          <button class="chip toggle" data-filter="call">Çağrı</button>
+          <button class="chip toggle" data-filter="place">Konum</button>
+        </div>
+        <div id="searchList" class="timeline"></div>
       </div>
-    </section>
-
-    <!-- Floating Buttons -->
-    <div class="float-zone">
-      <button id="fabAdd" class="fab glass" aria-label="Ekle">
-        <svg viewBox="0 0 24 24" width="28" height="28"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-      </button>
-      <button id="btnSearch" class="icon-btn glass circle search-fab" aria-label="Arama">
-        <svg viewBox="0 0 24 24" width="22" height="22"><path d="M21 21l-4.3-4.3m1.3-5.2a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0Z" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
-      </button>
     </div>
 
-    <!-- Add Menu -->
-    <div id="addMenuBackdrop" class="backdrop hidden"></div>
-    <div id="addMenu" class="add-menu hidden">
-      <button class="add-item glass" data-type="note">
-        <svg viewBox="0 0 24 24" width="22" height="22"><path d="M4 3h12l4 4v14H4V3zm12 1.5V7h3.5" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
-        <span>Not</span>
-      </button>
-      <button class="add-item glass" data-type="call">
-        <svg viewBox="0 0 24 24" width="22" height="22"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.6 19.6 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.2 1.2.5 2.3.9 3.4a2 2 0 0 1-.5 2L8.7 10a16 16 0 0 0 6 6l.9-1.8a2 2 0 0 1 2-1c1.1.4 2.2.7 3.4.9a2 2 0 0 1 1.8 1.8Z" fill="currentColor"/></svg>
-        <span>Çağrı</span>
-      </button>
-      <button class="add-item glass" data-type="place">
-        <svg viewBox="0 0 24 24" width="22" height="22"><path d="M12 21s7-5.3 7-11a7 7 0 0 0-14 0c0 5.7 7 11 7 11zM12 11a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
-        <span>Konum</span>
-      </button>
+    <!-- Editor Sheet (Note/Call/Place) -->
+    <div id="editorSheet" class="sheet hidden" role="dialog">
+      <div class="sheet-head">
+        <button id="editBack" class="circle ghost"><span class="i i-left"></span></button>
+        <div id="editTitle" class="sheet-title">Yeni</div>
+        <button id="editSave" class="circle primary"><span class="i i-check"></span></button>
+      </div>
+      <div class="sheet-body" id="editBody"></div>
     </div>
 
-    <!-- Fullscreen Panels -->
-    <div id="panelBackdrop" class="backdrop hidden"></div>
-
-    <!-- Search Panel -->
-    <section id="searchPanel" class="panel hidden glass">
-      <div class="panel-head">
-        <button class="icon-btn circle" data-close="#searchPanel"><svg viewBox="0 0 24 24" width="22" height="22"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-        <div class="panel-title">Arama</div>
-        <div style="width:44px"></div>
-      </div>
-      <div class="search-row">
-        <input id="searchInput" class="input glass-input" placeholder="kelime, kişi…">
-      </div>
-      <div class="chip-row">
-        <button class="chip" data-filter="note">Not</button>
-        <button class="chip" data-filter="call">Çağrı</button>
-        <button class="chip" data-filter="place">Konum</button>
-      </div>
-      <div id="searchResults" class="list"></div>
-    </section>
-
-    <!-- Edit/Create Panel -->
-    <section id="editPanel" class="panel hidden glass" data-mode="create">
-      <div class="panel-head">
-        <button class="icon-btn circle" id="btnBackEdit"><svg viewBox="0 0 24 24" width="22" height="22"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-        <div class="panel-title" id="editTitle">Yeni Kayıt</div>
-        <button class="icon-btn circle accent" id="btnSaveEdit" aria-label="Kaydet">
-          <svg viewBox="0 0 24 24" width="22" height="22"><path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </button>
-      </div>
-      <div id="editForm"></div>
-    </section>
-
-    <!-- Details Panel -->
-    <section id="detailPanel" class="panel hidden glass">
-      <div class="panel-head">
-        <button class="icon-btn circle" data-close="#detailPanel"><svg viewBox="0 0 24 24" width="22" height="22"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-        <div class="panel-title" id="detailTitle">Detay</div>
-        <div class="panel-actions">
-          <button class="icon-btn circle" id="btnEditDetail" title="Düzenle">
-            <svg viewBox="0 0 24 24" width="20" height="20"><path d="M3 17.25V21h3.75L17.8 9.96l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" fill="currentColor"/></svg>
-          </button>
-          <button class="icon-btn circle danger" id="btnDeleteDetail" title="Sil">
-            <svg viewBox="0 0 24 24" width="20" height="20"><path d="M6 7h12M9 7V5h6v2m-8 0l1 12h8l1-12H7z" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
-          </button>
+    <!-- Detail Sheet -->
+    <div id="detailSheet" class="sheet hidden">
+      <div class="sheet-head">
+        <button class="circle ghost" data-close="detail"><span class="i i-left"></span></button>
+        <div id="detailTitle" class="sheet-title">Detay</div>
+        <div class="right-actions">
+          <button id="detailEdit" class="circle ghost"><span class="i i-edit"></span></button>
+          <button id="detailDelete" class="circle danger"><span class="i i-trash"></span></button>
         </div>
       </div>
-      <div id="detailBody" class="detail-body"></div>
-    </section>
+      <div class="sheet-body" id="detailBody"></div>
+    </div>
 
-    <!-- Settings Panel -->
-    <section id="settingsPanel" class="panel hidden glass">
-      <div class="panel-head">
-        <button class="icon-btn circle" data-close="#settingsPanel"><svg viewBox="0 0 24 24" width="22" height="22"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-        <div class="panel-title">Ayarlar</div>
-        <div style="width:44px"></div>
-      </div>
-      <div class="settings">
-        <div class="settings-group">
-          <div class="settings-title">Görünüm</div>
-          <div class="row">
-            <label>Vurgu rengi</label>
-            <div class="swatches">
-              <button class="swatch" data-accent="#3b82f6" style="--sw:#3b82f6"></button>
-              <button class="swatch" data-accent="#22c55e" style="--sw:#22c55e"></button>
-              <button class="swatch" data-accent="#a855f7" style="--sw:#a855f7"></button>
-              <button class="swatch" data-accent="#f59e0b" style="--sw:#f59e0b"></button>
-            </div>
-          </div>
-          <div class="row">
-            <label><input type="checkbox" id="chReducedMotion"> Azaltılmış animasyon</label>
-          </div>
-          <div class="row">
-            <label><input type="checkbox" id="chHaptics" checked> Haptics (titreşim destekliyorsa)</label>
-          </div>
-        </div>
-
-        <div class="settings-group">
-          <div class="settings-title">Veri</div>
-          <div class="row">
-            <button id="btnExportCSV" class="chip">CSV indir</button>
-            <button id="btnExportJSON" class="chip">JSON indir</button>
-          </div>
-          <div class="row">
-            <label class="file">JSON içe aktar <input type="file" id="fileImport" accept="application/json"></label>
-            <button id="btnClearAll" class="chip danger">Tümünü temizle</button>
-          </div>
-        </div>
-
-        <div class="settings-group">
-          <div class="settings-title">Hakkında</div>
-          <p class="muted">Ajanda v10 beta — PWA modunda çevrimdışı çalışır. “Ana Ekrana Ekle” ile uygulama gibi kullanın.</p>
-        </div>
-      </div>
-    </section>
   </div>
-
   <script src="js/app.js"></script>
 </body>
 </html>
