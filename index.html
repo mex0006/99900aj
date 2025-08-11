@@ -12,157 +12,116 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <title>Ajanda</title>
 <style>
-/* ===== Design system (v9) ===== */
 :root{
   --bg:#000;
-  --panel:rgba(14,14,14,.75);
-  --ink:#ebeff6;
-  --muted:#9aa3b2;
+  --panel:rgba(16,16,16,.72);
   --edge:#1a1a1a;
-  --tint:#59a7ff;
-  --radius:16px;
-  --tabh:70px;
-  /* Typography */
-  --fs-h1:clamp(20px,4.6vw,26px);
-  --fs-h2:clamp(17px,3.3vw,20px);
-  --fs-title:clamp(15px,2.8vw,18px);
-  --fs-body:clamp(14px,2.1vw,16px);
+  --ink:#eef2f7;
+  --muted:#97a1b3;
+  --tint:#5aa8ff;
+  --radius:18px;
+  --tabh:68px;
+  --fs-h1:clamp(20px,4.8vw,28px);
+  --fs-h2:clamp(18px,3.8vw,22px);
+  --fs-title:clamp(15px,2.9vw,18px);
+  --fs-body:clamp(14px,2.2vw,16px);
   --fs-cap:12px;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{height:100%}
 body{
-  margin:0;color:var(--ink);
-  font:600 var(--fs-body)/1.58 -apple-system, ui-sans-serif, system-ui, "SF Pro Text", Inter, "Helvetica Neue", Arial;
+  margin:0; background:#000; color:var(--ink);
+  font:600 var(--fs-body)/1.58 -apple-system, ui-sans-serif, system-ui, "SF Pro Text", Inter, "Helvetica Neue";
   -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
-  min-height:100svh;
-  background:var(--bg);
-  padding-bottom:calc(var(--tabh) + env(safe-area-inset-bottom) + 14px);
-  scrollbar-width:none; -ms-overflow-style:none;
+  padding-bottom:calc(var(--tabh) + env(safe-area-inset-bottom) + 10px);
 }
-body::-webkit-scrollbar{display:none}
-/* gradient layer (visible above body, below content) */
-.bgfx{position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.9; background:transparent;}
-
-/* Layering for content */
-.container{position:relative; z-index:1; max-width:980px;margin:0 auto;padding:max(6px, calc(6px + env(safe-area-inset-top))) 12px 0}
-
-/* Header */
-.header{
-  position:sticky; top:0; z-index:30;
-  display:flex; align-items:center; justify-content:center;
-  padding:10px 8px 12px;
-  gap:8px;
-  background:rgba(0,0,0,.35);
-  backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px);
-  border-bottom:1px solid var(--edge);
+body.noscroll{overflow:hidden}
+.bgfx{position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.85;
+  background:
+    radial-gradient(1200px 800px at 80% 8%, rgba(90,168,255,.22), transparent 60%),
+    radial-gradient(900px 700px at 15% 28%, rgba(168,85,247,.18), transparent 60%);
 }
-.brand{font-weight:800;letter-spacing:.2px;font-size:var(--fs-h1)}
-.beamDot{position:absolute;right:14px;top:50%;transform:translateY(-50%);width:18px;height:18px;border-radius:999px;border:1px solid rgba(255,255,255,.08);}
-.beamDot::before{content:"";position:absolute;inset:2px;border-radius:inherit;filter: blur(6px);}
-.beamDot.ok{background:radial-gradient(circle at 50% 50%, rgba(34,197,94,1) 0%, rgba(34,197,94,.25) 60%, transparent 70%); box-shadow:0 0 18px rgba(34,197,94,.75)}
-.beamDot.warn{background:radial-gradient(circle at 50% 50%, rgba(250,204,21,1) 0%, rgba(250,204,21,.25) 60%, transparent 70%); box-shadow:0 0 18px rgba(250,204,21,.6)}
 
-/* Cards */
-.card{background:var(--panel); border:1px solid var(--edge); border-radius:var(--radius); padding:14px; margin-top:12px; box-shadow:0 10px 40px rgba(0,0,0,.45); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); animation:cardIn .28s cubic-bezier(.2,.8,.2,1) both}
-@keyframes cardIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-.title{font-weight:800; letter-spacing:.2px; font-size:var(--fs-title)}
+/* layout */
+.container{position:relative; z-index:1; max-width:960px; margin:0 auto; padding:calc(6px + env(safe-area-inset-top)) 12px 0}
+.header{position:sticky; top:0; z-index:20; display:flex; align-items:center; justify-content:center; gap:10px;
+  background:rgba(0,0,0,.35); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+  padding:12px 10px; border-bottom:1px solid var(--edge);
+}
+.brand{font-size:var(--fs-h1); font-weight:900; letter-spacing:.2px}
+.beam{position:absolute; right:14px; top:50%; transform:translateY(-50%); width:18px; height:18px; border-radius:999px; border:1px solid rgba(255,255,255,.06);
+  background:radial-gradient(circle at 50% 50%, rgba(250,204,21,1) 0%, rgba(250,204,21,.25) 60%, transparent 70%);
+  box-shadow:0 0 18px rgba(250,204,21,.6);
+}
+.card{background:var(--panel); border:1px solid var(--edge); border-radius:var(--radius); padding:14px; margin-top:12px; box-shadow:0 10px 40px rgba(0,0,0,.45); backdrop-filter:blur(18px)}
+.title{font-size:var(--fs-title); font-weight:800; letter-spacing:.2px}
 .sub{color:var(--muted); font-size:var(--fs-cap)}
+.hr{height:1px;background:#121212;margin:8px 0}
 
-/* Lists */
-.list{display:grid; gap:10px}
-.item{background:rgba(16,16,16,.62); border:1px solid var(--edge); border-radius:14px; padding:12px; transition:transform .12s ease, background .12s ease; backdrop-filter:blur(14px)}
-.item:active{transform:scale(.995); background:rgba(18,18,18,.72)}
-.row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
-
-/* Controls */
-.btn,input,select,textarea{
-  appearance:none; border:1px solid var(--edge); background:rgba(16,16,16,.62);
-  color:var(--ink); padding:10px 12px; border-radius:12px; font-weight:700; cursor:pointer; backdrop-filter:blur(12px)
-}
-.btn:active{transform:translateY(1px)}
-.btn.primary{background:linear-gradient(180deg,#183022,#101a15); border-color:#254232}
-.btn.danger{background:linear-gradient(180deg,#341f1f,#241515); border-color:#3a2626}
-
-/* Calendar */
 .dayline{font-size:var(--fs-h2); font-weight:900; text-align:center}
 .month-head{display:flex; align-items:center; justify-content:space-between}
-.cal-toggle{cursor:pointer; display:flex; align-items:center; gap:8px; padding:8px 10px; border:1px solid var(--edge); border-radius:12px; background:rgba(12,12,12,.5); backdrop-filter:blur(12px)}
+.cal-toggle{cursor:pointer; display:flex; align-items:center; gap:8px; padding:8px 10px; border:1px solid var(--edge); border-radius:12px; background:rgba(12,12,12,.5)}
 .grid{display:grid; grid-template-columns:repeat(7,1fr); gap:6px}
 .weekday{color:var(--muted); text-align:center; font-size:var(--fs-cap); font-weight:700}
-.d{aspect-ratio:1/1; display:grid; place-items:center; border:1px solid var(--edge); border-radius:12px; background:rgba(13,13,13,.65); font-weight:900; cursor:pointer; font-size:14px; backdrop-filter:blur(10px)}
-.d.muted{opacity:.45}.d.sel{outline:2px solid var(--tint); outline-offset:-3px}.d.today{border-color:#2c2c2c}
+.d{aspect-ratio:1/1; display:grid; place-items:center; border:1px solid var(--edge); border-radius:12px; background:rgba(13,13,13,.65); font-weight:900; cursor:pointer; font-size:14px}
+.d.muted{opacity:.45}.d.sel{outline:2px solid var(--tint); outline-offset:-3px}.d.today{border-color:#2b2b2b}
 .collapsible{overflow:hidden; transition:max-height .25s ease, opacity .2s ease; opacity:0; max-height:0}.collapsible.open{opacity:1; max-height:1000px}
 
-/* Timeline */
+.list{display:grid; gap:10px}
+.item{background:rgba(16,16,16,.62); border:1px solid var(--edge); border-radius:14px; padding:12px}
+.row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+
+.btn,input,select,textarea{appearance:none; border:1px solid var(--edge); background:rgba(16,16,16,.62); color:var(--ink); padding:10px 12px; border-radius:12px; font-weight:700}
+.btn.primary{background:linear-gradient(180deg,#183022,#101a15); border-color:#254232}
+.btn:active{transform:translateY(1px)}
+
+.dot{width:10px;height:10px;border-radius:50%;background:var(--tint);margin-top:7px}
+.dot.ok{background:#22c55e}.dot.note{background:#a78bfa}.dot.bad{background:#ef4444}
 .timeline .event{display:grid; grid-template-columns:auto 1fr; gap:10px; align-items:flex-start}
 .ev-title{font-weight:800}
-.dot{width:10px;height:10px;border-radius:50%;background:var(--tint);margin-top:7px}
-.dot.ok{background:#22c55e}.dot.bad{background:#ef4444}.dot.note{background:#a78bfa}
 
-/* Map */
-#map{height:58vh;border-radius:14px;overflow:hidden;border:1px solid var(--edge);background:rgba(10,10,10,.7);backdrop-filter:blur(12px)}
+#map{height:58vh;border-radius:14px;overflow:hidden;border:1px solid var(--edge);background:rgba(10,10,10,.7)}
 
-/* Tabbar */
-.tabbar{position:fixed;left:0;right:0;bottom:0;height:var(--tabh);padding-bottom:env(safe-area-inset-bottom);background:rgba(6,6,6,.58);border-top:1px solid var(--edge);display:grid;grid-template-columns:repeat(5,1fr);z-index:60;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);animation:fadeIn .25s ease both}
-.tabbtn{display:grid;place-items:center;gap:4px;color:#8893a6;font-size:12px;text-decoration:none;transition:transform .12s ease,color .12s ease}.tabbtn.active{color:var(--ink)}.tabbtn svg{width:22px;height:22px;fill:currentColor}.tabbtn.center svg{width:28px;height:28px}.tabbtn:active{transform:translateY(1px)}
-@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+/* tab bar */
+.tabbar{position:fixed;left:0;right:0;bottom:0;height:var(--tabh);padding-bottom:env(safe-area-inset-bottom);background:rgba(6,6,6,.54);border-top:1px solid var(--edge);display:grid;grid-template-columns:repeat(5,1fr);z-index:60;backdrop-filter:blur(18px)}
+.tabbtn{display:grid;place-items:center;gap:4px;color:#8893a6;font-size:12px;text-decoration:none}.tabbtn.active{color:var(--ink)}.tabbtn svg{width:22px;height:22px;fill:currentColor}.tabbtn.center svg{width:28px;height:28px}
 
-/* Pages */
-.page{display:none;animation:pageIn .24s cubic-bezier(.2,.8,.2,1) both}
-.page.active{display:block}
-@keyframes pageIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+/* pages */
+.page{display:none}.page.active{display:block}
 .pad-bottom{height:calc(var(--tabh) + env(safe-area-inset-bottom) + 20px)}
 
-/* Speed-dial for + */
-.dial-overlay{position:fixed; inset:0; background:rgba(0,0,0,.25); backdrop-filter:blur(3px); -webkit-backdrop-filter:blur(3px); display:none; z-index:65}
+/* speed dial */
+.dial-overlay{position:fixed; inset:0; background:rgba(0,0,0,.25); backdrop-filter:blur(3px); display:none; z-index:65}
 .dial-overlay.open{display:block}
 .dial{position:fixed; display:flex; gap:12px; z-index:66}
 .mini{width:56px;height:56px;border-radius:16px;border:1px solid var(--edge);background:rgba(16,16,16,.7);display:grid;place-items:center;box-shadow:0 10px 28px rgba(0,0,0,.45);transform:scale(.9);opacity:0;transition:transform .18s ease,opacity .18s ease}
 .mini.show{transform:scale(1);opacity:1}
 .mini svg{width:26px;height:26px;fill:var(--ink)}
 
-/* Detail / Composer sheet */
-.sheet{position:fixed;left:0;right:0;bottom:calc(var(--tabh)+env(safe-area-inset-bottom)+12px);background:var(--panel);border:1px solid var(--edge);border-radius:16px;margin:0 12px;padding:14px;box-shadow:0 20px 60px rgba(0,0,0,.6);display:none;z-index:70}
-.sheet.open{display:block}
-.sheet .title{margin-bottom:6px}
-.sheet .row{justify-content:flex-end}
-
-/* Composer (modern input) */
-.composer{position:fixed;left:0;right:0;bottom:calc(var(--tabh)+env(safe-area-inset-bottom)+12px);background:var(--panel);border:1px solid var(--edge);border-radius:18px;margin:0 12px;padding:14px;box-shadow:0 20px 60px rgba(0,0,0,.6);display:none;z-index:70}
-.composer.open{display:block}
-.comp-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
-.comp-head .title{font-weight:900}
-.comp-actions{display:flex;gap:10px}
-.comp-actions .btn{border-radius:999px}
-.comp-field{position:relative;margin-top:8px}
-.comp-field textarea,.comp-field input{width:100%}
-.comp-field .lbl{position:absolute;left:12px;top:-8px;background:rgba(0,0,0,.55);padding:0 8px;border-radius:10px;color:var(--muted);font-size:11px}
-
-/* Search / segmented */
-.seg{display:flex;gap:8px}
-.seg button{flex:1;border-radius:999px;background:rgba(16,16,16,.6)}
-.seg button.active{outline:2px solid var(--tint);outline-offset:-2px}
-.searchbar{display:flex;gap:10px;align-items:center}
-.searchbar .field{position:relative;flex:1}
-.searchbar .field input{width:100%;padding-left:38px}
-.searchbar .field svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:18px;height:18px;fill:#9aa4b5}
-
-/* Theme dots */
-.palette{display:flex;gap:10px;flex-wrap:wrap}
-.swatch{width:24px;height:24px;border-radius:999px;border:1px solid #333;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.35)}
-.swatch[aria-selected="true"]{outline:2px solid #fff;outline-offset:2px}
+/* full-screen composer */
+.modal{position:fixed; inset:0; z-index:1000; display:none}
+.modal.open{display:block}
+.scrim{position:absolute; inset:0; background:rgba(0,0,0,.45); backdrop-filter:blur(8px)}
+.sheet{position:absolute; left:0; right:0; bottom:0; top:0; padding:calc(10px + env(safe-area-inset-top)) 12px calc(var(--tabh) + env(safe-area-inset-bottom) + 12px);
+  display:grid; grid-template-rows:auto 1fr auto; gap:12px}
+.sheet .head{display:flex; justify-content:space-between; align-items:center}
+.sheet .seg{display:flex; gap:8px}
+.segment{padding:8px 12px; border:1px solid var(--edge); background:rgba(16,16,16,.62); border-radius:999px; font-weight:800}
+.segment.active{outline:2px solid var(--tint); outline-offset:-2px}
+.sheet .panel{background:var(--panel); border:1px solid var(--edge); border-radius:18px; padding:14px; overflow:auto}
+.field{display:grid; gap:6px; margin-bottom:12px}
+.field label{font-size:12px; color:var(--muted); font-weight:700}
+.actions{display:flex; gap:10px; justify-content:flex-end}
 </style>
 </head>
 <body>
-<div class="bgfx" id="bgfx"></div>
+<div class="bgfx"></div>
 <div class="container">
   <header class="header">
     <div class="brand">Ajanda</div>
-    <div id="beam" class="beamDot warn" aria-label="Durum"></div>
+    <div class="beam" title="Durum"></div>
   </header>
 
-  <!-- HOME -->
   <main id="pg-home" class="page active">
     <section class="card center">
       <div class="dayline" id="dayLine">—</div>
@@ -192,98 +151,40 @@ body::-webkit-scrollbar{display:none}
       <div class="list timeline" id="timelineList"></div>
     </section>
 
-    <section class="card">
-      <div class="title">Konum Takibi</div>
-      <div class="sub">Uygulama açıkken konumunu izler ve kalışları oluşturur.</div>
-      <div class="hr" style="height:1px;background:#141414;margin:10px 0"></div>
-      <div class="list" style="grid-template-columns:1fr 1fr; display:grid">
-        <div class="item">
-          <div class="sub">Son Konum</div>
-          <div class="title" id="lastFix">—</div>
-          <div class="sub" id="lastAddr">—</div>
-          <div class="sub" id="lastCoords" style="opacity:.55"></div>
-        </div>
-        <div class="item">
-          <div class="sub">Takip</div>
-          <div class="row">
-            <button id="toggleBtn" class="btn primary">Takibi Başlat</button>
-            <select id="accuracySel" class="btn">
-              <option value="balanced">Dengeli</option>
-              <option value="high">Yüksek</option>
-              <option value="low">Düşük</option>
-            </select>
-          </div>
-        </div>
-      </div>
-    </section>
     <div class="pad-bottom"></div>
   </main>
 
-  <!-- MAP -->
   <main id="pg-map" class="page">
     <section class="card">
       <div class="title">Harita</div>
-      <div class="sub">Günün hareketleri ve kalış noktaları</div>
-      <div class="hr" style="height:1px;background:#141414;margin:10px 0"></div>
+      <div class="sub">Kayıtlı konumları gör</div>
+      <div class="hr"></div>
       <div id="map"></div>
     </section>
     <div class="pad-bottom"></div>
   </main>
 
-  <!-- SEARCH -->
   <main id="pg-search" class="page">
     <section class="card">
       <div class="title">Ara</div>
-      <div class="searchbar">
-        <div class="field">
-          <svg viewBox="0 0 24 24"><path d="M15.5 14h-.8l-.3-.3a6.5 6.5 0 10-.7.7l.3.3v.8l5 5 1.5-1.5-5-5zm-6 0A4.5 4.5 0 1114 9.5 4.5 4.5 0 019.5 14z"/></svg>
-          <input id="q" class="btn" placeholder="kelime, kişi, adres…"/>
-        </div>
+      <div class="row">
+        <input id="q" class="btn" placeholder="kelime, kişi, adres…"/>
         <button id="searchBtn" class="btn">Ara</button>
       </div>
-      <div class="hr" style="height:1px;background:#141414;margin:10px 0"></div>
-      <div class="seg" id="segTypes">
-        <button data-t="" class="btn active">Tümü</button>
-        <button data-t="visit" class="btn">Kalış</button>
-        <button data-t="call" class="btn">Arama</button>
-        <button data-t="note" class="btn">Not</button>
-      </div>
-      <div class="hr" style="height:1px;background:#141414;margin:10px 0"></div>
+      <div class="hr"></div>
       <div class="list" id="searchResults"></div>
     </section>
     <div class="pad-bottom"></div>
   </main>
 
-  <!-- SETTINGS -->
   <main id="pg-settings" class="page">
-    <section class="card">
-      <div class="title">Tema</div>
-      <div class="row" style="align-items:center">
-        <select id="themeSel" class="btn">
-          <option value="amoled">AMOLED Siyah</option>
-          <option value="graphite">Grafit</option>
-          <option value="aurora">Aurora (mavi-mor gradyan)</option>
-          <option value="sunset">Sunset (turuncu-pembe gradyan)</option>
-        </select>
-        <button id="shuffleGrad" class="btn">Gradyanı Karıştır</button>
-      </div>
-      <div class="sub" style="margin-top:6px">Vurgu rengi</div>
-      <div class="palette" id="accentRow"></div>
-    </section>
-
-    <section class="card">
-      <div class="title">Kalış Algılama</div>
-      <div>Yarıçap <input id="radiusInp" class="btn" type="number" min="30" max="300" step="10" value="120" style="width:90px"> m ·
-        Eşik <input id="dwellInp" class="btn" type="number" min="1" max="60" step="1" value="8" style="width:70px"> dk</div>
-    </section>
-
     <section class="card">
       <div class="title">Veri</div>
       <div class="row">
         <button id="exportBtn" class="btn">CSV indir</button>
         <label for="importFile" class="btn" style="cursor:pointer">İçe Aktar</label>
         <input id="importFile" type="file" accept="application/json" style="display:none"/>
-        <button id="clearBtn" class="btn danger">Tümünü Temizle</button>
+        <button id="clearBtn" class="btn">Tümünü Temizle</button>
       </div>
     </section>
     <div class="pad-bottom"></div>
@@ -309,7 +210,7 @@ body::-webkit-scrollbar{display:none}
   </a>
 </nav>
 
-<!-- Dial Overlay -->
+<!-- Speed Dial -->
 <div id="dialOverlay" class="dial-overlay"></div>
 <div id="dial" class="dial" style="display:none">
   <button id="miniNote" class="mini" title="Not">
@@ -318,476 +219,228 @@ body::-webkit-scrollbar{display:none}
   <button id="miniCall" class="mini" title="Çağrı">
     <svg viewBox="0 0 24 24"><path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2a1 1 0 011.01-.24 11.36 11.36 0 003.56.57 1 1 0 011 1v3.61a1 1 0 01-1 1A17 17 0 013 5a1 1 0 011-1h3.61a1 1 0 011 1 11.36 11.36 0 00.57 3.56 1 1 0 01-.24 1.01l-2.32 2.22z"/></svg>
   </button>
+  <button id="miniPlace" class="mini" title="Konum">
+    <svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 00-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 00-7-7zm0 9.5a2.5 2.5 0 112.5-2.5 2.5 2.5 0 01-2.5 2.5z"/></svg>
+  </button>
 </div>
 
-<!-- Permission hint -->
-<div id="permOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:80; align-items:center; justify-content:center; padding:20px">
-  <div style="max-width:540px; width:100%; background:#0a0a0a; border:1px solid var(--edge); border-radius:20px; padding:16px">
-    <div class="title">Konum izni gerekiyor</div>
-    <div class="sub" style="margin:6px 0 12px 0">Safari: “aA → Site Ayarları → Konum: İzin ver”. PWA: Ayarlar → Konum Servisleri.</div>
-    <div style="display:flex; justify-content:flex-end"><button class="btn" id="permOverlayClose">Tamam</button></div>
-  </div>
-</div>
-
-<!-- Detail Sheet -->
-<div id="detailSheet" class="sheet">
-  <div class="title" id="detailTitle">Detay</div>
-  <div class="sub" id="detailSub">—</div>
-  <div class="hr" style="height:1px;background:#141414;margin:10px 0"></div>
-  <div id="detailForm" class="list"></div>
-  <div class="row">
-    <button id="saveBtn" class="btn">Kaydet</button>
-    <button id="delBtn" class="btn danger">Sil</button>
-    <button id="closeSheet" class="btn">Kapat</button>
-  </div>
-</div>
-
-<!-- Composer (modern add) -->
-<div id="composer" class="composer" aria-hidden="true">
-  <div class="comp-head">
-    <div class="title" id="compTitle">Yeni</div>
-    <div class="comp-actions">
-      <button id="compCancel" class="btn">Vazgeç</button>
-      <button id="compSave" class="btn primary">Kaydet</button>
+<!-- Full-screen Composer -->
+<div id="modal" class="modal" aria-hidden="true">
+  <div class="scrim"></div>
+  <div class="sheet">
+    <div class="head">
+      <div class="seg" id="modeSeg">
+        <button data-m="note" class="segment active">Not</button>
+        <button data-m="call" class="segment">Çağrı</button>
+        <button data-m="place" class="segment">Konum</button>
+      </div>
+      <div class="seg">
+        <button id="cancelBtn" class="segment">Vazgeç</button>
+        <button id="saveBtn" class="segment" style="background:linear-gradient(180deg,#183022,#101a15); border-color:#254232">Kaydet</button>
+      </div>
     </div>
+    <div class="panel" id="formPanel"></div>
+    <div class="sub" style="text-align:right">Saat: <span id="nowTxt">—</span></div>
   </div>
-  <div id="compFields"></div>
 </div>
 
 <script>
-// ===== Utilities & Haptics =====
+// basic utils
 const $=(q)=>document.querySelector(q), $$=(q)=>Array.from(document.querySelectorAll(q));
-const dateKey=(ts)=> new Date(ts).toISOString().slice(0,10);
-const todayKey=()=> dateKey(Date.now());
-function fmtTime(ts){const d=new Date(ts);return d.toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'})}
-function dayLong(ts){const d=new Date(ts);return d.toLocaleDateString('tr-TR',{day:'2-digit',month:'long',weekday:'long'})}
-const startOfDay=(ts)=>{const d=new Date(ts);d.setHours(0,0,0,0);return d.getTime()};
-const endOfDay=(ts)=>{const d=new Date(ts);d.setHours(23,59,59,999);return d.getTime()};
-function haversine(a,b){const R=6371000;const toRad=(x)=>x*Math.PI/180;const dLat=toRad(b.lat-a.lat),dLon=toRad(b.lon-a.lon);const s=Math.sin(dLat/2)**2+Math.cos(toRad(a.lat))*Math.cos(toRad(b.lat))*Math.sin(dLon/2)**2;return 2*R*Math.asin(Math.sqrt(s))}
-function haptic(ms=20){ if(navigator.vibrate){ navigator.vibrate(ms) }}
+function haptic(ms=15){ if(navigator.vibrate){ navigator.vibrate(ms) } }
+const fmt=(t)=> new Date(t).toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'});
+const dayLong=(ts)=> new Date(ts).toLocaleDateString('tr-TR',{day:'2-digit',month:'long',weekday:'long'});
+const startDay=(ts)=>{const d=new Date(ts);d.setHours(0,0,0,0);return d.getTime()}; const endDay=(ts)=>{const d=new Date(ts);d.setHours(23,59,59,999);return d.getTime()};
+const todayKey=()=> new Date().toISOString().slice(0,10);
 
-// ===== State =====
+// state & storage
+const Store={key:'agenda.v9.1', data:{notes:[],calls:[],places:[],addrCache:{}},
+  load(){const raw=localStorage.getItem(this.key); if(raw){this.data=JSON.parse(raw)}; renderAll()},
+  save(){localStorage.setItem(this.key, JSON.stringify(this.data))}
+};
+
+// pages & tabs
 const pages={home:$('#pg-home'),map:$('#pg-map'),search:$('#pg-search'),settings:$('#pg-settings')};
 const tabs=$$('.tabbtn');
-function showTab(name){
-  Object.values(pages).forEach(p=>p.classList.remove('active'));
-  (pages[name]||pages.home).classList.add('active');
-  tabs.forEach(t=>t.classList.toggle('active',t.dataset.tab===name));
-  if(name==='map'){setTimeout(initMapOnce,50);setTimeout(()=>{if(window._map){window._map.invalidateSize();updateMap()}},120)}
-}
-tabs.forEach(t=>t.addEventListener('click',(e)=>{
-  const tab=t.dataset.tab;
-  if(tab==='add'){e.preventDefault();openDial();return}
-  haptic(10); showTab(tab);
-}));
+function showTab(name){ Object.values(pages).forEach(p=>p.classList.remove('active')); (pages[name]||pages.home).classList.add('active'); tabs.forEach(t=>t.classList.toggle('active',t.dataset.tab===name)); if(name==='map'){setTimeout(initMapOnce,80); setTimeout(()=>{if(window._map)window._map.invalidateSize(); updateMap()},160)} }
+tabs.forEach(t=>t.addEventListener('click',(e)=>{ const tab=t.dataset.tab; if(tab==='add'){ e.preventDefault(); openDial(); return } haptic(8); showTab(tab) }));
 showTab('home');
 
-const Store={key:'agenda.v9',
-  data:{points:[],visits:[],calls:[],notes:[],addrCache:{},theme:{mode:'amoled',accent:'#59a7ff'}},
-  load(){
-    const old=localStorage.getItem('agenda.v8.3')||localStorage.getItem('agenda.v8.1')||localStorage.getItem('agenda.v8')||localStorage.getItem('agenda.v7');
-    if(old && !localStorage.getItem(this.key)) localStorage.setItem(this.key,old);
-    const raw=localStorage.getItem(this.key); if(raw){this.data=JSON.parse(raw)}
-    applyTheme(this.data.theme||{mode:'amoled',accent:'#59a7ff'});
-    renderAll();
-  },
-  save(){localStorage.setItem(this.key,JSON.stringify(this.data))}
+// day & calendar
+let selectedDay=todayKey();
+function setDay(ts){ $('#dayLine').textContent=dayLong(ts) }
+setDay(Date.now());
+const weekdays=['Pzt','Sal','Çar','Per','Cum','Cmt','Paz'];
+function buildCal(){ const w=$('#calWeekdays'); w.innerHTML=''; weekdays.forEach(x=>{const d=document.createElement('div'); d.className='weekday'; d.textContent=x; w.appendChild(d)}); }
+function daysInMonth(y,m){return new Date(y,m+1,0).getDate()} function firstWeekday(y,m){const d=new Date(y,m,1).getDay(); return (d+6)%7}
+let cy=new Date().getFullYear(), cm=new Date().getMonth();
+function renderCalendar(){ $('#monthLabel').textContent=new Date(cy,cm,1).toLocaleDateString('tr-TR',{month:'long',year:'numeric'}); const grid=$('#calGrid'); grid.innerHTML=''; const days=daysInMonth(cy,cm), off=firstWeekday(cy,cm), prev=daysInMonth(cy,cm-1);
+  for(let i=0;i<off;i++)grid.appendChild(cell(prev-off+i+1,true));
+  for(let d=1; d<=days; d++)grid.appendChild(cell(d,false));
+  const left=42-(off+days); for(let d=1; d<=left; d++)grid.appendChild(cell(d,true,true));
+  highlightSel();
+}
+function cell(day,muted,next=false){
+  const el=document.createElement('div'); el.className='d'+(muted?' muted':''); el.textContent=day;
+  let y=cy,m=cm; if(muted && !next){m--; if(m<0){m=11;y--}} if(muted && next){m++; if(m>11){m=0;y++}}
+  const key=`${y}-${String(m+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`; if(key===todayKey()) el.classList.add('today'); el.dataset.key=key;
+  el.onclick=()=>{selectedDay=key; setDay(new Date(key)); highlightSel(); renderAll(); haptic(6)}; return el;
+}
+function highlightSel(){ $$('#calGrid .d').forEach(d=>d.classList.toggle('sel', d.dataset.key===selectedDay)) }
+$('#prevMonth').onclick=()=>{cm--; if(cm<0){cm=11;cy--} renderCalendar(); haptic(6)}; $('#nextMonth').onclick=()=>{cm++; if(cm>11){cm=0;cy++} renderCalendar(); haptic(6)};
+buildCal(); renderCalendar();
+const wrap=$('#calWrap'); const togg=$('#calToggle'); function setCal(open){wrap.classList.toggle('open',open); togg.querySelector('span').textContent=open?'Takvimi gizle':'Takvimi aç'; togg.setAttribute('aria-expanded',open)}; setCal(false);
+togg.onclick=()=>{ setCal(!wrap.classList.contains('open')); haptic(8) };
+
+// timeline
+function renderTimeline(){
+  const list=$('#timelineList'); list.innerHTML='';
+  const base=new Date(selectedDay+'T00:00:00').getTime(); const from=startDay(base), to=endDay(base);
+  const evs=[];
+  for(const n of Store.data.notes){ if(n.ts>=from&&n.ts<=to) evs.push({type:'note', sort:n.ts, ts:n.ts, title:n.title||'', text:n.text}) }
+  for(const c of Store.data.calls){ if(c.ts>=from&&c.ts<=to) evs.push({type:'call', sort:c.ts+0.1, ts:c.ts, who:c.who, callType:c.type, notes:c.notes}) }
+  for(const p of Store.data.places){ if(p.ts>=from&&p.ts<=to) evs.push({type:'place', sort:p.ts+0.2, ts:p.ts, name:p.name, addr:p.addr}) }
+  evs.sort((a,b)=>a.sort-b.sort);
+  if(!evs.length){ const empty=document.createElement('div'); empty.className='item'; empty.innerHTML='<div class="sub">Bu gün için kayıt yok.</div>'; list.appendChild(empty); return }
+  const chunk=30; let i=0;
+  function draw(){ for(let k=0;k<chunk && i<evs.length;k++,i++){ const e=evs[i]; const el=document.createElement('div'); el.className='item timeline event'; el.dataset.id=e.id;
+      const dot = e.type==='place'?'ok': e.type==='call'?(e.callType==='cevapsız'?'bad':'') : 'note';
+      const title = e.type==='place' ? 'Konum' : e.type==='call' ? (e.callType==='giden'?'Giden':e.callType==='cevapsız'?'Cevapsız':'Gelen')+' arama' : (e.title? e.title+' — ':'')+'Not';
+      const sub = e.type==='place' ? (e.name ? e.name+' • ' : '')+(e.addr||'') : e.type==='call' ? [e.who||'Bilinmeyen', e.notes||''].filter(Boolean).join(' • ') : e.text;
+      el.innerHTML=`<div class="dot ${dot}"></div><div><div class="ev-title">${fmt(e.ts)} — ${title}</div><div class="sub">${sub||''}</div></div>`;
+      el.onclick=()=>openEditor(e);
+      list.appendChild(el); } if(i<evs.length){ (window.requestIdleCallback||setTimeout)(draw,50) } }
+  draw();
+}
+function renderAll(){ renderTimeline(); if(window._map) updateMap() }
+setInterval(()=>$('#dayLine').textContent=dayLong(Date.now()),60*1000);
+
+// editor (full-screen modal)
+const modal=$('#modal'), formPanel=$('#formPanel'), nowTxt=$('#nowTxt');
+let mode='note';
+function openModal(m){ mode=m; document.body.classList.add('noscroll'); modal.classList.add('open'); buildForm(mode); nowTxt.textContent=fmt(Date.now()); modal.setAttribute('aria-hidden','false') }
+function closeModal(){ modal.classList.remove('open'); document.body.classList.remove('noscroll'); modal.setAttribute('aria-hidden','true') }
+$('#cancelBtn').onclick=closeModal;
+$('#modeSeg').addEventListener('click',(e)=>{const btn=e.target.closest('.segment'); if(!btn) return; $$('#modeSeg .segment').forEach(x=>x.classList.remove('active')); btn.classList.add('active'); mode=btn.dataset.m; buildForm(mode) });
+
+function buildForm(m){
+  formPanel.innerHTML='';
+  if(m==='note'){
+    formPanel.innerHTML=`
+      <div class="field"><label>Başlık (opsiyonel)</label><input id="f_title" class="btn" placeholder="Başlık"></div>
+      <div class="field"><label>Not</label><textarea id="f_text" rows="6" class="btn" placeholder="Bugün olanlar…"></textarea></div>
+      <div class="field"><label>Etiketler (virgülle)</label><input id="f_tags" class="btn" placeholder="iş, spor, aile"></div>`;
+  } else if(m==='call'){
+    formPanel.innerHTML=`
+      <div class="field"><label>Kişi</label><input id="f_who" class="btn" placeholder="Kişi adı"></div>
+      <div class="field"><label>Tür</label>
+        <div class="row"><button class="btn" data-t="gelen">Gelen</button><button class="btn" data-t="giden">Giden</button><button class="btn" data-t="cevapsız">Cevapsız</button></div>
+        <input id="f_type" value="gelen" hidden/>
+      </div>
+      <div class="field"><label>Not (opsiyonel)</label><textarea id="f_notes" rows="4" class="btn" placeholder="Detay…"></textarea></div>`;
+    formPanel.querySelectorAll('.field .btn[data-t]').forEach(b=>b.onclick=()=>{formPanel.querySelectorAll('.field .btn[data-t]').forEach(x=>x.style.outline=''); b.style.outline='2px solid var(--tint)'; $('#f_type').value=b.dataset.t});
+  } else {
+    formPanel.innerHTML=`
+      <div class="field"><label>Yer adı</label><input id="p_name" class="btn" placeholder="örn. Ev, İş, Kafe"></div>
+      <div class="field"><label>Adres</label><input id="p_addr" class="btn" placeholder="Cadde, No, İlçe…"></div>
+      <div class="field"><button id="pickMap" class="btn">Haritada seç</button><div class="sub" id="pickHint">Enlem/Boylam: —</div></div>`;
+    $('#pickMap').onclick=openPicker;
+  }
+}
+
+$('#saveBtn').onclick=()=>{
+  const ts=Date.now();
+  if(mode==='note'){
+    const text=$('#f_text').value.trim(); const title=$('#f_title').value.trim(); const tags=$('#f_tags').value;
+    if(!text){alert('Not boş olamaz'); return}
+    Store.data.notes.push({ts,text,title,tags});
+  } else if(mode==='call'){
+    const who=$('#f_who').value.trim(); const type=$('#f_type').value; const notes=$('#f_notes').value;
+    if(!who && type!=='cevapsız'){alert('Kişi?'); return}
+    Store.data.calls.push({ts,who,type,notes});
+  } else {
+    const name=$('#p_name').value.trim(); const addr=$('#p_addr').value.trim(); const lat=window._pickLat||null; const lon=window._pickLon||null;
+    if(!name && !addr){alert('En azından isim ya da adres gir.'); return}
+    Store.data.places.push({ts,name,addr,lat,lon});
+  }
+  Store.save(); closeModal(); renderAll();
 };
 
-let watchId=null,currentAnchor=null,lastPoint=null,selectedDay=todayKey();
-function setDayText(ts){$('#dayLine').textContent=dayLong(ts)}
-setDayText(Date.now());
-function setBeam(run){const b=$('#beam');b.classList.remove('ok','warn');b.classList.add(run?'ok':'warn')}
-setBeam(false);
-
-// ===== Calendar =====
-const weekdays=['Pzt','Sal','Çar','Per','Cum','Cmt','Paz'];
-function buildWeekdays(){const root=$('#calWeekdays');root.innerHTML='';for(const w of weekdays){const d=document.createElement('div');d.className='weekday';d.textContent=w;root.appendChild(d)}}
-function daysInMonth(y,m){return new Date(y,m+1,0).getDate()}
-function firstWeekday(y,m){const d=new Date(y,m,1).getDay();return (d+6)%7}
-let calYear=new Date().getFullYear(),calMonth=new Date().getMonth();
-function renderCalendar(){
-  $('#monthLabel').textContent=new Date(calYear,calMonth,1).toLocaleDateString('tr-TR',{month:'long',year:'numeric'});
-  const grid=$('#calGrid');grid.innerHTML='';
-  const days=daysInMonth(calYear,calMonth),offset=firstWeekday(calYear,calMonth),prevDays=daysInMonth(calYear,calMonth-1);
-  for(let i=0;i<offset;i++)grid.appendChild(dayCell(prevDays-offset+i+1,true));
-  for(let d=1;d<=days;d++)grid.appendChild(dayCell(d,false));
-  const cellsNeeded=42-(offset+days); for(let d=1;d<=cellsNeeded;d++)grid.appendChild(dayCell(d,true,true));
-  highlightSelected();
-}
-function dayCell(day,muted,next=false){
-  const div=document.createElement('div');div.className='d'+(muted?' muted':'');div.textContent=day;
-  let y=calYear,m=calMonth;
-  if(muted && !next){m--; if(m<0){m=11; y--}}
-  if(muted && next){m++; if(m>11){m=0; y++}}
-  const key=`${y}-${String(m+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-  if(key===todayKey())div.classList.add('today');
-  div.dataset.key=key;
-  div.onclick=()=>{selectedDay=key;setDayText(new Date(key));highlightSelected();renderAll();haptic(8)};
-  return div;
-}
-function highlightSelected(){$$('#calGrid .d').forEach(el=>el.classList.toggle('sel',el.dataset.key===selectedDay))}
-$('#prevMonth').onclick=()=>{calMonth--;if(calMonth<0){calMonth=11;calYear--}renderCalendar();haptic(6)};
-$('#nextMonth').onclick=()=>{calMonth++;if(calMonth>11){calMonth=0;calYear++}renderCalendar();haptic(6)};
-buildWeekdays();renderCalendar();
-const wrap=$('#calWrap');const togg=$('#calToggle');
-function setCal(open){wrap.classList.toggle('open',open);togg.setAttribute('aria-expanded',open);togg.querySelector('span').textContent=open?'Takvimi gizle':'Takvimi aç'}
-setCal(false);
-togg.onclick=()=>{setCal(!wrap.classList.contains('open'));haptic(10)};
-
-// ===== Reverse Geocode (throttled queue) =====
-const geoQueue=[]; let geoBusy=false;
-function queueGeocode(lat,lon,cb){
-  geoQueue.push({lat,lon,cb}); pump();
-}
-function pump(){
-  if(geoBusy||!geoQueue.length) return;
-  geoBusy=true;
-  const job=geoQueue.shift();
-  reverseGeocode(job.lat,job.lon).then(s=>job.cb(s)).finally(()=>{geoBusy=false; setTimeout(pump,180)}) // ~5-6 req/sn
-}
-async function reverseGeocode(lat,lon){
-  const key=lat.toFixed(5)+','+lon.toFixed(5);
-  if(Store.data.addrCache[key]) return Store.data.addrCache[key];
-  try{
-    const url=`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}&accept-language=tr`;
-    const res=await fetch(url,{headers:{'Accept':'application/json','User-Agent':'AjandaPWA/1.0'}});
-    const j=await res.json();
-    const a=j.address||{};
-    const parts=[[a.road,a.house_number].filter(Boolean).join(' '),a.neighbourhood||a.suburb||a.district||a.borough,a.town||a.city||a.county,a.state].filter(Boolean);
-    const s=parts.join(', ');
-    Store.data.addrCache[key]=s||j.display_name||key;
-    Store.save();
-    return Store.data.addrCache[key];
-  }catch{return key}
-}
-
-// ===== Geolocation =====
-function requestOneShotPermission(){
-  return new Promise((resolve,reject)=>{
-    if(!('geolocation'in navigator)) return reject(new Error('konum yok'));
-    navigator.geolocation.getCurrentPosition(resolve,reject,{enableHighAccuracy:true,timeout:10000,maximumAge:0});
-  });
-}
-async function startTracking(){
-  try{await requestOneShotPermission()}catch(e){if(e.code===1)$('#permOverlay').style.display='flex';return}
-  const optSel=$('#accuracySel').value;
-  const options={enableHighAccuracy:optSel==='high',maximumAge:optSel==='low'?120000:30000,timeout:20000};
-  watchId=navigator.geolocation.watchPosition(onPos,onErr,options);
-  setBeam(true); $('#toggleBtn').textContent='Durdur'; haptic(15);
-}
-function stopTracking(){
-  if(watchId!==null){navigator.geolocation.clearWatch(watchId);watchId=null}
-  setBeam(false); $('#toggleBtn').textContent='Takibi Başlat'; haptic(15);
-  finalizeAnchorIfNeeded(true);
-  Store.save(); renderAll();
-}
-function onErr(err){if(err&&err.code===1)$('#permOverlay').style.display='flex'}
-async function onPos(pos){
-  const {latitude:lat,longitude:lon,accuracy}=pos.coords; const ts=Date.now();
-  if(accuracy>150) return;
-  const p={lat,lon,acc:Math.round(accuracy),ts};
-  $('#lastFix').textContent=`${new Date(ts).toLocaleDateString('tr-TR',{weekday:'short',day:'2-digit',month:'short'})} • ${fmtTime(ts)} • ±${p.acc}m`;
-  $('#lastCoords').textContent=`${lat.toFixed(5)}, ${lon.toFixed(5)}`;
-  $('#lastAddr').textContent='adres aranıyor…'; queueGeocode(lat,lon,(s)=>$('#lastAddr').textContent=s);
-
-  // track simplification
-  if(!lastPoint || haversine(lastPoint,p)>8 || (ts-lastPoint.ts)>120000){Store.data.points.push(p);lastPoint=p}
-
-  const R=Number($('#radiusInp').value||120), MIN=(Number($('#dwellInp').value||8))*60*1000;
-  if(!currentAnchor){currentAnchor={lat,lon,startedAt:ts,lastAt:ts}}
-  else{
-    const d=haversine(currentAnchor,{lat,lon});
-    if(d<=R){currentAnchor.lastAt=ts}
-    else{finalizeAnchorIfNeeded(false);currentAnchor={lat,lon,startedAt:ts,lastAt:ts}}
-  }
-  Store.save(); renderAll();
-}
-document.getElementById('toggleBtn').onclick=()=>watchId?stopTracking():startTracking();
-document.getElementById('permOverlayClose').onclick=()=>$('#permOverlay').style.display='none';
-
-function finalizeAnchorIfNeeded(force){
-  if(!currentAnchor) return;
-  const MIN=(Number($('#dwellInp').value||8))*60*1000;
-  const dur=currentAnchor.lastAt-currentAnchor.startedAt;
-  if(force||dur>=MIN){
-    if(dur>=MIN){
-      Store.data.visits.push({id:'v_'+currentAnchor.startedAt,lat:currentAnchor.lat,lon:currentAnchor.lon,start:currentAnchor.startedAt,end:currentAnchor.lastAt});
-    }
-    currentAnchor=null;
-  }
-}
-
-// ===== Speed Dial & Composer =====
+// speed dial
 const dial=$('#dial'), dialOv=$('#dialOverlay'), addBtn=$('#addTab');
 function openDial(){
-  const r=addBtn.getBoundingClientRect();
-  const y = Math.round(r.top - 80);
-  const x = Math.round(r.left + r.width/2);
-  dial.style.left = (x - 56 - 6)+'px';
-  dial.style.top = y+'px';
-  dial.style.display='flex';
-  dialOv.classList.add('open');
+  const r=addBtn.getBoundingClientRect(); const y=Math.round(r.top - 80); const x=Math.round(r.left + r.width/2);
+  dial.style.left=(x - 56*1.5 - 10)+'px'; dial.style.top=y+'px'; dial.style.display='flex'; dialOv.classList.add('open');
   setTimeout(()=>{$$('#dial .mini').forEach(m=>m.classList.add('show'))},10);
 }
-function closeDial(){
-  $$('#dial .mini').forEach(m=>m.classList.remove('show'));
-  setTimeout(()=>{dial.style.display='none'; dialOv.classList.remove('open')},160);
-}
+function closeDial(){ $$('#dial .mini').forEach(m=>m.classList.remove('show')); setTimeout(()=>{dial.style.display='none'; dialOv.classList.remove('open')},160) }
 dialOv.addEventListener('click',closeDial);
+$('#miniNote').onclick=()=>{closeDial(); openModal('note')}
+$('#miniCall').onclick=()=>{closeDial(); openModal('call')}
+$('#miniPlace').onclick=()=>{closeDial(); openModal('place')}
 
-const composer=$('#composer'), compTitle=$('#compTitle'), compFields=$('#compFields');
-let compMode='note';
-function openComposer(mode){
-  compMode=mode; compFields.innerHTML=''; composer.classList.add('open'); composer.setAttribute('aria-hidden','false'); haptic(8);
-  if(mode==='note'){
-    compTitle.textContent='Yeni Not';
-    compFields.innerHTML=`
-      <div class="comp-field"><span class="lbl">Başlık (opsiyonel)</span><input id="comp_title" class="btn" placeholder="Başlık"></div>
-      <div class="comp-field"><span class="lbl">Not</span><textarea id="comp_text" rows="4" class="btn" placeholder="Neler oldu?"></textarea></div>`;
-  }else{
-    compTitle.textContent='Yeni Çağrı';
-    compFields.innerHTML=`
-      <div class="comp-field"><span class="lbl">Kişi</span><input id="comp_who" class="btn" placeholder="Kişi adı"></div>
-      <div class="comp-field"><span class="lbl">Tür</span>
-        <select id="comp_type" class="btn"><option value="gelen">gelen</option><option value="giden">giden</option><option value="cevapsız">cevapsız</option></select>
-      </div>
-      <div class="comp-field"><span class="lbl">Not (opsiyonel)</span><textarea id="comp_notes" rows="3" class="btn" placeholder="Detaylar…"></textarea></div>`;
-  }
-}
-$('#compCancel').onclick=()=>{composer.classList.remove('open'); composer.setAttribute('aria-hidden','true')};
-$('#compSave').onclick=()=>{
-  const ts=Date.now();
-  if(compMode==='note'){
-    const text=$('#comp_text').value.trim(); const title=$('#comp_title').value.trim();
-    if(!text){alert('Not boş olamaz');return}
-    Store.data.notes.push({id:'n_'+ts,ts,text, title});
-  }else{
-    const who=$('#comp_who').value.trim(); const type=$('#comp_type').value; const notes=($('#comp_notes').value||'').trim();
-    if(!who && type!=='cevapsız'){alert('Kişi?');return}
-    Store.data.calls.push({id:'c_'+ts,ts,who,type,notes});
-  }
-  Store.save(); composer.classList.remove('open'); renderAll(); haptic(12);
-};
-
-$('#miniNote').onclick=()=>{closeDial(); openComposer('note')};
-$('#miniCall').onclick=()=>{closeDial(); openComposer('call')};
-
-// ===== Render (chunked for performance) =====
-function renderAll(){renderTimeline(); if(window._map) updateMap()}
-function renderTimeline(){
-  const tl=$('#timelineList'); tl.innerHTML='';
-  const dayTS=new Date(selectedDay+'T00:00:00').getTime(); const from=startOfDay(dayTS),to=endOfDay(dayTS);
-  const events=[];
-  for(const v of Store.data.visits){if(v.end<from||v.start>to)continue;events.push({id:v.id,ts:v.start,sort:v.start,type:'visit',lat:v.lat,lon:v.lon,dur:((v.end-v.start)/60000|0),label:v.label||''})}
-  for(const n of Store.data.notes){if(n.ts>=from&&n.ts<=to)events.push({id:n.id,ts:n.ts,sort:n.ts+0.1,type:'note',text:n.text,title:n.title||''})}
-  for(const c of Store.data.calls){if(c.ts>=from&&c.ts<=to)events.push({id:c.id,ts:c.ts,sort:c.ts+0.2,type:'call',who:c.who,callType:c.type,notes:c.notes})}
-  events.sort((a,b)=>a.sort-b.sort);
-  if(events.length===0){const empty=document.createElement('div');empty.className='item';empty.innerHTML='<div class="sub">Bu gün için kayıt yok.</div>';tl.appendChild(empty);return}
-  const chunk=30; let i=0;
-  function drawChunk(){
-    for(let k=0;k<chunk && i<events.length;k++,i++){
-      const ev=events[i];
-      const el=document.createElement('div'); el.className='item timeline event'; el.dataset.id=ev.id; el.dataset.type=ev.type;
-      const dotClass=ev.type==='visit'?'ok':ev.type==='call'?(ev.callType==='cevapsız'?'bad':''):'note';
-      el.innerHTML=`<div class="dot ${dotClass}"></div><div><div class="ev-title">${fmtTime(ev.ts)} — ${label(ev)}</div><div class="sub">${sub(ev)}</div></div>`;
-      el.onclick=()=>openDetail(ev);
-      tl.appendChild(el);
-      if(ev.type==='visit'){
-        queueGeocode(ev.lat,ev.lon,(addr)=>{
-          const s=(ev.label? ev.label+' • ' : '')+addr+' • '+Math.max(1,ev.dur)+' dk';
-          el.querySelector('.sub').textContent=s;
-        });
-      }
-    }
-    if(i<events.length){(window.requestIdleCallback||setTimeout)(drawChunk,50)}
-  }
-  drawChunk();
-
-  function label(ev){if(ev.type==='visit')return'Kalış'; if(ev.type==='call')return(ev.callType==='giden'?'Giden':ev.callType==='cevapsız'?'Cevapsız':'Gelen')+' arama'; return (ev.title? ev.title+' — ':'')+'Not'}
-  function sub(ev){if(ev.type==='note')return ev.text; if(ev.type==='call')return[ev.who||'Bilinmeyen',ev.notes||''].filter(Boolean).join(' • '); return'adres alınıyor…'}
-}
-
-// ===== Detail sheet (edit/delete) =====
-const sheet=$('#detailSheet');
-function openDetail(ev){
-  $('#detailTitle').textContent=(ev.type==='visit'?'Kalış':ev.type==='call'?'Arama':'Not')+' — '+fmtTime(ev.ts);
-  $('#detailSub').textContent=ev.type==='visit'?'adres alınıyor…':new Date(ev.ts).toLocaleDateString('tr-TR');
-  const form=$('#detailForm'); form.innerHTML='';
-  if(ev.type==='note'){
-    form.innerHTML=`<label class="sub">Not</label><textarea id="f_text" rows="4" class="btn">${ev.text||''}</textarea>`;
-  }else if(ev.type==='call'){
-    form.innerHTML=`<label class="sub">Kişi</label><input id="f_who" class="btn" value="${ev.who||''}"/>
-      <label class="sub">Tür</label><select id="f_type" class="btn"><option value="gelen">gelen</option><option value="giden">giden</option><option value="cevapsız">cevapsız</option></select>
-      <label class="sub">Not</label><textarea id="f_notes" rows="3" class="btn">${ev.notes||''}</textarea>`;
-    setTimeout(()=>{$('#f_type').value=ev.callType||'gelen'},0);
-  }else{
-    form.innerHTML=`<div class="sub">Bu kalışa isim ekle (etiket):</div>
-      <input id="f_vlabel" class="btn" placeholder="örn. Ev, İş, Spor" value="${ev.label||''}"/>`;
-    queueGeocode(ev.lat,ev.lon,(s)=>$('#detailSub').textContent=s+(ev.dur?' • '+ev.dur+' dk':''));
-  }
-  sheet.classList.add('open'); haptic(10);
-  $('#delBtn').onclick=()=>{
-    if(!confirm('Silinsin mi?')) return;
-    const S=Store.data;
-    if(ev.type==='visit')S.visits=S.visits.filter(x=>x.id!==ev.id);
-    if(ev.type==='note')S.notes=S.notes.filter(x=>x.id!==ev.id);
-    if(ev.type==='call')S.calls=S.calls.filter(x=>x.id!==ev.id);
-    Store.save(); renderAll(); sheet.classList.remove('open');
-  };
-  $('#saveBtn').onclick=()=>{
-    const S=Store.data;
-    if(ev.type==='note'){const n=S.notes.find(x=>x.id===ev.id); if(n){n.text=$('#f_text').value}}
-    if(ev.type==='call'){const c=S.calls.find(x=>x.id===ev.id); if(c){c.who=$('#f_who').value;c.type=$('#f_type').value;c.notes=$('#f_notes').value}}
-    if(ev.type==='visit'){const v=S.visits.find(x=>x.id===ev.id); if(v){v.label=$('#f_vlabel').value||''}}
-    Store.save(); renderAll(); sheet.classList.remove('open'); haptic(8);
-  };
-}
-$('#closeSheet').onclick=()=>{sheet.classList.remove('open')};
-
-// ===== Map =====
+// map (view & picker)
 function initMapOnce(){
   if(window._map) return;
   window._map=L.map('map',{zoomControl:true}).setView([39.93,32.86],12);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap'}).addTo(window._map);
-  window._routeLayer=L.polyline([], {color:getComputedStyle(document.documentElement).getPropertyValue('--tint').trim(),weight:3,opacity:.85}).addTo(window._map);
-  window._visitLayer=L.layerGroup().addTo(window._map);
+  window._placesLayer=L.layerGroup().addTo(window._map);
   updateMap();
-  setTimeout(()=>window._map.invalidateSize(),300);
-  window.addEventListener('resize',()=>{if(window._map){window._map.invalidateSize()}});
-}
-function simplifyTrack(pts, tol=8){
-  if(pts.length<=2) return pts.slice();
-  const out=[pts[0]];
-  for(let i=1;i<pts.length-1;i++){
-    const d=haversine(pts[i], out[out.length-1]);
-    if(d>tol) out.push(pts[i]);
-  }
-  out.push(pts[pts.length-1]); return out;
 }
 function updateMap(){
   if(!window._map) return;
-  const dayTS=new Date(selectedDay+'T00:00:00').getTime(); const from=startOfDay(dayTS),to=endOfDay(dayTS);
-  const pts=(Store.data.points||[]).filter(p=>p.ts>=from&&p.ts<=to);
-  const vs=(Store.data.visits||[]).filter(v=>(v.end>=from&&v.start<=to));
-  const simp=simplifyTrack(pts,8);
-  window._routeLayer.setLatLngs(simp.map(p=>[p.lat,p.lon]));
-  window._visitLayer.clearLayers();
-  const bounds=[]; for(const p of simp)bounds.push([p.lat,p.lon]);
-  for(const v of vs){
-    const m=L.circleMarker([v.lat,v.lon],{radius:6,color:'#22c55e',fill:true,fillOpacity:.95}).addTo(window._visitLayer);
-    m.bindPopup((v.label? v.label+' • ' : '')+'Kalış • '+new Date(v.start).toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'})+' — '+new Date(v.end).toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'}));
-    bounds.push([v.lat,v.lon]);
-  }
-  if(bounds.length){window._map.fitBounds(bounds,{padding:[20,20]})}
-  else if(lastPoint){window._map.setView([lastPoint.lat,lastPoint.lon],14)}
+  window._placesLayer.clearLayers();
+  const pts=[];
+  for(const p of Store.data.places){ if(p.lat && p.lon){ const m=L.marker([p.lat,p.lon]).addTo(window._placesLayer); m.bindPopup((p.name||'Konum')+'<br/>'+(p.addr||'')); pts.push([p.lat,p.lon]); } }
+  if(pts.length) window._map.fitBounds(pts,{padding:[20,20]});
+}
+function openPicker(){
+  // open small overlay map picker
+  const ov=document.createElement('div'); ov.style.cssText='position:fixed;inset:0;z-index:1200;background:rgba(0,0,0,.55)';
+  const wrap=document.createElement('div'); wrap.style.cssText='position:absolute;left:12px;right:12px;top:calc(10px + env(safe-area-inset-top));bottom:calc(var(--tabh) + env(safe-area-inset-bottom) + 12px);background:#0a0a0a;border:1px solid var(--edge);border-radius:18px;overflow:hidden';
+  const mapdiv=document.createElement('div'); mapdiv.id='pickMapDiv'; mapdiv.style.cssText='position:absolute;inset:0';
+  wrap.appendChild(mapdiv); ov.appendChild(wrap); document.body.appendChild(ov);
+  const mp=L.map('pickMapDiv').setView([39.93,32.86],13);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mp);
+  let marker=null;
+  function setLatLng(latlng){ if(marker) marker.setLatLng(latlng); else marker=L.marker(latlng,{draggable:true}).addTo(mp); window._pickLat=latlng.lat; window._pickLon=latlng.lng; $('#pickHint').textContent='Enlem/Boylam: '+latlng.lat.toFixed(5)+', '+latlng.lng.toFixed(5) }
+  mp.on('click',e=>setLatLng(e.latlng));
+  const btn=document.createElement('button'); btn.textContent='Seç'; btn.className='btn'; btn.style.cssText='position:absolute;right:12px;bottom:12px;z-index:10';
+  btn.onclick=()=>{document.body.removeChild(ov)}; wrap.appendChild(btn);
 }
 
-// ===== Search =====
-let segType="";
-$('#segTypes').addEventListener('click',(e)=>{
-  const btn=e.target.closest('button'); if(!btn) return;
-  $$('#segTypes button').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active'); segType=btn.dataset.t; haptic(6);
-});
+// search
 $('#searchBtn').onclick=()=>{
-  const q=$('#q').value.trim().toLowerCase();
-  const out=$('#searchResults'); out.innerHTML='';
-  function push(l,s){const el=document.createElement('div'); el.className='item'; el.innerHTML=`<div class="title">${l}</div><div class="sub">${s}</div>`; out.appendChild(el)}
-
-  for(const v of Store.data.visits){
-    if(segType&&segType!=='visit') continue;
-    const addrKey=(v.lat.toFixed(5)+','+v.lon.toFixed(5)); const addr=Store.data.addrCache[addrKey]||'';
-    const text=((v.label||'')+' '+addr).toLowerCase();
-    if(!q||text.includes(q)) push('Kalış — '+new Date(v.start).toLocaleDateString('tr-TR'), (v.label? v.label+' • ':'')+(addr||''));
-  }
-  for(const c of Store.data.calls){
-    if(segType&&segType!=='call') continue;
-    const text=((c.who||'')+' '+(c.notes||'')).toLowerCase();
-    if(!q||text.includes(q)) push((c.type==='giden'?'Giden':c.type==='cevapsız'?'Cevapsız':'Gelen')+' arama — '+new Date(c.ts).toLocaleDateString('tr-TR'), (c.who||'Bilinmeyen')+(c.notes?' • '+c.notes:''));
-  }
-  for(const n of Store.data.notes){
-    if(segType&&segType!=='note') continue;
-    const text=((n.title||'')+' '+(n.text||'')).toLowerCase();
-    if(!q||text.includes(q)) push('Not — '+new Date(n.ts).toLocaleDateString('tr-TR'), (n.title? n.title+' • ':'')+n.text);
-  }
+  const q=($('#q').value||'').toLowerCase(); const out=$('#searchResults'); out.innerHTML='';
+  function push(title,sub){const el=document.createElement('div'); el.className='item'; el.innerHTML='<div class="title">'+title+'</div><div class="sub">'+(sub||'')+'</div>'; out.appendChild(el)}
+  Store.data.notes.forEach(n=>{const txt=((n.title||'')+' '+n.text+' '+(n.tags||'')).toLowerCase(); if(!q||txt.includes(q)) push('Not — '+new Date(n.ts).toLocaleDateString('tr-TR'), (n.title? n.title+' • ':'')+n.text)});
+  Store.data.calls.forEach(c=>{const txt=((c.who||'')+' '+(c.notes||'')+' '+(c.type||'')).toLowerCase(); if(!q||txt.includes(q)) push((c.type==='giden'?'Giden':c.type==='cevapsız'?'Cevapsız':'Gelen')+' arama', (c.who||'Bilinmeyen')+(c.notes?' • '+c.notes:''))});
+  Store.data.places.forEach(p=>{const txt=((p.name||'')+' '+(p.addr||'')).toLowerCase(); if(!q||txt.includes(q)) push('Konum', (p.name? p.name+' • ':'')+(p.addr||''))});
   if(!out.children.length) out.innerHTML='<div class="sub">Sonuç yok</div>';
 };
 
-// ===== Theme Engine (4 modes + gradient shuffle) =====
-const accents=['#59a7ff','#22c55e','#f59e0b','#ef4444','#a78bfa','#14b8a6','#fb7185'];
-const gradients={
-  aurora:[
-   'radial-gradient(1200px 800px at 20% 10%, rgba(56,189,248,.25), transparent 60%), radial-gradient(1000px 700px at 80% 30%, rgba(168,85,247,.25), transparent 60%), radial-gradient(900px 900px at 40% 80%, rgba(99,102,241,.18), transparent 60%)',
-   'radial-gradient(900px 700px at 15% 20%, rgba(34,197,94,.22), transparent 60%), radial-gradient(1000px 700px at 85% 40%, rgba(2,132,199,.24), transparent 60%), radial-gradient(800px 800px at 40% 85%, rgba(59,130,246,.18), transparent 60%)'
-  ],
-  sunset:[
-   'radial-gradient(1100px 700px at 80% 10%, rgba(251,146,60,.28), transparent 60%), radial-gradient(900px 700px at 20% 30%, rgba(244,63,94,.25), transparent 60%), radial-gradient(900px 900px at 50% 85%, rgba(217,70,239,.15), transparent 60%)',
-   'radial-gradient(900px 700px at 10% 15%, rgba(245,158,11,.26), transparent 60%), radial-gradient(900px 700px at 70% 35%, rgba(239,68,68,.24), transparent 60%), radial-gradient(900px 900px at 40% 85%, rgba(236,72,153,.16), transparent 60%)'
-  ]
-};
-function applyTheme(theme){
-  document.documentElement.style.setProperty('--tint', theme.accent||'#59a7ff');
-  const bgfx=$('#bgfx');
-  if(theme.mode==='graphite'){
-    document.documentElement.style.setProperty('--bg','#0b0b0b');
-    document.documentElement.style.setProperty('--panel','rgba(16,16,16,.72)');
-    document.documentElement.style.setProperty('--edge','#1d1d1d');
-    bgfx.style.background='transparent';
-  }else if(theme.mode==='aurora' || theme.mode==='sunset'){
-    document.documentElement.style.setProperty('--bg','#000');
-    document.documentElement.style.setProperty('--panel','rgba(12,12,12,.7)');
-    document.documentElement.style.setProperty('--edge','#1a1a1a');
-    const list=gradients[theme.mode];
-    const pick=list[Math.floor(Math.random()*list.length)];
-    bgfx.style.background=pick;
-  }else{ // amoled
-    document.documentElement.style.setProperty('--bg','#000');
-    document.documentElement.style.setProperty('--panel','rgba(12,12,12,.72)');
-    document.documentElement.style.setProperty('--edge','#181818');
-    bgfx.style.background='transparent';
-  }
-  document.body.style.background = getComputedStyle(document.documentElement).getPropertyValue('--bg');
-  // palette UI
-  const row=$('#accentRow'); if(row && !row.childElementCount){
-    accents.forEach(col=>{
-      const b=document.createElement('button'); b.className='swatch'; b.style.background=col; b.setAttribute('aria-selected', (Store.data.theme.accent===col)+''); b.onclick=()=>{
-        Store.data.theme.accent=col; applyTheme(Store.data.theme); $$('button.swatch').forEach(x=>x.setAttribute('aria-selected','false')); b.setAttribute('aria-selected','true'); Store.save();
-      }; row.appendChild(b);
-    });
-  }
-  const sel=$('#themeSel'); if(sel){ sel.value=theme.mode; sel.onchange=()=>{Store.data.theme.mode=sel.value; applyTheme(Store.data.theme); Store.save()} }
-  const sh=$('#shuffleGrad'); if(sh){ sh.onclick=()=>{if(Store.data.theme.mode==='aurora'||Store.data.theme.mode==='sunset'){applyTheme(Store.data.theme)}} }
-}
-
-// ===== Export / Import / Clear =====
-function exportCSVDay(){
-  const day=selectedDay;
-  const from=startOfDay(new Date(day).getTime()),to=endOfDay(new Date(day).getTime());
+// export / import
+document.getElementById('exportBtn').onclick=()=>{
   const rows=[['time','type','title','details']];
-  function addRow(t,ty,title,det){rows.push([new Date(t).toISOString(),ty,title,(det||'').replaceAll(',',';')])}
-  for(const v of Store.data.visits){if(v.end<from||v.start>to)continue; addRow(v.start,'visit',v.label? 'Kalış ('+v.label+')':'Kalış',`${v.lat},${v.lon}`)}
-  for(const c of Store.data.calls){if(c.ts<from||c.ts>to)continue; addRow(c.ts,'call',c.type,(c.who||'')+' '+(c.notes||''))}
-  for(const n of Store.data.notes){if(n.ts<from||n.ts>to)continue; addRow(n.ts,'note',(n.title||'Not'),n.text||'')}
+  function add(t,ty,ti,de){rows.push([new Date(t).toISOString(),ty,ti,de])}
+  Store.data.notes.forEach(n=>add(n.ts,'note',n.title||'Not',n.text||''));
+  Store.data.calls.forEach(c=>add(c.ts,'call',c.type,(c.who||'')+' '+(c.notes||'')));
+  Store.data.places.forEach(p=>add(p.ts,'place',p.name||'Konum',(p.addr||'')+' '+(p.lat? (p.lat+','+p.lon):'')));
   const csv=rows.map(r=>r.map(x=>`"${String(x).replaceAll('"','""')}"`).join(',')).join('\n');
-  const blob=new Blob([csv],{type:'text/csv'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`ajanda-${day}.csv`; a.click();
-}
-document.getElementById('exportBtn').onclick=exportCSVDay;
+  const blob=new Blob([csv],{type:'text/csv'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='ajanda.csv'; a.click();
+};
 document.getElementById('importFile').onchange=(e)=>{
-  const f=e.target.files[0]; if(!f) return;
-  const rd=new FileReader();
-  rd.onload=()=>{try{const obj=JSON.parse(rd.result); if(obj&&obj.visits&&obj.calls){Store.data=obj; Store.save(); renderAll()}}catch{alert('Hatalı dosya')}};
+  const f=e.target.files[0]; if(!f) return; const rd=new FileReader();
+  rd.onload=()=>{try{const obj=JSON.parse(rd.result); if(obj && (obj.notes||obj.calls||obj.places)){ Store.data=obj; Store.save(); renderAll() }}catch{alert('Hatalı dosya')}};
   rd.readAsText(f);
 };
-document.getElementById('clearBtn').onclick=()=>{
-  if(confirm('Tüm verileri sil?')){localStorage.removeItem(Store.key);Store.data={points:[],visits:[],calls:[],notes:[],addrCache:{},theme:{mode:'amoled',accent:'#59a7ff'}};applyTheme(Store.data.theme);renderAll()}
-};
+document.getElementById('clearBtn').onclick=()=>{ if(confirm('Tüm verileri sil?')){ localStorage.removeItem(Store.key); Store.data={notes:[],calls:[],places:[],addrCache:{}}; renderAll() } };
 
-// ===== Init =====
+// init
 Store.load();
-setInterval(()=>setDayText(Date.now()), 60*1000);
+setInterval(()=>setDay(Date.now()),60*1000);
 
-// Service worker
+// service worker
 if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('./sw.js').catch(()=>{})})}
 </script>
 </body></html>
