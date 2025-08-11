@@ -1,291 +1,442 @@
+/* Ajanda v10.2.1 — liquid glass, TR takvim, PWA cache-safe */
 
-// AJANDA v10.2 – TR calendar, safe FAB, liquid glass, 60fps animations
+const VERSION = '10.2.1';
+
+// ================== State & Storage ==================
+const storeKey = 'ajanda.items';
+const state = {
+  today: new Date(),
+  selected: new Date(),
+  items: [],
+  calCursor: null, // ay görünümü
+};
 
 const $ = sel => document.querySelector(sel);
-const $$ = sel => Array.from(document.querySelectorAll(sel));
+const $$ = sel => document.querySelectorAll(sel);
 
-const state = {
-  selected: todayLocal(),
-  monthCursor: curMonthStart(todayLocal()),
-  items: loadItems()
-};
+function load() {
+  try { state.items = JSON.parse(localStorage.getItem(storeKey) || '[]'); }
+  catch { state.items = []; }
+}
+function save() {
+  localStorage.setItem(storeKey, JSON.stringify(state.items));
+}
+function uid() { return Math.random().toString(36).slice(2)+Date.now().toString(36); }
+function fmtDateISO(d){ return d.toISOString().slice(0,10); }
 
-// ---- Utils (timezone-safe, Monday-first calendar) ----
-function todayLocal(){
-  const now = new Date();
-  return new Date(now.getFullYear(), now.getMonth(), now.getDate());
-}
-function curMonthStart(d){ return new Date(d.getFullYear(), d.getMonth(), 1); }
-function daysInMonth(y,m){ return new Date(y, m+1, 0).getDate(); }
-function dowMon0(d){
-  // JS getDay: 0=Sun..6=Sat ; convert to Monday=0..Sunday=6
-  const g = d.getDay(); return (g+6)%7;
-}
+// ================== Locale ==================
 const TR_MONTHS = ["Ocak","Şubat","Mart","Nisan","Mayıs","Haziran","Temmuz","Ağustos","Eylül","Ekim","Kasım","Aralık"];
-const TR_DAYS = ["Pzt","Sal","Çar","Per","Cum","Cmt","Paz"];
+const TR_DOW = ["Paz","Pzt","Sal","Çar","Per","Cum","Cmt"]; // Görsel başlık için
+const TR_DOW_MON_FIRST = ["Pzt","Sal","Çar","Per","Cum","Cmt","Paz"]; // grid için
 
-// ---- Storage ----
-function loadItems(){
-  try{ return JSON.parse(localStorage.getItem("ajanda_items")||"[]"); }catch(e){ return []; }
-}
-function saveItems(){ localStorage.setItem("ajanda_items", JSON.stringify(state.items)); }
-
-// ---- Rendering ----
-function fmtDateLabel(d){
-  const day = d.getDate();
-  const month = TR_MONTHS[d.getMonth()];
-  const weekdayFull = ["Pazartesi","Salı","Çarşamba","Perşembe","Cuma","Cumartesi","Pazar"][ (d.getDay()+6)%7 ];
-  return `${day} ${month} ${d.getFullYear()} ${weekdayFull}`;
+function prettyDayText(d){
+  const dowLong = ["Pazar","Pazartesi","Salı","Çarşamba","Perşembe","Cuma","Cumartesi"][d.getDay()];
+  return `${d.getDate()} ${TR_MONTHS[d.getMonth()]} ${d.getFullYear()} ${dowLong}`;
 }
 
-function refreshHeader(){
-  $("#dateLabel").textContent = fmtDateLabel(state.selected);
-  $("#monthLabel").textContent = TR_MONTHS[state.selected.getMonth()] + " " + state.selected.getFullYear();
-}
-
-function renderCalendar(){
-  const wrap = $("#calendarWrap");
-  const grid = $("#calGrid");
-  const y = state.monthCursor.getFullYear();
-  const m = state.monthCursor.getMonth();
-  $("#calMonthTitle").textContent = `${TR_MONTHS[m]} ${y}`;
-
-  grid.innerHTML = "";
-  // headers Mon..Sun
-  TR_DAYS.forEach(txt=>{
-    const el = document.createElement("div");
-    el.className = "dow";
-    el.textContent = txt;
-    grid.appendChild(el);
-  });
-
-  const dim = daysInMonth(y, m);
+// ================== Calendar (Monday-first, TR-correct) ==================
+function buildCalendar(date){
+  const y = date.getFullYear();
+  const m = date.getMonth();
   const first = new Date(y,m,1);
-  const pad = dowMon0(first); // blanks before 1st so that Monday is column 1
+  const last = new Date(y,m+1,0);
+  const firstDowSun0 = first.getDay();      // 0..6, 0=Sun
+  const lead = (firstDowSun0 + 6) % 7;      // Monday-first boşluk
 
-  for(let i=0;i<pad;i++){
-    const b = document.createElement("div");
-    b.className="day blank";
-    grid.appendChild(b);
-  }
-  for(let d=1; d<=dim; d++){
-    const el = document.createElement("div");
-    el.className = "day";
+  const grid = $("#calGrid");
+  grid.innerHTML = '';
+
+  // DOW header
+  TR_DOW_MON_FIRST.forEach(d => {
+    const el = document.createElement('div');
+    el.className = 'dow';
     el.textContent = d;
-    const cur = new Date(y,m,d);
-    if(sameDate(cur, todayLocal())) el.classList.add("today");
-    if(sameDate(cur, state.selected)) el.classList.add("selected");
-    el.addEventListener("click", ()=>{
-      state.selected = cur;
-      refreshHeader();
-      renderCalendar();
-      renderList();
-      vibrate(10);
-    });
     grid.appendChild(el);
+  });
+
+  // lead blanks
+  for(let i=0;i<lead;i++){
+    const c = document.createElement('div');
+    c.className = 'cell muted';
+    grid.appendChild(c);
+  }
+
+  // days
+  const selISO = fmtDateISO(state.selected);
+  for(let d=1; d<=last.getDate(); d++){
+    const c = document.createElement('button');
+    c.className = 'cell glass';
+    const cur = new Date(y,m,d);
+    c.textContent = d;
+    c.dataset.date = cur.toISOString();
+    if(fmtDateISO(cur) === selISO) c.classList.add('sel');
+    c.addEventListener('click', () => {
+      state.selected = cur;
+      $('#prettyDay').textContent = prettyDayText(state.selected);
+      $('#prettyMonth').textContent = TR_MONTHS[state.selected.getMonth()] + ' ' + state.selected.getFullYear();
+      renderTimeline();
+      buildCalendar(state.calCursor); // yeniden çiz
+    });
+    grid.appendChild(c);
+  }
+
+  $('#calTitle').textContent = `${TR_MONTHS[m]} ${y}`;
+}
+
+// ================== Timeline ==================
+function renderTimeline(){
+  const list = $('#timelineList');
+  const dayISO = fmtDateISO(state.selected);
+  const items = state.items.filter(it => it.date === dayISO)
+                  .sort((a,b)=> (a.time||'00:00').localeCompare(b.time||'00:00'));
+  list.classList.toggle('empty', items.length===0);
+  list.innerHTML = items.length? '' : `<div class="empty-note glass">Bu gün için kayıt yok.</div>`;
+
+  for(const it of items){
+    const row = document.createElement('button');
+    row.className = 'tli';
+    const dot = document.createElement('div');
+    dot.className = 'dot';
+    dot.style.background = it.kind==='note' ? 'var(--dot-note)' :
+                           it.kind==='call' ? 'var(--dot-call)' : 'var(--dot-place)';
+    const body = document.createElement('div');
+    const title = document.createElement('div');
+    title.className='title'; title.textContent = it.title || (
+      it.kind==='note' ? 'Not' : it.kind==='call' ? (it.who || 'Çağrı') : 'Konum'
+    );
+    const meta = document.createElement('div');
+    meta.className='meta';
+    meta.textContent = [(it.time||''), it.kind==='call' ? (it.callType||'') : '', it.kind==='place' ? (it.address||'') : '']
+      .filter(Boolean).join(' • ');
+    body.appendChild(title); body.appendChild(meta);
+    row.appendChild(dot); row.appendChild(body);
+    row.addEventListener('click', ()=>openDetail(it.id));
+    list.appendChild(row);
   }
 }
 
-function sameDate(a,b){ return a.getFullYear()==b.getFullYear() && a.getMonth()==b.getMonth() && a.getDate()==b.getDate(); }
+// ================== FAB & Quick Add ==================
+const overlay = $('#quickAdd');
+$('#fab').addEventListener('click', openQuickAdd);
+overlay.addEventListener('click', (e)=> { if(e.target.classList.contains('overlay-bg')) closeQuickAdd(); });
 
-function renderList(){
-  const list = $("#entries");
-  list.innerHTML = "";
-  const dayItems = state.items.filter(x=> sameDate(new Date(x.when), state.selected))
-                              .sort((a,b)=> new Date(a.when)-new Date(b.when));
-  $("#noEntries").style.display = dayItems.length? "none":"block";
-  dayItems.forEach(item=>{
-    const row = document.createElement("div");
-    row.className = "entry";
-    const dot = document.createElement("div");
-    dot.className = "dot " + item.type;
-    const text = document.createElement("div");
-    text.innerHTML = `<div><strong>${item.type==='note'?'Not':(item.type==='call'?'Çağrı':'Konum')}</strong></div>
-                      <div class="meta">${timeOf(new Date(item.when))}${item.type==='call'&&item.person? ' · '+item.person:''}${item.type==='place'&&item.address? ' · '+item.address:''}</div>`;
-    row.appendChild(dot); row.appendChild(text);
-    row.addEventListener("click", ()=> openDetail(item.id));
-    list.appendChild(row);
+function openQuickAdd(){
+  overlay.classList.remove('hidden');
+  requestAnimationFrame(()=>{
+    $$('.qa-btn').forEach((el,i)=>{
+      el.style.transitionDelay = `${60*i}ms`;
+      el.style.transform = 'translateY(0)';
+      el.style.opacity = '1';
+    });
   });
 }
-
-function timeOf(d){
-  return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+function closeQuickAdd(){
+  $$('.qa-btn').forEach(el=>{ el.style.transitionDelay='0ms'; el.style.transform='translateY(40px)'; el.style.opacity='0'; });
+  setTimeout(()=>overlay.classList.add('hidden'), 200);
 }
-
-// ---- Overlay / FAB ----
-const overlay = $("#overlay");
-$("#fab").addEventListener("click", ()=>{
-  overlay.classList.toggle("show");
-  overlay.classList.toggle("hidden");
-  vibrate(8);
+$$('.qa-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    closeQuickAdd();
+    const kind = btn.dataset.kind;
+    openForm(kind);
+  });
 });
-overlay.addEventListener("click", (e)=>{
-  if(e.target === overlay) closeOverlay();
-});
-function closeOverlay(){ overlay.classList.remove("show"); setTimeout(()=>overlay.classList.add("hidden"), 180); }
 
-$$(".opt").forEach(btn=> btn.addEventListener("click", ()=>{
-  const type = btn.dataset.type;
-  closeOverlay();
-  openSheet(type);
-}));
+// ================== Forms ==================
+const formHost = $('#formHost');
+function openForm(kind, existing){
+  formHost.classList.add('active');
+  const isEdit = !!existing;
+  const ttl = isEdit ? 'Düzenle' : (`Yeni ${kind==='note'?'Not':kind==='call'?'Çağrı':'Konum'}`);
+  const saveId = existing?.id;
 
-// ---- Sheets (forms) ----
-const sheet = $("#sheet");
-const sheetBody = $("#sheetBody");
-let editId = null;
-function openSheet(type, existing=null){
-  editId = existing? existing.id : null;
-  $("#sheetTitle").textContent = (existing? "Düzenle: " : "Yeni ") + (type==='note'?'Not': type==='call'?'Çağrı':'Konum');
-  sheetBody.innerHTML = buildForm(type, existing);
-  sheet.classList.remove("hidden");
-  requestAnimationFrame(()=>sheet.classList.add("show"));
-  sheet.dataset.type = type;
-}
-function closeSheet(){
-  sheet.classList.remove("show");
-  setTimeout(()=>sheet.classList.add("hidden"), 180);
-}
-$("#sheetBack").addEventListener("click", closeSheet);
-$("#sheetSave").addEventListener("click", ()=>{
-  const type = sheet.dataset.type;
-  const payload = readForm(type);
-  if(!payload) return;
-  if(editId){
-    const idx = state.items.findIndex(x=>x.id===editId);
-    state.items[idx] = {...state.items[idx], ...payload};
-  }else{
-    state.items.push({id:crypto.randomUUID(), type, when: new Date().toISOString(), ...payload});
+  const html = `
+    <div class="sheet enter" role="dialog" aria-modal="true">
+      <div class="bar">
+        <button class="glass icon-btn" id="fBack"><svg><use href="#i-back"/></svg></button>
+        <div class="ttl">${ttl}</div>
+        <button class="glass icon-btn" id="fSave"><svg><use href="#i-check"/></svg></button>
+      </div>
+
+      ${kind==='note'? `
+        <div class="field"><div class="label">Başlık (opsiyonel)</div>
+          <input id="fTitle" class="input" placeholder="örn. Fikir, yapılacak..."></div>
+        <div class="field"><div class="label">Not</div>
+          <textarea id="fBody" class="textarea" placeholder="Metni yaz..."></textarea></div>
+        <div class="field"><div class="label">Etiketler (virgülle)</div>
+          <input id="fTags" class="input" placeholder="iş, spor, aile"></div>
+      `: kind==='call'? `
+        <div class="field"><div class="label">Kişi adı</div>
+          <input id="fWho" class="input" placeholder="örn. Ayşe Yılmaz"></div>
+        <div class="field"><div class="label">Tür</div>
+          <div class="chips">
+            <button class="chip" data-val="Gelen">Gelen</button>
+            <button class="chip" data-val="Giden">Giden</button>
+            <button class="chip" data-val="Cevapsız">Cevapsız</button>
+          </div>
+        </div>
+        <div class="field"><div class="label">Not (opsiyonel)</div>
+          <input id="fBody" class="input" placeholder="Kısa not..."></div>
+      `: `
+        <div class="field"><div class="label">Yer adı</div>
+          <input id="fTitle" class="input" placeholder="örn. Ev, İş, Kafe"></div>
+        <div class="field"><div class="label">Adres</div>
+          <input id="fAddress" class="input" placeholder="Cadde, No, ilçe..."></div>
+        <div class="field"><div class="label">Koordinat</div>
+          <input id="fCoord" class="input mono" placeholder="enlem,boylam"></div>
+      `}
+      <div class="field">
+        <div class="label">Saat</div>
+        <input id="fTime" class="input" type="time">
+      </div>
+    </div>
+  `;
+  formHost.innerHTML = html;
+
+  // prefills for edit
+  if(existing){
+    $('#fTitle') && ($('#fTitle').value = existing.title || '');
+    $('#fBody') && ($('#fBody').value = existing.body || '');
+    $('#fTags') && ($('#fTags').value = (existing.tags||[]).join(', '));
+    $('#fWho') && ($('#fWho').value = existing.who || '');
+    $('#fAddress') && ($('#fAddress').value = existing.address || '');
+    $('#fCoord') && ($('#fCoord').value = existing.coord || '');
+    $('#fTime') && ($('#fTime').value = existing.time || '');
+    if(existing.callType){
+      $$('.chip').forEach(c => { if(c.dataset.val===existing.callType) c.classList.add('sel'); });
+    }
   }
-  saveItems(); renderList(); closeSheet(); vibrate(15);
-});
 
-function buildForm(type, existing){
-  const v = existing||{};
-  if(type==='note'){
-    return `
-      <div class="field"><label>Başlık</label><input class="input" id="fTitle" placeholder="opsiyonel" value="${v.title||''}"></div>
-      <div class="field"><label>Not</label><textarea class="input" id="fText" rows="6" placeholder="Metni yaz...">${v.text||''}</textarea></div>
-      <div class="field"><label>Etiketler (virgülle)</label><input class="input" id="fTags" placeholder="iş, kişisel" value="${(v.tags||[]).join(', ')}"></div>`;
-  }
-  if(type==='call'){
-    return `
-      <div class="field"><label>Kişi</label><input class="input" id="fPerson" placeholder="örn. Ayşe" value="${v.person||''}"></div>
-      <div class="field"><label>Tür</label>
-        <div class="row">
-          ${["Gelen","Giden","Cevapsız"].map(kind=>{
-            const k = {Gelen:"in",Giden:"out",Cevapsız:"miss"}[kind];
-            const checked = (v.kind||"in")===(k) ? 'checked':'';
-            return `<label class="chip"><input type="radio" name="kind" value="${k}" ${checked}> ${kind}</label>`;
-          }).join("")}
+  // Call chips
+  $$('.chip').forEach(c=> c.addEventListener('click', ()=>{
+    $$('.chip').forEach(x=>x.classList.remove('sel'));
+    c.classList.add('sel');
+  }));
+
+  $('#fBack').addEventListener('click', closeForm);
+  $('#fSave').addEventListener('click', ()=>{
+    const date = fmtDateISO(state.selected);
+    if(kind==='note'){
+      const title = $('#fTitle').value.trim();
+      const body = $('#fBody').value.trim();
+      const tags = $('#fTags').value.split(',').map(s=>s.trim()).filter(Boolean);
+      if(!body){ toast("Not boş olamaz."); return; }
+      upsert({ id: saveId||uid(), kind, title, body, tags,
+               date, time: $('#fTime').value || null });
+    } else if(kind==='call'){
+      const who = $('#fWho').value.trim();
+      const callType = $('.chip.sel')?.dataset.val || 'Gelen';
+      const body = $('#fBody').value.trim();
+      upsert({ id: saveId||uid(), kind, who, callType, body,
+               date, time: $('#fTime').value || null, title: who });
+    } else {
+      const title = $('#fTitle').value.trim();
+      const address = $('#fAddress').value.trim();
+      const coord = $('#fCoord').value.trim();
+      if(!(title || address)){ toast("En azından isim ya da adres gir."); return; }
+      upsert({ id: saveId||uid(), kind, title, address, coord,
+               date, time: $('#fTime').value || null });
+    }
+    closeForm();
+    renderTimeline();
+  });
+}
+function closeForm(){ formHost.classList.remove('active'); formHost.innerHTML=''; }
+function upsert(obj){
+  const idx = state.items.findIndex(it=>it.id===obj.id);
+  if(idx>=0) state.items[idx] = {...state.items[idx], ...obj};
+  else state.items.push(obj);
+  save();
+}
+
+// ================== Detail ==================
+const detailHost = $('#detailHost');
+function openDetail(id){
+  const it = state.items.find(x=>x.id===id); if(!it) return;
+  detailHost.classList.add('active');
+  const ttl = it.title || (it.kind==='note'?'Not':it.kind==='call'?'Çağrı':'Konum');
+  const color = it.kind==='note'?'var(--dot-note)':it.kind==='call'?'var(--dot-call)':'var(--dot-place)';
+  detailHost.innerHTML = `
+    <div class="sheet enter">
+      <div class="bar">
+        <button class="glass icon-btn" id="dBack"><svg><use href="#i-back"/></svg></button>
+        <div class="ttl">${ttl}</div>
+        <div style="display:flex; gap:8px">
+          <button class="glass icon-btn" id="dEdit"><svg><use href="#i-edit"/></svg></button>
+          <button class="glass icon-btn" id="dDel"><svg><use href="#i-trash"/></svg></button>
         </div>
       </div>
-      <div class="field"><label>Kısa not</label><input class="input" id="fNote" placeholder="opsiyonel" value="${v.note||''}"></div>`;
-  }
-  // place
-  return `
-    <div class="field"><label>Yer adı</label><input class="input" id="fPlaceName" placeholder="örn. Ev, Ofis" value="${v.placeName||''}"></div>
-    <div class="field"><label>Adres</label><input class="input" id="fAddress" placeholder="Cadde, No, İlçe..." value="${v.address||''}"></div>
-    <div class="row">
-      <div class="field" style="flex:1"><label>Enlem</label><input class="input" id="fLat" placeholder="39.9" value="${v.lat||''}"></div>
-      <div class="field" style="flex:1"><label>Boylam</label><input class="input" id="fLng" placeholder="32.8" value="${v.lng||''}"></div>
+      <div class="field">
+        <div class="label">Tarih & Saat</div>
+        <div class="input" style="display:flex; gap:8px; align-items:center;">
+          <span class="dot" style="background:${color}"></span>
+          <span>${prettyDayText(new Date(it.date))} ${it.time? ('• '+it.time):''}</span>
+        </div>
+      </div>
+      ${it.kind==='note' ? `
+        ${it.title? `<div class="field"><div class="label">Başlık</div><div class="input">${esc(it.title)}</div></div>`:''}
+        ${it.body? `<div class="field"><div class="label">Not</div><div class="input">${nl2br(esc(it.body))}</div></div>`:''}
+        ${(it.tags&&it.tags.length)? `<div class="chips">${it.tags.map(t=>`<span class="chip">${esc(t)}</span>`).join('')}</div>`:''}
+      `: it.kind==='call' ? `
+        <div class="field"><div class="label">Kişi</div><div class="input">${esc(it.who||'—')}</div></div>
+        <div class="field"><div class="label">Tür</div><div class="input">${esc(it.callType||'—')}</div></div>
+        ${it.body? `<div class="field"><div class="label">Not</div><div class="input">${esc(it.body)}</div></div>`:''}
+      `: `
+        ${it.title? `<div class="field"><div class="label">Yer</div><div class="input">${esc(it.title)}</div></div>`:''}
+        ${it.address? `<div class="field"><div class="label">Adres</div><div class="input">${esc(it.address)}</div></div>`:''}
+        ${it.coord? `<div class="field"><div class="label">Koordinat</div><div class="input mono">${esc(it.coord)}</div></div>`:''}
+      `}
+    </div>
+  `;
+  $('#dBack').addEventListener('click', ()=>{ detailHost.classList.remove('active'); detailHost.innerHTML=''; });
+  $('#dEdit').addEventListener('click', ()=>{ detailHost.classList.remove('active'); detailHost.innerHTML=''; openForm(it.kind, it); });
+  $('#dDel').addEventListener('click', ()=>{
+    if(confirm('Silinsin mi?')){
+      state.items = state.items.filter(x=>x.id!==id); save(); renderTimeline();
+      detailHost.classList.remove('active'); detailHost.innerHTML='';
+    }
+  });
+}
+function esc(s){ return s.replace(/[&<>"]/g,m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' })[m]); }
+function nl2br(s){ return s.replace(/\n/g,'<br>'); }
+
+// ================== Search ==================
+const searchHost = $('#searchHost');
+$('#btnSearch').addEventListener('click', openSearch);
+function openSearch(){
+  searchHost.classList.add('active');
+  searchHost.innerHTML = `
+    <div class="sheet enter">
+      <div class="bar">
+        <button class="glass icon-btn" id="sBack"><svg><use href="#i-back"/></svg></button>
+        <div class="ttl">Arama</div>
+        <span style="width:40px"></span>
+      </div>
+      <div class="field"><input id="sQuery" class="input" placeholder="kelime, kişi..."></div>
+      <div class="chips">
+        <button class="chip sel" data-k="all">Tümü</button>
+        <button class="chip" data-k="note">Not</button>
+        <button class="chip" data-k="call">Çağrı</button>
+        <button class="chip" data-k="place">Konum</button>
+      </div>
+      <div id="sResults" class="tl-list" style="margin-top:12px"></div>
     </div>`;
-}
-function readForm(type){
-  if(type==='note'){
-    const title = $("#fTitle").value.trim();
-    const text = $("#fText").value.trim();
-    if(!title && !text){ alert("En azından bir başlık ya da not gir."); return null; }
-    const tags = $("#fTags").value.split(",").map(s=>s.trim()).filter(Boolean);
-    return {title, text, tags};
+  const q = $('#sQuery'), r = $('#sResults');
+  const chips = $$('.chip');
+  chips.forEach(c=>c.addEventListener('click', ()=>{ chips.forEach(x=>x.classList.remove('sel')); c.classList.add('sel'); doSearch(); }));
+  q.addEventListener('input', doSearch);
+  $('#sBack').addEventListener('click', ()=>{ searchHost.classList.remove('active'); searchHost.innerHTML=''; });
+  doSearch();
+  function doSearch(){
+    const text = q.value.trim().toLowerCase();
+    const filt = $('.chip.sel').dataset.k;
+    const items = state.items.filter(it => (filt==='all'||it.kind===filt) &&
+      (text==='' || JSON.stringify(it).toLowerCase().includes(text)));
+    r.innerHTML = '';
+    for(const it of items){
+      const row = document.createElement('button');
+      row.className='tli';
+      const dot = document.createElement('div'); dot.className='dot';
+      dot.style.background = it.kind==='note' ? 'var(--dot-note)' :
+                             it.kind==='call' ? 'var(--dot-call)' : 'var(--dot-place)';
+      const meta = document.createElement('div'); meta.className='meta';
+      meta.textContent = `${it.date}${it.time? ' • '+it.time:''}`;
+      const title = document.createElement('div'); title.className='title'; title.textContent = it.title || (it.kind==='call'?(it.who||'Çağrı'): (it.kind==='note'?'Not':'Konum'));
+      const body = document.createElement('div'); body.appendChild(title); body.appendChild(meta);
+      row.appendChild(dot); row.appendChild(body);
+      row.addEventListener('click', ()=>openDetail(it.id));
+      r.appendChild(row);
+    }
+    if(!items.length) r.innerHTML = `<div class="empty-note glass">Sonuç yok.</div>`;
   }
-  if(type==='call'){
-    const person = $("#fPerson").value.trim();
-    const kind = (document.querySelector('input[name="kind"]:checked')||{value:"in"}).value;
-    const note = $("#fNote").value.trim();
-    return {person, kind, note};
-  }
-  const placeName = $("#fPlaceName").value.trim();
-  const address = $("#fAddress").value.trim();
-  const lat = $("#fLat").value.trim();
-  const lng = $("#fLng").value.trim();
-  if(!placeName && !address){ alert("En azından isim ya da adres gir."); return null; }
-  return {placeName, address, lat, lng};
-}
-
-// ---- Details ----
-const ds = {
-  show:false, id:null
-};
-function openDetail(id){
-  ds.id = id;
-  const item = state.items.find(x=>x.id===id);
-  $("#detailTitle").textContent = item.type==='note'?'Not':item.type==='call'?'Çağrı':'Konum';
-  $("#detailBody").innerHTML = detailHtml(item);
-  $("#detail").classList.remove("hidden");
-  requestAnimationFrame(()=>$("#detail").classList.add("show"));
-}
-function closeDetail(){
-  $("#detail").classList.remove("show");
-  setTimeout(()=>$("#detail").classList.add("hidden"), 180);
-}
-$("#detailBack").addEventListener("click", closeDetail);
-$("#detailEdit").addEventListener("click", ()=>{
-  const it = state.items.find(x=>x.id===ds.id);
-  closeDetail();
-  openSheet(it.type, it);
-});
-$("#detailDelete").addEventListener("click", ()=>{
-  if(confirm("Silinsin mi?")){
-    state.items = state.items.filter(x=>x.id!==ds.id);
-    saveItems(); renderList(); closeDetail();
-  }
-});
-function detailHtml(it){
-  const when = new Date(it.when);
-  if(it.type==='note'){
-    return `<div class="field"><label>Başlık</label><div>${it.title||'—'}</div></div>
-            <div class="field"><label>Not</label><div>${(it.text||'—').replace(/\n/g,'<br>')}</div></div>
-            <div class="field"><label>Etiketler</label><div>${(it.tags||[]).join(', ')||'—'}</div></div>
-            <div class="field"><label>Saat</label><div>${timeOf(when)}</div></div>`;
-  }
-  if(it.type==='call'){
-    return `<div class="field"><label>Kişi</label><div>${it.person||'Bilinmiyor'}</div></div>
-            <div class="field"><label>Tür</label><div>${{in:'Gelen',out:'Giden',miss:'Cevapsız'}[it.kind||'in']}</div></div>
-            <div class="field"><label>Not</label><div>${it.note||'—'}</div></div>
-            <div class="field"><label>Saat</label><div>${timeOf(when)}</div></div>`;
-  }
-  return `<div class="field"><label>Yer</label><div>${it.placeName||'—'}</div></div>
-          <div class="field"><label>Adres</label><div>${it.address||'—'}</div></div>
-          <div class="field"><label>Koordinat</label><div>${(it.lat&&it.lng)? it.lat+', '+it.lng : '—'}</div></div>
-          <div class="field"><label>Saat</label><div>${timeOf(when)}</div></div>`;
 }
 
-// ---- Calendar controls ----
-$("#btnCalendar").addEventListener("click", ()=>{
-  $("#calendarWrap").classList.toggle("hidden");
-});
-$("#calPrev").addEventListener("click", ()=>{
-  const c = state.monthCursor; state.monthCursor = new Date(c.getFullYear(), c.getMonth()-1, 1);
-  renderCalendar();
-});
-$("#calNext").addEventListener("click", ()=>{
-  const c = state.monthCursor; state.monthCursor = new Date(c.getFullYear(), c.getMonth()+1, 1);
-  renderCalendar();
-});
+// ================== Settings ==================
+$('#btnSettings').addEventListener('click', openSettings);
+function openSettings(){
+  const host = $('#formHost'); host.classList.add('active');
+  host.innerHTML = `
+    <div class="sheet enter">
+      <div class="bar">
+        <button class="glass icon-btn" id="stBack"><svg><use href="#i-back"/></svg></button>
+        <div class="ttl">Ayarlar</div>
+        <span style="width:40px"></span>
+      </div>
+      <div class="field"><div class="label">Sürüm</div><div class="input mono">v${VERSION}</div></div>
+      <div class="field"><button id="btnExport" class="chip">Verileri JSON olarak indir</button></div>
+      <div class="field">
+        <label class="chip" for="imp">JSON içe aktar</label>
+        <input id="imp" type="file" accept="application/json" style="display:none">
+      </div>
+      <div class="field"><button id="btnClear" class="chip" style="background:#3b82f6;border-color:#3b82f6;">Önbelleği Temizle (SW + Cache)</button></div>
+      <div class="field"><button id="btnWipe" class="chip" style="background:#ef4444;border-color:#ef4444;">Tüm Kayıtları Sil</button></div>
+    </div>
+  `;
+  $('#stBack').addEventListener('click', closeForm);
+  $('#btnExport').addEventListener('click', ()=>{
+    const blob = new Blob([JSON.stringify(state.items,null,2)],{type:'application/json'});
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'ajanda-data.json'; a.click();
+  });
+  $('#imp').addEventListener('change', async e=>{
+    const f = e.target.files[0]; if(!f) return;
+    try{
+      const txt = await f.text(); const arr = JSON.parse(txt);
+      if(Array.isArray(arr)){ state.items = arr; save(); renderTimeline(); toast('İçe aktarıldı.'); }
+    }catch{ toast('Dosya okunamadı.'); }
+  });
+  $('#btnWipe').addEventListener('click', ()=>{
+    if(confirm('Tüm kayıtlar silinsin mi?')){ state.items=[]; save(); renderTimeline(); toast('Silindi.'); }
+  });
+  $('#btnClear').addEventListener('click', clearAppCache);
+}
 
-// ---- Search (placeholder) ----
-$("#btnSearch").addEventListener("click", ()=>{
-  alert("Arama: kelime ve tür filtreleri (Not/Çağrı/Konum). v10.3'te tam ekran cam panel gelecektir.");
-});
+async function clearAppCache(){
+  try{
+    const regs = await navigator.serviceWorker.getRegistrations(); for(const r of regs) await r.unregister();
+    const keys = await caches.keys(); await Promise.all(keys.map(k=>caches.delete(k)));
+    toast('Önbellek temizlendi. Sayfa yenileniyor...');
+    setTimeout(()=>location.reload(), 400);
+  }catch{
+    location.reload();
+  }
+}
 
-// ---- Haptics ----
-function vibrate(ms){ if(navigator.vibrate) navigator.vibrate(ms); }
+// ================== Toast ==================
+function toast(msg){
+  const t = document.createElement('div');
+  t.className='glass'; t.style.position='fixed'; t.style.left='50%'; t.style.bottom='calc(env(safe-area-inset-bottom,0) + 90px)';
+  t.style.transform='translateX(-50%)'; t.style.padding='12px 16px'; t.style.borderRadius='14px'; t.textContent=msg;
+  t.style.zIndex='2147483900'; document.body.appendChild(t);
+  setTimeout(()=>{ t.style.transition='opacity .3s ease, transform .3s ease'; t.style.opacity='0'; t.style.transform='translateX(-50%) translateY(6px)'; }, 1300);
+  setTimeout(()=>t.remove(), 1700);
+}
 
-// ---- Init ----
+// ================== Init ==================
 function init(){
-  refreshHeader();
-  renderCalendar();
-  renderList();
+  // header date lines
+  $('#prettyDay').textContent = prettyDayText(state.selected);
+  $('#prettyMonth').textContent = `${TR_MONTHS[state.selected.getMonth()]} ${state.selected.getFullYear()}`;
+
+  // Calendar
+  state.calCursor = new Date(state.selected.getFullYear(), state.selected.getMonth(), 1);
+  buildCalendar(state.calCursor);
+  $('#btnToggleCal').addEventListener('click', ()=>{
+    $('#calendarWrap').classList.toggle('hidden');
+  });
+  $('#calPrev').addEventListener('click', ()=>{ state.calCursor = new Date(state.calCursor.getFullYear(), state.calCursor.getMonth()-1, 1); buildCalendar(state.calCursor); });
+  $('#calNext').addEventListener('click', ()=>{ state.calCursor = new Date(state.calCursor.getFullYear(), state.calCursor.getMonth()+1, 1); buildCalendar(state.calCursor); });
+
+  renderTimeline();
+
+  // register SW
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.register('./sw.js?v=10.2.1');
+  }
 }
-init();
+
+// Load
+load();
+document.addEventListener('DOMContentLoaded', init);
+
+// ================== Helpers for demo ==================
+// (İstersen ilk açılışta örnek kayıtlar için buraya seed ekleyebilirsin)
