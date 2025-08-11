@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="theme-color" content="#0b0c0f"/>
@@ -10,104 +10,112 @@
   <link rel="icon" href="icons/icon-192.png" sizes="192x192">
   <title>Ajanda — Zaman Çizelgesi</title>
   <style>
+    /* ====== Design System (Nova) ====== */
     :root{
-      --bg:#0b0c0f; --panel:#12151a; --ink:#eaeef2; --muted:#9aa4b2; --edge:#202733; --pill:#161b22;
-      --ok:#10b981; --warn:#f59e0b; --danger:#ef4444; --brand:#60a5fa;
+      --bg:#0b0c0f; --panel:#0e1117; --ink:#e9edf2; --muted:#9aa4b2; --edge:#1a2230;
+      --brand:#7dd3fc; --brand-2:#60a5fa; --ok:#34d399; --warn:#f59e0b; --bad:#ef4444;
+      --glass: rgba(255,255,255,.03); --radius:20px;
     }
     *{box-sizing:border-box}
     html,body{height:100%}
+    html{background:var(--bg)}
     body{
-      margin:0;
-      background:linear-gradient(180deg,#0a0c10,#0d1016 60%,#0a0c10) fixed;
-      color:var(--ink);
-      font:500 15px/1.45 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Inter,Helvetica,Arial;
+      margin:0; color:var(--ink);
+      background:radial-gradient(1200px 600px at 10% -10%, rgba(96,165,250,.12), transparent 60%),
+                 radial-gradient(1000px 600px at 110% 0%, rgba(125,211,252,.12), transparent 70%),
+                 var(--bg);
+      font:500 16px/1.45 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Inter,Helvetica,Arial;
       -webkit-font-smoothing:antialiased;
-      min-height:100dvh;
-      padding: max(14px, calc(12px + env(safe-area-inset-top))) 14px calc(14px + env(safe-area-inset-bottom));
+      /* Safe-area + extra bottom for Safari toolbar */
+      padding: max(10px, calc(10px + env(safe-area-inset-top))) 12px calc(24px + env(safe-area-inset-bottom)) 12px;
+      min-height:100svh; /* iOS 15+ true viewport */
+      overscroll-behavior-y:none;
     }
     .app{
-      width:min(980px,100%);
-      background:var(--panel);
-      border:1px solid var(--edge);
-      border-radius:24px;
-      padding:14px;
-      box-shadow:0 12px 36px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.03);
+      width:min(1040px,100%);
       margin:0 auto;
+      display:grid;
+      grid-template-rows:auto auto 1fr;
+      gap:12px;
     }
-    header{
-      position:sticky; top:0;
-      display:flex; align-items:center; gap:10px;
-      padding:10px 12px;
-      background:var(--pill);
+    /* Header */
+    .hdr{
+      position:sticky; top:0; z-index:20;
+      background:linear-gradient(180deg, rgba(14,17,23,.9), rgba(14,17,23,.6));
+      backdrop-filter: blur(10px);
       border:1px solid var(--edge);
-      border-radius:20px;
-      z-index:5;
+      border-radius:var(--radius);
+      padding:10px 12px;
+      display:flex; align-items:center; gap:10px;
     }
-    .logo{font-weight:800; letter-spacing:.2px}
+    .logo{display:flex; align-items:center; gap:8px; font-weight:900; letter-spacing:.2px}
+    .logo .i{width:24px; height:24px; border-radius:6px; background:linear-gradient(135deg,var(--brand),var(--brand-2)); box-shadow:0 0 0 2px #0b0c0f inset}
+    .pill{background:var(--glass); border:1px solid var(--edge); border-radius:999px; padding:8px 12px}
     .spacer{flex:1}
     .btn, select, input{
-      appearance:none; border:1px solid var(--edge); background:var(--pill); color:var(--ink);
+      appearance:none; border:1px solid var(--edge); background:var(--glass); color:var(--ink);
       padding:10px 12px; border-radius:12px; font-weight:700; cursor:pointer; touch-action:manipulation;
     }
     .btn:active{transform:translateY(1px)}
-    .primary{background:linear-gradient(180deg,#1b2a1e,#142116); border-color:#233524}
-    .danger{background:linear-gradient(180deg,#2a1b1b,#211414); border-color:#312121}
-    .ok{background:linear-gradient(180deg,#1a2330,#141a22); border-color:#263041}
-    .wrap{display:grid; grid-template-columns: 1.1fr .9fr; gap:14px; margin-top:14px}
-    @media (max-width:920px){ .wrap{grid-template-columns:1fr} }
-    .card{background:#0e1318; border:1px solid var(--edge); border-radius:20px; padding:14px}
+    .btn.primary{background:linear-gradient(180deg,#183022,#101a15); border-color:#254232}
+    .btn.danger{background:linear-gradient(180deg,#341f1f,#241515); border-color:#3a2626}
+    /* Layout */
+    .main{
+      display:grid; gap:12px;
+      grid-template-columns: 1.2fr .8fr;
+    }
+    @media (max-width:980px){ .main{grid-template-columns:1fr} }
+    .card{
+      background:linear-gradient(180deg,#0e1117, #0b0d12);
+      border:1px solid var(--edge);
+      border-radius:var(--radius);
+      padding:14px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.02);
+    }
+    .title{font-weight:900; letter-spacing:.2px}
+    .sub{color:var(--muted); font-size:13px}
     .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
-    .grid2{display:grid; grid-template-columns:1fr 1fr; gap:8px}
     .list{display:grid; gap:10px}
-    .item{background:var(--pill); border:1px solid var(--edge); border-radius:16px; padding:12px}
-    .title{font-weight:800}
-    .k{font-size:12px; color:var(--muted)}
-    .v{font-weight:800}
-    .hr{height:1px; background:linear-gradient(90deg,transparent,#1e2630,transparent); margin:8px 0}
-    .pill{background:#0b1016; border:1px solid var(--edge); border-radius:999px; padding:8px 10px}
+    .item{background:var(--glass); border:1px solid var(--edge); border-radius:16px; padding:12px}
+    .hr{height:1px; background:linear-gradient(90deg,transparent,#1f2834,transparent); margin:10px 0}
     .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; font-size:12px}
-    .toast{position:fixed; left:50%; bottom:calc(18px + env(safe-area-inset-bottom)); transform:translateX(-50%);
-           background:#0e1318; color:var(--ink); border:1px solid var(--edge); border-radius:999px; padding:10px 14px; font-size:14px;
-           box-shadow:0 8px 24px rgba(0,0,0,.4); opacity:0; pointer-events:none; transition:opacity .25s ease}
-    .toast.show{opacity:1}
     /* Calendar */
-    .calendar{background:#0b1016; border:1px solid var(--edge); border-radius:20px; padding:12px}
-    .cal-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:8px}
-    .cal-title{font-weight:800}
-    .cal-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:6px}
-    .cal-cell{aspect-ratio:1/1; display:grid; place-items:center; border:1px solid #1e2630; border-radius:12px; background:#0f141c; font-weight:700; cursor:pointer}
-    .cal-cell.muted{opacity:.5}
-    .cal-cell.sel{outline:2px solid var(--brand); outline-offset:-3px}
-    .cal-cell.today{border-color:#263041}
+    .calendar{display:grid; gap:10px}
+    .cal-head{display:flex; align-items:center; justify-content:space-between}
+    .cal-title{font-weight:900}
+    .cal-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:8px}
+    .weekday{color:var(--muted); text-align:center; font-size:12px}
+    .d{aspect-ratio:1/1; display:grid; place-items:center; border:1px solid var(--edge); border-radius:14px; background:#0f141c; font-weight:800; cursor:pointer}
+    .d.muted{opacity:.45}
+    .d.sel{outline:2px solid var(--brand-2); outline-offset:-3px}
+    .d.today{border-color:#2a3a52}
+    /* Timeline */
     .timeline .event{display:grid; grid-template-columns:auto 1fr; gap:10px; align-items:flex-start}
-    .dot{width:10px; height:10px; border-radius:50%; background:var(--brand); margin-top:7px}
-    .dot.ok{background:var(--ok)} .dot.bad{background:var(--danger)} .dot.note{background:#a78bfa}
+    .dot{width:10px; height:10px; border-radius:50%; background:var(--brand-2); margin-top:7px; box-shadow:0 0 12px rgba(96,165,250,.6)}
+    .dot.ok{background:var(--ok)} .dot.bad{background:var(--bad)} .dot.note{background:#a78bfa}
     .event .h{font-weight:800}
     .empty{color:var(--muted); text-align:center; padding:16px}
-    .overlay{
-      position:fixed; inset:0; background:rgba(0,0,0,.6); display:none; align-items:center; justify-content:center; z-index:1000;
-      padding:20px;
-    }
-    .overlay .sheet{max-width:520px; width:100%; background:var(--panel); border:1px solid var(--edge); border-radius:20px; padding:16px}
+    /* Footer space to avoid cut-off */
+    .pad-bottom{height: max(24px, calc(24px + env(safe-area-inset-bottom)))}
   </style>
 </head>
 <body>
-  <div class="app" role="application" aria-label="Ajanda — Zaman Çizelgesi">
-    <header>
-      <div class="logo">🗓️ Ajanda</div>
+  <div class="app">
+    <div class="hdr">
+      <div class="logo"><div class="i"></div> Ajanda</div>
       <div class="pill">Gün: <b id="dayText">—</b></div>
-      <div class="pill" id="statusPill">Durum: <b id="statusText">Hazır</b></div>
+      <div class="pill">Durum: <b id="statusText">Hazır</b></div>
       <div class="spacer"></div>
-      <button id="installHint" class="btn ok" title="Ana Ekrana Ekle talimatı">Ana Ekrana</button>
-      <button id="exportBtn" class="btn ok">Dışa Aktar</button>
-      <label for="importFile" class="btn ok" style="cursor:pointer">İçe Aktar</label>
+      <button id="installHint" class="btn">Ana Ekrana</button>
+      <button id="exportBtn" class="btn">Dışa Aktar</button>
+      <label for="importFile" class="btn" style="cursor:pointer">İçe Aktar</label>
       <input id="importFile" type="file" accept="application/json" style="display:none" />
       <button id="clearBtn" class="btn danger">Temizle</button>
-    </header>
+    </div>
 
-    <div class="wrap">
+    <div class="main">
       <!-- Left: Calendar + Timeline -->
-      <section class="card" aria-label="Takvim ve Zaman Çizelgesi">
+      <section class="card">
         <div class="calendar">
           <div class="cal-head">
             <button class="btn" id="prevMonth">‹</button>
@@ -119,17 +127,16 @@
         </div>
 
         <div class="hr"></div>
-
         <div class="title">Günün Zaman Çizelgesi</div>
         <div class="list timeline" id="timeline"></div>
       </section>
 
       <!-- Right: Live Tracker + Summary -->
-      <section class="card" aria-label="Canlı Takip ve Özet">
+      <section class="card">
         <div class="row" style="justify-content:space-between">
           <div>
             <div class="title">Konum Takibi</div>
-            <div class="k">Uygulama açıkken konumunu izler ve kalışları oluşturur.</div>
+            <div class="sub">Uygulama açıkken konumunu izler ve kalışları oluşturur.</div>
           </div>
           <div class="row">
             <button id="toggleBtn" class="btn primary">Takibi Başlat</button>
@@ -142,16 +149,18 @@
         </div>
 
         <div class="hr"></div>
-        <div class="grid2">
+        <div class="list" style="grid-template-columns:1fr 1fr; display:grid">
           <div class="item">
-            <div class="k">Son Konum</div>
-            <div class="v" id="lastFix">—</div>
-            <div class="mono" id="lastCoords"></div>
+            <div class="sub">Son Konum</div>
+            <div class="title" id="lastFix">—</div>
+            <div class="sub" id="lastAddr">—</div>
+            <div class="mono" id="lastCoords" style="opacity:.6"></div>
           </div>
           <div class="item">
-            <div class="k">Kalış Algılama</div>
-            <div>Yarıçap <input id="radiusInp" class="btn" type="number" min="30" max="300" step="10" value="120" style="width:90px"> m · Eşik <input id="dwellInp" class="btn" type="number" min="3" max="60" step="1" value="8" style="width:70px"> dk</div>
-            <div class="k">Aynı noktada belirtilen eşiğin üzerinde kalınca kalış (visit) oluşturulur.</div>
+            <div class="sub">Kalış Algılama</div>
+            <div>Yarıçap <input id="radiusInp" class="btn" type="number" min="30" max="300" step="10" value="120" style="width:90px"> m ·
+              Eşik <input id="dwellInp" class="btn" type="number" min="1" max="60" step="1" value="8" style="width:70px"> dk</div>
+            <div class="sub">Aynı noktada belirtilen eşiğin üzerinde kalınca kalış (visit) oluşturulur.</div>
           </div>
         </div>
 
@@ -159,7 +168,7 @@
         <div class="row" style="gap:8px">
           <button id="noteBtn" class="btn">Hızlı Not</button>
           <button id="callBtn" class="btn">Arama Ekle</button>
-          <span class="k">Not ve aramalar cihazında saklanır.</span>
+          <span class="sub">Not ve aramalar cihazında saklanır.</span>
         </div>
 
         <div class="hr"></div>
@@ -167,166 +176,133 @@
         <div class="list" id="summaryList" style="margin-top:8px"></div>
       </section>
     </div>
+
+    <div class="pad-bottom"></div>
   </div>
 
-  <!-- Permission/Instruction overlay -->
-  <div class="overlay" id="permOverlay">
-    <div class="sheet">
+  <!-- Overlay: permission tips -->
+  <div id="permOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:1000; align-items:center; justify-content:center; padding:20px">
+    <div style="max-width:540px; width:100%; background:var(--panel); border:1px solid var(--edge); border-radius:20px; padding:16px">
       <div class="title">Konum izni gerekiyor</div>
-      <div class="k" style="margin:6px 0 12px 0">
-        iPhone'da konum izni verilmediği için takip başlayamadı. Aşağıdaki adımları izle:
+      <div class="sub" style="margin:6px 0 12px 0">
+        İzin verilmediği için takip başlayamadı. Safari için “aA → Site Ayarları → Konum: İzin ver”. PWA ise Ayarlar → Konum Servisleri bölümünden izin ver.
       </div>
-      <ul class="k">
-        <li>Safari'de: Adres çubuğunun solundaki <b>“aA”</b> → <b>Website Settings / Site Ayarları</b> → <b>Location: Allow</b>.</li>
-        <li>Ana ekrandan çalışıyorsa: <b>Ayarlar → Gizlilik ve Güvenlik → Konum Servisleri</b> → listeden uygulama adını bul → <b>Kullanırken</b> izni ver.</li>
-      </ul>
-      <div class="row" style="justify-content:flex-end">
-        <button class="btn ok" id="permOverlayClose">Tamam</button>
-      </div>
+      <div style="display:flex; justify-content:flex-end"><button class="btn" id="permOverlayClose">Tamam</button></div>
     </div>
   </div>
 
-  <div class="toast" id="toast" role="status" aria-live="polite"></div>
-
   <script>
-    // ===== Helpers =====
+    /* ===== Helpers ===== */
     const $ = (q)=>document.querySelector(q);
     const $$ = (q)=>Array.from(document.querySelectorAll(q));
-    function toast(msg){ const t=$('#toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1600); }
+    const clamp = (n,min,max)=> Math.max(min, Math.min(max,n));
     function fmtTime(ts){ const d=new Date(ts); return d.toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'}); }
     function fmtDateShort(ts){ const d=new Date(ts); return d.toLocaleDateString('tr-TR',{weekday:'short', day:'2-digit', month:'short'}); }
-    function dateKeyFromTS(ts){ return new Date(ts).toISOString().slice(0,10); }
-    function todayKey(){ return dateKeyFromTS(Date.now()); }
-    function startOfDay(ts){ const d=new Date(ts); d.setHours(0,0,0,0); return d.getTime(); }
-    function endOfDay(ts){ const d=new Date(ts); d.setHours(23,59,59,999); return d.getTime(); }
+    const dateKey=(ts)=> new Date(ts).toISOString().slice(0,10);
+    const todayKey=()=> dateKey(Date.now());
+    const startOfDay=(ts)=>{ const d=new Date(ts); d.setHours(0,0,0,0); return d.getTime(); };
+    const endOfDay=(ts)=>{ const d=new Date(ts); d.setHours(23,59,59,999); return d.getTime(); };
     function haversine(a,b){ const R=6371000; const toRad=(x)=>x*Math.PI/180; const dLat=toRad(b.lat-a.lat), dLon=toRad(b.lon-a.lon);
       const s=Math.sin(dLat/2)**2 + Math.cos(toRad(a.lat))*Math.cos(toRad(b.lat))*Math.sin(dLon/2)**2; return 2*R*Math.asin(Math.sqrt(s)); }
 
-    // ===== Store =====
+    /* ===== Store ===== */
     const Store = {
-      key:'agenda.v2',
-      data:{ points:[], visits:[], calls:[], notes:[] },
-      load(){ try{ const raw=localStorage.getItem(this.key); if(raw){ this.data=JSON.parse(raw); } }catch(e){ console.error(e); }
-        renderAll(); },
+      key:'agenda.v3',
+      data:{ points:[], visits:[], calls:[], notes:[], addrCache:{} }, // addrCache[lat,lon] = string
+      load(){ try{ const raw=localStorage.getItem(this.key); if(raw){ this.data=JSON.parse(raw); } }catch(e){ console.error(e); } renderAll(); },
       save(){ localStorage.setItem(this.key, JSON.stringify(this.data)); }
     };
 
-    // ===== State =====
+    /* ===== State & UI ===== */
     let watchId=null, currentAnchor=null, lastPoint=null;
     let selectedDay = todayKey();
-    // UI refs
-    const statusText=$('#statusText'), dayText=$('#dayText');
-    dayText.textContent = fmtDateShort(Date.now());
+    $('#dayText').textContent = fmtDateShort(Date.now());
+    const statusText=$('#statusText'), lastFix=$('#lastFix'), lastAddr=$('#lastAddr'), lastCoords=$('#lastCoords');
 
-    // ===== Calendar =====
-    const calWeekdays = ['Pzt','Sal','Çar','Per','Cum','Cmt','Paz']; // start Monday
-    function buildWeekdays(){
-      const root=$('#calWeekdays'); root.innerHTML='';
-      for(const w of calWeekdays){ const div=document.createElement('div'); div.className='k'; div.style.textAlign='center'; div.textContent=w; root.appendChild(div); }
-    }
-    let calYear = new Date().getFullYear();
-    let calMonth = new Date().getMonth(); // 0-11
-    function daysInMonth(y,m){ return new Date(y, m+1, 0).getDate(); }
+    /* ===== Calendar ===== */
+    const weekdays=['Pzt','Sal','Çar','Per','Cum','Cmt','Paz'];
+    function buildWeekdays(){ const root=$('#calWeekdays'); root.innerHTML=''; for(const w of weekdays){ const d=document.createElement('div'); d.className='weekday'; d.textContent=w; root.appendChild(d);}}
+    function daysInMonth(y,m){ return new Date(y,m+1,0).getDate(); }
     function firstWeekday(y,m){ const d=new Date(y,m,1).getDay(); return (d+6)%7; } // Monday=0
+    let calYear=new Date().getFullYear(), calMonth=new Date().getMonth();
     function renderCalendar(){
-      $('#calTitle').textContent = new Date(calYear, calMonth, 1).toLocaleDateString('tr-TR',{month:'long', year:'numeric'});
+      $('#calTitle').textContent = new Date(calYear, calMonth, 1).toLocaleDateString('tr-TR',{month:'long',year:'numeric'});
       const grid=$('#calGrid'); grid.innerHTML='';
-      const days=daysInMonth(calYear,calMonth); const offset=firstWeekday(calYear,calMonth);
-      const prevDays=daysInMonth(calYear,calMonth-1);
-      // prev month tail
-      for(let i=0;i<offset;i++){ const n=prevDays-offset+i+1; grid.appendChild(dayCell(n,true)); }
-      // current month
-      for(let d=1; d<=days; d++){ grid.appendChild(dayCell(d,false)); }
-      // next month head to fill rows (42 cells)
-      const cellsNeeded = 42 - (offset + days);
-      for(let d=1; d<=cellsNeeded; d++){ grid.appendChild(dayCell(d,true,true)); }
+      const days=daysInMonth(calYear,calMonth), offset=firstWeekday(calYear,calMonth), prevDays=daysInMonth(calYear,calMonth-1);
+      for(let i=0;i<offset;i++) grid.appendChild(dayCell(prevDays-offset+i+1,true));
+      for(let d=1; d<=days; d++) grid.appendChild(dayCell(d,false));
+      const cellsNeeded=42-(offset+days); for(let d=1; d<=cellsNeeded; d++) grid.appendChild(dayCell(d,true,true));
       highlightSelected();
     }
     function dayCell(day, muted, next=false){
-      const div=document.createElement('div'); div.className='cal-cell'+(muted?' muted':''); div.textContent=day;
+      const div=document.createElement('div'); div.className='d'+(muted?' muted':'');
+      div.textContent=day;
       let y=calYear, m=calMonth;
-      if(muted && !next){ m = calMonth-1; if(m<0){ m=11; y--; } }
-      if(muted && next){ m = calMonth+1; if(m>11){ m=0; y++; } }
-      const key = `${y}-${String(m+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+      if(muted && !next){ m--; if(m<0){ m=11; y--; } }
+      if(muted && next){ m++; if(m>11){ m=0; y++; } }
+      const key=`${y}-${String(m+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
       if(key===todayKey()) div.classList.add('today');
-      div.onclick = ()=>{ selectedDay=key; dayText.textContent=new Date(key).toLocaleDateString('tr-TR',{weekday:'short', day:'2-digit', month:'short'}); highlightSelected(); renderAll(); };
-      div.dataset.key = key;
+      div.dataset.key=key;
+      div.onclick=()=>{ selectedDay=key; $('#dayText').textContent=new Date(key).toLocaleDateString('tr-TR',{weekday:'short',day:'2-digit',month:'short'}); highlightSelected(); renderAll(); };
       return div;
     }
-    function highlightSelected(){
-      $$('#calGrid .cal-cell').forEach(c=> c.classList.toggle('sel', c.dataset.key===selectedDay));
-    }
-    $('#prevMonth').onclick = ()=>{ calMonth--; if(calMonth<0){ calMonth=11; calYear--; } renderCalendar(); };
-    $('#nextMonth').onclick = ()=>{ calMonth++; if(calMonth>11){ calMonth=0; calYear++; } renderCalendar(); };
+    function highlightSelected(){ $$('#calGrid .d').forEach(el=> el.classList.toggle('sel', el.dataset.key===selectedDay)); }
+    $('#prevMonth').onclick=()=>{ calMonth--; if(calMonth<0){calMonth=11; calYear--;} renderCalendar(); };
+    $('#nextMonth').onclick=()=>{ calMonth++; if(calMonth>11){calMonth=0; calYear++;} renderCalendar(); };
     buildWeekdays(); renderCalendar();
 
-    // ===== Tracking =====
-    function requestOneShotPermission(){
-      return new Promise((resolve, reject)=>{
-        if(!('geolocation' in navigator)){ return reject(new Error('Tarayıcı konum desteği yok')); }
-        navigator.geolocation.getCurrentPosition(
-          pos=>resolve(pos),
-          err=>reject(err),
-          {enableHighAccuracy:true, timeout:10000, maximumAge:0}
-        );
-      });
+    /* ===== Reverse Geocoding (Nominatim) ===== */
+    async function reverseGeocode(lat, lon){
+      const key = lat.toFixed(5)+','+lon.toFixed(5);
+      if(Store.data.addrCache[key]) return Store.data.addrCache[key];
+      try{
+        const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}&accept-language=tr`;
+        const res = await fetch(url, { headers:{ 'Accept':'application/json', 'User-Agent':'AjandaPWA/1.0 (personal use)' } });
+        const j = await res.json();
+        const a = j.address||{};
+        // Prefer road + house_number + neighbourhood/suburb + town/city + state
+        const parts = [ [a.road, a.house_number].filter(Boolean).join(' '), a.neighbourhood || a.suburb || a.district || a.borough, a.town || a.city || a.county, a.state ];
+        const s = parts.filter(Boolean).join(', ');
+        Store.data.addrCache[key] = s || (j.display_name || key);
+        Store.save();
+        return Store.data.addrCache[key];
+      }catch(e){ console.warn('geocode fail', e); return key; }
     }
 
+    /* ===== Tracking ===== */
+    function requestOneShotPermission(){
+      return new Promise((resolve,reject)=>{
+        if(!('geolocation' in navigator)) return reject(new Error('Tarayıcı konum desteği yok'));
+        navigator.geolocation.getCurrentPosition(resolve, reject, {enableHighAccuracy:true, timeout:10000, maximumAge:0});
+      });
+    }
     async function startTracking(){
-      try{
-        await requestOneShotPermission(); // ensure permission prompt appears from a user gesture
-      }catch(e){
-        if(e && (e.code===1 || String(e.message||'').toLowerCase().includes('denied'))){
-          // Permission denied
-          $('#permOverlay').style.display='flex';
-          return;
-        }
-        // Non-permission error: still continue with watch; might succeed
-      }
-      const optSel = $('#accuracySel').value;
-      const options = {
-        enableHighAccuracy: optSel==='high',
-        maximumAge: optSel==='low'? 120000 : 30000,
-        timeout: 20000
-      };
+      try{ await requestOneShotPermission(); }
+      catch(e){ if(e.code===1){ $('#permOverlay').style.display='flex'; return; } }
+      const optSel=$('#accuracySel').value;
+      const options={ enableHighAccuracy: optSel==='high', maximumAge: optSel==='low'?120000:30000, timeout:20000 };
       watchId = navigator.geolocation.watchPosition(onPos, onErr, options);
-      statusText.textContent='Takip Açık';
-      $('#toggleBtn').textContent='Durdur';
-      toast('Takip başlatıldı');
+      statusText.textContent='Takip Açık'; $('#toggleBtn').textContent='Durdur';
     }
     function stopTracking(){
       if(watchId!==null){ navigator.geolocation.clearWatch(watchId); watchId=null; }
-      statusText.textContent='Hazır';
-      $('#toggleBtn').textContent='Takibi Başlat';
-      finalizeAnchorIfNeeded(true);
-      Store.save(); renderAll();
-      toast('Takip durduruldu');
+      statusText.textContent='Hazır'; $('#toggleBtn').textContent='Takibi Başlat';
+      finalizeAnchorIfNeeded(true); Store.save(); renderAll();
     }
-    function onErr(err){
-      if(err && (err.code===1 || String(err.message||'').toLowerCase().includes('denied'))){
-        $('#permOverlay').style.display='flex';
-      }else{
-        toast('Konum alınamadı: '+(err.message||err));
-      }
-    }
-    function onPos(pos){
+    function onErr(err){ if(err && err.code===1) $('#permOverlay').style.display='flex'; }
+    async function onPos(pos){
       const {latitude:lat, longitude:lon, accuracy} = pos.coords;
-      const ts=Date.now();
-      if(accuracy>150) return; // low quality
+      const ts=Date.now(); if(accuracy>150) return;
       const p={lat,lon,acc:Math.round(accuracy),ts};
-      $('#lastFix').textContent = `${fmtDateShort(ts)} • ${fmtTime(ts)} • ±${p.acc}m`;
-      $('#lastCoords').textContent = `${lat.toFixed(5)}, ${lon.toFixed(5)}`;
-      if(!lastPoint || haversine(lastPoint,p)>15 || (ts-lastPoint.ts)>120000){
-        Store.data.points.push(p); lastPoint=p;
-      }
+      lastFix.textContent = `${fmtDateShort(ts)} • ${fmtTime(ts)} • ±${p.acc}m`;
+      lastCoords.textContent = `${lat.toFixed(5)}, ${lon.toFixed(5)}`;
+      lastAddr.textContent = 'adres aranıyor…';
+      reverseGeocode(lat,lon).then(s=> lastAddr.textContent = s);
+      if(!lastPoint || haversine(lastPoint,p)>15 || (ts-lastPoint.ts)>120000){ Store.data.points.push(p); lastPoint=p; }
       const R = Number($('#radiusInp').value || 120);
       if(!currentAnchor){ currentAnchor={lat,lon,startedAt:ts,lastAt:ts}; }
-      else{
-        const d=haversine(currentAnchor,{lat,lon});
-        if(d<=R){ currentAnchor.lastAt=ts; } else { finalizeAnchorIfNeeded(false); currentAnchor={lat,lon,startedAt:ts,lastAt:ts}; }
-      }
-      Store.save();
-      renderAll();
+      else{ const d=haversine(currentAnchor,{lat,lon}); if(d<=R){ currentAnchor.lastAt=ts; } else { finalizeAnchorIfNeeded(false); currentAnchor={lat,lon,startedAt:ts,lastAt:ts}; } }
+      Store.save(); renderAll();
     }
     function finalizeAnchorIfNeeded(force){
       if(!currentAnchor) return;
@@ -340,91 +316,70 @@
       }
     }
 
-    // ===== Notes & Calls =====
+    /* ===== Notes & Calls ===== */
     function addQuickNote(text){
       const ts=Date.now(); const note={id:'n_'+ts, ts, text};
-      const v=nearestVisit(ts);
-      if(v && Math.abs((v.end||ts)-ts)<30*60*1000){ v.notes.push(note); }
-      else { Store.data.notes.push(note); }
-      Store.save(); renderAll(); toast('Not eklendi');
+      const v=nearestVisit(ts); if(v && Math.abs((v.end||ts)-ts)<30*60*1000){ v.notes.push(note); } else { Store.data.notes.push(note); }
+      Store.save(); renderAll();
     }
-    function logCall(obj){
-      const ts=obj.ts||Date.now();
-      Store.data.calls.push({ id:'c_'+ts, ts, who:obj.who, type:obj.type||'gelen', notes:obj.notes||'' });
-      Store.save(); renderAll(); toast('Arama kaydedildi');
-    }
-    function nearestVisit(ts){
-      if(Store.data.visits.length===0) return null;
-      let best=null, bestDt=1e15;
-      for(const v of Store.data.visits){ const mid=(v.start + (v.end||v.start))/2; const dt=Math.abs(ts-mid); if(dt<bestDt){ best=v; bestDt=dt; } }
-      return best;
-    }
+    function logCall(obj){ const ts=obj.ts||Date.now(); Store.data.calls.push({ id:'c_'+ts, ts, who:obj.who, type:obj.type||'gelen', notes:obj.notes||'' }); Store.save(); renderAll(); }
+    function nearestVisit(ts){ if(Store.data.visits.length===0) return null; let best=null, bestDt=1e15; for(const v of Store.data.visits){ const mid=(v.start+(v.end||v.start))/2; const dt=Math.abs(ts-mid); if(dt<bestDt){ best=v; bestDt=dt; } } return best; }
 
-    // ===== Render =====
+    /* ===== Render ===== */
     function renderAll(){ renderSummary(); renderTimeline(); }
     function renderSummary(){
-      const S=Store.data; const today=selectedDay;
-      const inDay=(ts)=> dateKeyFromTS(ts)===today;
+      const S=Store.data; const day=selectedDay;
+      const inDay=(ts)=> dateKey(ts)===day;
       const visits=S.visits.filter(v=> inDay(v.start) || inDay(v.end));
       const calls=S.calls.filter(c=> inDay(c.ts));
       const notes=S.notes.filter(n=> inDay(n.ts));
       const totalStay=visits.reduce((a,v)=>a+(v.end-v.start),0);
-      const items=[
-        ['Kalış sayısı', visits.length],
-        ['Toplam kalış süresi', fmtDur(totalStay)],
-        ['Aramalar', calls.length],
-        ['Notlar', notes.length]
-      ];
+      const items=[ ['Kalış sayısı', visits.length], ['Toplam kalış süresi', fmtDur(totalStay)], ['Aramalar', calls.length], ['Notlar', notes.length] ];
       const box=$('#summaryList'); box.innerHTML='';
-      for(const [k,v] of items){ const div=document.createElement('div'); div.className='item'; div.innerHTML=`<div class="k">${k}</div><div class="v">${v}</div>`; box.appendChild(div); }
+      for(const [k,v] of items){ const div=document.createElement('div'); div.className='item'; div.innerHTML=`<div class="sub">${k}</div><div class="title">${v}</div>`; box.appendChild(div); }
+      function fmtDur(ms){ const s=Math.max(0,Math.round(ms/1000)); const h=Math.floor(s/3600), m=Math.floor((s%3600)/60); return (h? h+' sa ': '') + (m+' dk'); }
     }
-
+    async function nameOf(lat,lon){
+      const s = await reverseGeocode(lat,lon); return s;
+    }
     function renderTimeline(){
       const tl=$('#timeline'); tl.innerHTML='';
       const dayTS = new Date(selectedDay+'T00:00:00').getTime();
-      const from = startOfDay(dayTS); const to=endOfDay(dayTS);
-
+      const from = startOfDay(dayTS), to=endOfDay(dayTS);
       const events=[];
-      // visits
       for(const v of Store.data.visits){
         if(v.end<from || v.start>to) continue;
-        const s=Math.max(v.start, from); const e=Math.min(v.end, to);
-        events.push({ts:s, sort:s, type:'visit', title:`Kalış`, sub:`${fmtTime(v.start)}–${fmtTime(v.end)} • ${((v.end-v.start)/60000|0)} dk`, dot:'ok'});
-        for(const n of v.notes||[]){ if(n.ts>=from && n.ts<=to) events.push({ts:n.ts, sort:n.ts+0.05, type:'note', title:'Not', sub:n.text, dot:'note'}); }
+        events.push({ts:v.start, sort:v.start, type:'visit', lat:v.lat, lon:v.lon, dur:((v.end-v.start)/60000|0)});
+        for(const n of v.notes||[]){ if(n.ts>=from && n.ts<=to) events.push({ts:n.ts, sort:n.ts+0.05, type:'note', text:n.text}); }
       }
-      // loose notes
-      for(const n of Store.data.notes){ if(n.ts>=from && n.ts<=to) events.push({ts:n.ts, sort:n.ts+0.1, type:'note', title:'Not', sub:n.text, dot:'note'}); }
-      // calls
-      for(const c of Store.data.calls){ if(c.ts>=from && c.ts<=to) events.push({ts:c.ts, sort:c.ts+0.2, type:'call', title:`${c.type==='giden'?'Giden':c.type==='cevapsız'?'Cevapsız':'Gelen'} arama`, sub:(c.who||'Bilinmeyen')+(c.notes? ' • '+c.notes:''), dot:(c.type==='cevapsız'?'bad':'brand')}); }
-
+      for(const n of Store.data.notes){ if(n.ts>=from && n.ts<=to) events.push({ts:n.ts, sort:n.ts+0.1, type:'note', text:n.text}); }
+      for(const c of Store.data.calls){ if(c.ts>=from && c.ts<=to) events.push({ts:c.ts, sort:c.ts+0.2, type:'call', who:c.who, callType:c.type, notes:c.notes}); }
       events.sort((a,b)=> a.sort-b.sort);
-
-      if(events.length===0){ const empty=document.createElement('div'); empty.className='empty'; empty.textContent='Bu gün için kayıt yok.'; tl.appendChild(empty); return; }
-
+      if(events.length===0){ const empty=document.createElement('div'); empty.className='item'; empty.innerHTML='<div class="empty">Bu gün için kayıt yok.</div>'; tl.appendChild(empty); return; }
       for(const ev of events){
         const el=document.createElement('div'); el.className='item event';
-        el.innerHTML=`
-          <div class="dot ${ev.dot||''}"></div>
-          <div>
-            <div class="h">${fmtTime(ev.ts)} — ${ev.title}</div>
-            <div class="k">${ev.sub||''}</div>
-          </div>`;
+        const dotClass = ev.type==='visit'?'ok': ev.type==='call'?(ev.callType==='cevapsız'?'bad':'') : 'note';
+        el.innerHTML = `<div class="dot ${dotClass}"></div><div><div class="h">${fmtTime(ev.ts)} — ${label(ev)}</div><div class="sub">${sub(ev)}</div></div>`;
         tl.appendChild(el);
+        // async enrich address for visits
+        if(ev.type==='visit'){
+          (async()=>{
+            const addr = await nameOf(ev.lat, ev.lon);
+            el.querySelector('.sub').textContent = `${addr} • ${ev.dur} dk`;
+          })();
+        }
+        function label(ev){ if(ev.type==='visit') return 'Kalış'; if(ev.type==='call') return (ev.callType==='giden'?'Giden':ev.callType==='cevapsız'?'Cevapsız':'Gelen')+' arama'; return 'Not'; }
+        function sub(ev){ if(ev.type==='note') return ev.text; if(ev.type==='call') return [ev.who||'Bilinmeyen', ev.notes||''].filter(Boolean).join(' • '); return 'adres alınıyor…'; }
       }
     }
 
-    // ===== UI binds =====
+    /* ===== UI binds ===== */
     $('#toggleBtn').onclick = ()=> watchId ? stopTracking() : startTracking();
     $('#noteBtn').onclick = ()=>{ const t=prompt('Hızlı not:'); if(t) addQuickNote(t); };
-    $('#callBtn').onclick = ()=>{
-      const who = prompt('Kim aradı / kimi aradın? (isim/numara)'); if(who===null) return;
-      const type = prompt('Tür: gelen / giden / cevapsız', 'gelen') || 'gelen';
-      const notes = prompt('Not (opsiyonel)', '') || '';
-      logCall({who,type,notes});
-    };
+    $('#callBtn').onclick = ()=>{ const who=prompt('Kim aradı / kimi aradın? (isim/numara)'); if(who===null) return; const type=prompt('Tür: gelen / giden / cevapsız','gelen')||'gelen'; const notes=prompt('Not (opsiyonel)','')||''; logCall({who,type,notes}); };
     $('#exportBtn').onclick = ()=>{ const blob=new Blob([JSON.stringify(Store.data,null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='ajanda-'+selectedDay+'.json'; a.click(); };
-    $('#importFile').onchange = (e)=>{ const f=e.target.files[0]; if(!f) return; const rd=new FileReader(); rd.onload=()=>{ try{ const obj=JSON.parse(rd.result); if(obj && obj.visits && obj.calls && obj.points){ Store.data=obj; Store.save(); renderAll(); toast('İçe aktarıldı'); } }catch{ toast('Hatalı dosya'); } }; rd.readAsText(f); };
-    $('#clearBtn').onclick = ()=>{ if(confirm('Tüm verileri temizlemek istiyor musun?')){ localStorage.removeItem(Store.key); Store.data={points:[],visits:[],calls:[],notes:[]}; renderAll(); toast('Temizlendi'); } };
+    $('#importFile').onchange = (e)=>{ const f=e.target.files[0]; if(!f) return; const rd=new FileReader(); rd.onload=()=>{ try{ const obj=JSON.parse(rd.result); if(obj && obj.visits && obj.calls && obj.points){ Store.data=obj; Store.save(); renderAll(); } }catch{ alert('Hatalı dosya'); } }; rd.readAsText(f); };
+    $('#clearBtn').onclick = ()=>{ if(confirm('Tüm verileri temizlemek istiyor musun?')){ localStorage.removeItem(Store.key); Store.data={points:[],visits:[],calls:[],notes:[],addrCache:{}}; renderAll(); } };
     $('#installHint').onclick = ()=>{ alert('Safari → Paylaş → “Ana Ekrana Ekle”. Böylece tam ekran/simge ile çalışır.'); };
     $('#permOverlayClose').onclick = ()=>{ $('#permOverlay').style.display='none'; };
 
