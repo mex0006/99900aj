@@ -1,145 +1,160 @@
 <!doctype html>
 <html lang="tr">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
-  <meta name="theme-color" content="#0b1429">
-  <title>Ajanda</title>
-  <link rel="manifest" href="manifest.webmanifest">
-  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-  <link rel="stylesheet" href="css/main.css">
-  <!-- Leaflet -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="theme-color" content="#0B1325">
+<title>Ajanda v11</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="stylesheet" href="css/main.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
 </head>
 <body>
-  <div id="app">
-    <header class="app-header">
-      <h1 class="title">Ajanda</h1>
-      <button class="btn icon settings" id="btnSettings" aria-label="Ayarlar">
-        <svg viewBox="0 0 24 24"><path d="M12 15.6a3.6 3.6 0 1 0 0-7.2 3.6 3.6 0 0 0 0 7.2Zm9.4-3.6a7.6 7.6 0 0 0-.1-1l2.2-1.7-2-3.4-2.7 1a7.6 7.6 0 0 0-1.7-1l-.4-2.9H8.3l-.4 2.9c-.6.3-1.2.6-1.7 1l-2.7-1-2 3.4 2.2 1.7a7.6 7.6 0 0 0-.1 1c0 .3 0 .7.1 1L-.5 15l2 3.4 2.7-1c.5.4 1.1.7 1.7 1l.4 2.9h6.8l.4-2.9c.6-.3 1.2-.6 1.7-1l2.7 1 2-3.4-2.2-1.7c.1-.3.1-.7.1-1Z"/></svg>
-      </button>
-    </header>
-
-    <section class="meta">
-      <div class="month-label" id="monthLabel">Ağustos 2025</div>
-      <button id="btnCalendar" class="chip"><span class="dot"></span><span>Takvimi aç</span></button>
-    </section>
-
-    <!-- SLIDE Calendar -->
-    <section id="calendarDrawer" class="calendar" aria-hidden="true">
-      <div class="cal-head">
-        <button class="btn icon ghost" id="calPrev" aria-label="Önceki ay">
-          <svg viewBox="0 0 24 24"><path d="M15 18 9 12l6-6"/></svg>
-        </button>
-        <div class="cal-title" id="calTitle">Ağustos 2025</div>
-        <button class="btn icon ghost" id="calNext" aria-label="Sonraki ay">
-          <svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>
-        </button>
+<div class="app" id="app">
+  <div class="gear"><button class="icon-gear" id="btnSettings">⚙️</button></div>
+  <div class="header">
+    <div>
+      <div class="title">Ajanda</div>
+      <div class="meta">
+        <div id="monthLabel">Ağustos 2025</div>
+        <button id="btnToggleCal" class="badge"><span style="width:10px;height:10px;border-radius:50%;background:#4da3ff;display:inline-block"></span> Takvimi aç</button>
       </div>
-      <div class="cal-grid" id="calGrid"></div>
-    </section>
-
-    <section class="section">
-      <h2>Günün Zaman Çizelgesi</h2>
-      <div id="timeline" class="timeline empty">
-        <div class="empty-line"><span class="dot dot-note"></span> Bu gün için kayıt yok.</div>
-      </div>
-    </section>
-
-    <!-- Search Button -->
-    <button class="fab fab-search" id="btnSearch" aria-label="Arama">
-      <svg viewBox="0 0 24 24"><path d="M15.5 14h-.8l-.3-.3a6 6 0 1 0-.9.9l.3.3v.8l5 5 1.5-1.5-5-5Zm-5.5 0a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9Z"/></svg>
-    </button>
-
-    <!-- Main FAB -->
-    <button class="fab fab-main" id="btnFab" aria-label="Ekle">
-      <svg viewBox="0 0 24 24"><path d="M11 11V6h2v5h5v2h-5v5h-2v-5H6v-2z"/></svg>
-    </button>
-
-    <!-- Scrim -->
-    <div id="scrim" class="scrim" aria-hidden="true"></div>
-
-    <!-- Action Dock -->
-    <div id="actionDock" class="dock" aria-hidden="true">
-      <button class="tile" data-type="note">
-        <div class="tile-icon">📄</div><div class="tile-label">Not</div>
-      </button>
-      <button class="tile" data-type="call">
-        <div class="tile-icon">📞</div><div class="tile-label">Çağrı</div>
-      </button>
-      <button class="tile" data-type="place">
-        <div class="tile-icon">📍</div><div class="tile-label">Konum</div>
-      </button>
     </div>
-
-    <!-- Editor Sheet -->
-    <section class="sheet" id="sheet" aria-hidden="true">
-      <div class="panel" id="panel">
-        <div class="panel-head">
-          <button class="btn icon ghost" data-back aria-label="Geri">
-            <svg viewBox="0 0 24 24"><path d="M15 18 9 12l6-6"/></svg>
-          </button>
-          <div class="panel-title" id="panelTitle">Yeni</div>
-          <div class="panel-actions">
-            <button id="btnDelete" class="btn icon ghost hide" title="Sil" aria-label="Sil">
-              <svg viewBox="0 0 24 24"><path d="M6 7h12l-1 14H7L6 7Zm4-3h4l1 2H9l1-2Z"/></svg>
-            </button>
-            <button id="btnSave" class="btn icon ok" title="Kaydet" aria-label="Kaydet">
-              <svg viewBox="0 0 24 24"><path d="M9 16.2 5.8 13 4.4 14.4 9 19l11-11-1.4-1.4z"/></svg>
-            </button>
-          </div>
-        </div>
-        <div class="panel-body" id="panelBody"></div>
-      </div>
-    </section>
-
-    <!-- Search Sheet -->
-    <section class="sheet" id="sheetSearch" aria-hidden="true">
-      <div class="panel">
-        <div class="panel-head">
-          <button class="btn icon ghost" data-back aria-label="Geri">
-            <svg viewBox="0 0 24 24"><path d="M15 18 9 12l6-6"/></svg>
-          </button>
-          <div class="panel-title">Arama</div>
-        </div>
-        <div class="panel-body">
-          <div class="field"><input id="q" class="input" placeholder="kelime, kişi..." inputmode="search"></div>
-          <div class="chips">
-            <button class="chip active" data-filter="all">Tümü</button>
-            <button class="chip" data-filter="note">Not</button>
-            <button class="chip" data-filter="call">Çağrı</button>
-            <button class="chip" data-filter="place">Konum</button>
-          </div>
-          <div id="searchList" class="list"></div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Settings Sheet -->
-    <section class="sheet" id="sheetSettings" aria-hidden="true">
-      <div class="panel">
-        <div class="panel-head">
-          <button class="btn icon ghost" data-back aria-label="Geri">
-            <svg viewBox="0 0 24 24"><path d="M15 18 9 12l6-6"/></svg>
-          </button>
-          <div class="panel-title">Ayarlar</div>
-        </div>
-        <div class="panel-body">
-          <div class="row">
-            <div class="label">Sürüm</div><div class="value">v10.3.0</div>
-          </div>
-          <div class="row"><button id="btnExport" class="pill">Verileri JSON olarak indir</button></div>
-          <div class="row">
-            <label class="pill ghost">JSON içe aktar <input type="file" id="fileImport" accept="application/json"></label>
-          </div>
-          <div class="row"><button id="btnClearCache" class="pill info">Önbelleği Temizle (SW + Cache)</button></div>
-          <div class="row"><button id="btnWipe" class="pill danger">Tüm Kayıtları Sil</button></div>
-        </div>
-      </div>
-    </section>
   </div>
 
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-8EO8Q4Z7H9Q4C0QKQ7T8e1koRaSPo6e7iT730GUNShQ=" crossorigin=""></script>
-  <script defer src="js/app.js"></script>
+  <div class="sep"></div>
+
+  <div>
+    <div class="section-title">Günün Zaman Çizelgesi</div>
+    <div class="card" id="emptyState">Bu gün için kayıt yok.</div>
+    <div class="list" id="timeline"></div>
+  </div>
+
+  <div class="drawer" id="calDrawer" style="margin-top:12px">
+    <div class="calendar hidden" id="calendar">
+      <div class="cal-head">
+        <button class="icon-btn" id="prevMonth">‹</button>
+        <div id="calTitle">Ağustos 2025</div>
+        <button class="icon-btn" id="nextMonth">›</button>
+      </div>
+      <div class="grid" id="weekday">
+        <div class="cell" style="border:none;background:transparent;opacity:.6">Pzt</div>
+        <div class="cell" style="border:none;background:transparent;opacity:.6">Sal</div>
+        <div class="cell" style="border:none;background:transparent;opacity:.6">Çar</div>
+        <div class="cell" style="border:none;background:transparent;opacity:.6">Per</div>
+        <div class="cell" style="border:none;background:transparent;opacity:.6">Cum</div>
+        <div class="cell" style="border:none;background:transparent;opacity:.6">Cmt</div>
+        <div class="cell" style="border:none;background:transparent;opacity:.6">Paz</div>
+      </div>
+      <div class="grid" id="calGrid"></div>
+      <div style="display:flex;gap:8px; margin-top:10px">
+        <button class="pill" id="btnToday">Bugün</button>
+        <button class="pill ghost" id="btnCloseCal">Kapat</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="fab">
+  <button class="fbtn" id="btnFab">+</button>
+  <button class="sbtn" id="btnSearch">🔎</button>
+</div>
+
+<div class="scrim" id="scrim"></div>
+
+<!-- Dock -->
+<div class="dock" id="dock">
+  <div class="dock-card" data-open="note"><div>📝</div><div>Not</div></div>
+  <div class="dock-card" data-open="call"><div>📞</div><div>Çağrı</div></div>
+  <div class="dock-card" data-open="loc"><div>📍</div><div>Konum</div></div>
+</div>
+
+<!-- Note Sheet -->
+<div class="sheet" id="sheet-note">
+  <div class="panel">
+    <div class="panel-head"><div class="panel-title">Yeni Not</div><div class="rowf"><button class="pill" id="saveNote">Kaydet</button><button class="pill ghost" data-close>Vazgeç</button></div></div>
+    <label class="label">Başlık</label>
+    <input id="noteTitle" class="field" placeholder="opsiyonel">
+    <label class="label">Not</label>
+    <textarea id="noteBody" class="field" rows="5" placeholder="Metin..."></textarea>
+    <label class="label">Etiketler (virgülle)</label>
+    <input id="noteTags" class="field" placeholder="iş, aile">
+    <label class="label">Saat</label>
+    <input id="noteTime" class="field" inputmode="time" placeholder="14:30">
+  </div>
+</div>
+
+<!-- Call Sheet -->
+<div class="sheet" id="sheet-call">
+  <div class="panel">
+    <div class="panel-head"><div class="panel-title">Yeni Çağrı</div><div class="rowf"><button class="pill" id="saveCall">Kaydet</button><button class="pill ghost" data-close>Vazgeç</button></div></div>
+    <label class="label">Tür</label>
+    <div class="chips" id="callType">
+      <div class="chip active" data-type="genel">Genel</div>
+      <div class="chip" data-type="gelen">Gelen</div>
+      <div class="chip" data-type="giden">Giden</div>
+      <div class="chip" data-type="cevapsiz">Cevapsız</div>
+    </div>
+    <label class="label">Kişi</label>
+    <input id="callPerson" class="field" placeholder="Ad, kişi...">
+    <div class="rowf">
+      <div style="flex:1">
+        <label class="label">Saat</label>
+        <input id="callTime" class="field" placeholder="14:30">
+      </div>
+      <div style="flex:1">
+        <label class="label">Süre (dk)</label>
+        <input id="callDur" class="field" inputmode="numeric" placeholder="5">
+      </div>
+    </div>
+    <button class="pill ghost" id="callNow">Şimdi</button>
+  </div>
+</div>
+
+<!-- Location Sheet -->
+<div class="sheet" id="sheet-loc">
+  <div class="panel">
+    <div class="panel-head"><div class="panel-title">Yeni Konum</div><div class="rowf"><button class="pill" id="saveLoc">Kaydet</button><button class="pill ghost" data-close>Vazgeç</button></div></div>
+    <label class="label">Başlık (opsiyonel)</label>
+    <input id="locTitle" class="field">
+    <label class="label">Not</label>
+    <textarea id="locBody" class="field" rows="4"></textarea>
+    <label class="label">Adres</label>
+    <input id="locAddr" class="field" placeholder="Açık adres">
+    <div id="map"></div>
+    <div class="rowf" style="margin-top:10px">
+      <button class="pill" id="pickOnMap">Haritada Nokta</button>
+      <button class="pill ghost" id="useCurrent">Mevcut Konum</button>
+    </div>
+  </div>
+</div>
+
+<!-- Search Sheet -->
+<div class="sheet" id="sheet-search">
+  <div class="panel">
+    <div class="panel-head"><div class="panel-title">Arama</div><div><button class="pill ghost" data-close>Kapat</button></div></div>
+    <input id="searchInput" class="field" placeholder="kelime, kişi...">
+    <div class="chips" id="searchChips" style="margin:10px 0"><div class="chip active" data-kind="all">Tümü</div><div class="chip" data-kind="note">Not</div><div class="chip" data-kind="call">Çağrı</div><div class="chip" data-kind="loc">Konum</div></div>
+    <div class="list" id="searchResults"></div>
+  </div>
+</div>
+
+<!-- Settings Sheet -->
+<div class="sheet" id="sheet-settings">
+  <div class="panel">
+    <div class="panel-head"><div class="panel-title">Ayarlar</div><div><button class="pill ghost" data-close>Kapat</button></div></div>
+    <div class="row">Sürüm <b>v11.0.0</b></div>
+    <div class="rowf">
+      <button class="pill" id="btnExport">Verileri JSON indir</button>
+      <label class="pill ghost" style="cursor:pointer">JSON içe aktar<input id="fileImport" type="file" accept="application/json" style="display:none"></label>
+      <button class="pill ghost" id="btnClear">Önbelleği Temizle (SW + Cache)</button>
+      <button class="pill" style="background:#e23a4e" id="btnWipe">Tüm Kayıtları Sil</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script type="module" src="js/app.js"></script>
 </body>
 </html>
