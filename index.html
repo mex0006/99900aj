@@ -1,0 +1,433 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ajanda</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<style>
+:root{
+  --bg:#000; /* AMOLED */
+  --glass: rgba(255,255,255,.06);
+  --glass-strong: rgba(255,255,255,.10);
+  --txt: #e9e9ea;
+  --sub:#a3a3a6;
+  --accent:#7aa7ff;
+  --success:#31d158;
+  --warning:#ffd426;
+  --danger:#ff453a;
+  --shadow: 0 10px 30px rgba(0,0,0,.6);
+  --radius: 20px;
+}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  color:var(--txt);
+  background:var(--bg);
+  -webkit-tap-highlight-color: transparent;
+  overflow-x:hidden;
+}
+
+.app{
+  padding: max(16px, env(safe-area-inset-top)) 16px 90px;
+  min-height:100%;
+  background:
+    radial-gradient(1200px 800px at 120% -10%, rgba(38,73,156,.22), transparent 60%),
+    radial-gradient(1000px 600px at -10% -20%, rgba(0,120,255,.15), transparent 60%);
+  background-blend-mode: screen;
+}
+
+/* Header */
+.header{
+  position:sticky; top:0; z-index:10;
+  backdrop-filter:saturate(180%) blur(8px);
+  background:linear-gradient(to bottom, rgba(0,0,0,.7), rgba(0,0,0,.0));
+  margin:-16px -16px 8px; padding: 8px 16px 6px;
+}
+.hrow{display:flex; align-items:center; justify-content:center; gap:12px}
+h1{margin:6px 0 4px; font-size:28px; letter-spacing:.3px; text-align:center}
+.glow{
+  margin-left:auto; margin-right:4px;
+  width:18px; height:18px; border-radius:50%;
+  background: radial-gradient(circle at 50% 50%, #ffd33d 0%, #f5c21a 35%, rgba(255,212,61,.6) 55%, rgba(255,212,61,.2) 70%, transparent 100%);
+  box-shadow: 0 0 14px rgba(255,212,61,.55), 0 0 30px rgba(255,212,61,.35);
+  flex-shrink:0;
+}
+.glow.on{
+  background: radial-gradient(circle at 50% 50%, #28ff6a 0%, #12d65f 35%, rgba(40,255,106,.6) 55%, rgba(40,255,106,.2) 70%, transparent 100%);
+  box-shadow: 0 0 14px rgba(40,255,106,.55), 0 0 30px rgba(40,255,106,.35);
+}
+
+/* Glass cards */
+.card{
+  background: var(--glass);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  padding:14px;
+  margin:12px 0;
+}
+
+.section-title{font-size:22px; font-weight:700; margin:8px 6px 10px}
+
+/* Calendar toggle */
+.calendar-head{
+  display:flex; align-items:center; gap:10px; justify-content:space-between;
+  padding:4px 6px;
+}
+.btn{
+  appearance:none; border:0; cursor:pointer;
+  color:var(--txt); background:var(--glass-strong);
+  border:1px solid rgba(255,255,255,.08);
+  padding:10px 14px; border-radius:14px; font-weight:600;
+  transition: transform .08s ease, background .2s ease, opacity .2s ease;
+}
+.btn:active{ transform: scale(.98) }
+.badge{ font-weight:700; letter-spacing:.2px }
+.small{ font-size:13px; color:var(--sub) }
+
+.hidden{display:none}
+.calendar{ padding:10px}
+.grid-7{
+  display:grid; grid-template-columns:repeat(7,1fr); gap:8px;
+}
+.day{ aspect-ratio:1/1; display:flex; align-items:center; justify-content:center;
+  border-radius:14px; background:rgba(255,255,255,.04); font-weight:600; }
+.day.sel{outline:2px solid var(--accent);}
+
+/* Timeline list */
+.item{ background:rgba(0,0,0,.3); padding:12px 14px; border-radius:14px; border:1px solid rgba(255,255,255,.08); margin:12px 0 }
+.row{ display:flex; align-items:center; gap:10px }
+.dot{ width:10px; height:10px; border-radius:50%; background:#9b9b9b; box-shadow:0 0 6px rgba(155,155,155,.6) }
+.dot.note{background:#9b7cff}
+.dot.call{background:#5ac8f5}
+.dot.loc{background:#30d158}
+.time{ font-weight:800; letter-spacing:.2px }
+.title{ font-weight:700 }
+.muted{ color:var(--sub) }
+
+/* Bottom nav */
+.nav{
+  position:fixed; left:0; right:0; bottom:0; z-index:20;
+  padding: 10px max(16px, env(safe-area-inset-left)) calc(10px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-right));
+  display:flex; gap:14px; justify-content:space-between; align-items:center;
+  background: rgba(255,255,255,.05);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  border-top:1px solid rgba(255,255,255,.08);
+}
+.ico{ font-size:22px; line-height:1; padding:10px 12px; border-radius:14px; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.08) }
+#fab{ font-size:26px; padding:12px 16px; border-radius:16px; background:linear-gradient(180deg,#1f6fff,#174aff); box-shadow:0 10px 22px rgba(31,111,255,.45) }
+
+/* Quick add radial */
+.qwrap{ position:fixed; bottom:82px; left:50%; transform:translateX(-50%); width:0; height:0; pointer-events:none; }
+.qbtn{ position:absolute; width:56px; height:56px; border-radius:28px; display:flex; align-items:center; justify-content:center; font-size:22px;
+  background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.12); box-shadow:var(--shadow);
+  opacity:0; transform:translate(-50%,0) scale(.6); transition: all .18s cubic-bezier(.2,.8,.2,1); backdrop-filter: blur(12px) saturate(160%);
+}
+.qwrap.show .qbtn{ opacity:1; transform:translate(-50%,-20px) scale(1); pointer-events:auto }
+.qbtn.left{ left:-64px }
+.qbtn.right{ left:64px }
+
+/* Modal (sheet) */
+.sheet{
+  position:fixed; inset:0; display:none; z-index:40;
+}
+.sheet.show{ display:block }
+.sheet .mask{ position:absolute; inset:0; background:rgba(0,0,0,.44); backdrop-filter: blur(2px); }
+.panel{
+  position:absolute; left:0; right:0; top:0;
+  transform: translateY(-8%); opacity:0;
+  margin: 10px 10px 0; padding: 6px 10px 14px;
+  background: rgba(20,20,22,.72);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius: 22px;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  transition: transform .22s cubic-bezier(.2,.8,.2,1), opacity .22s ease;
+}
+.sheet.show .panel{ transform: translateY(0); opacity:1 }
+.toolbar{ display:flex; align-items:center; justify-content:space-between; gap:8px; padding:6px 4px 10px }
+.tbtn{ width:38px; height:38px; border-radius:19px; display:flex; align-items:center; justify-content:center; background: rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.14) }
+.tbtn svg{ width:20px; height:20px; stroke:#fff; stroke-width:2.4; fill:none }
+.tlbl{ font-size:20px; font-weight:800 }
+
+.field{ margin:12px 6px }
+label{ display:block; font-weight:700; margin:0 0 6px; color:var(--sub) }
+input[type="text"], textarea{
+  width:100%; padding:14px 12px; border-radius:14px; border:1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.06); color:var(--txt); font-size:16px;
+}
+textarea{ min-height:110px; resize:vertical }
+
+/* Map area */
+.mapbox{ height:260px; border-radius:16px; overflow:hidden; border:1px solid rgba(255,255,255,.12); margin-top:8px }
+.mapbox iframe{ width:100%; height:100%; border:0 }
+
+/* helpers */
+.center{ text-align:center }
+.spacer{ height:6px }
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <div class="header">
+    <div class="hrow">
+      <div style="width:18px"></div>
+      <h1>Ajanda</h1>
+      <div id="statusGlow" class="glow" title="Durum"></div>
+    </div>
+  </div>
+
+  <div class="card" id="todayCard">
+    <div class="section-title" id="dayTitle">—</div>
+    <div class="calendar-head">
+      <div class="badge small" id="monthTitle">Ağustos 2025</div>
+      <button class="btn" id="calToggle">📅 Takvimi aç</button>
+    </div>
+    <div id="calendar" class="calendar hidden"></div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">Günün Zaman Çizelgesi</div>
+    <div id="timeline">
+      <div class="item muted">Bu gün için kayıt yok.</div>
+    </div>
+  </div>
+</div>
+
+<!-- Bottom nav -->
+<div class="nav">
+  <div class="ico" title="Zaman">🏠</div>
+  <div class="ico" title="Harita">🗺️</div>
+  <button id="fab" class="ico" aria-label="Ekle">＋</button>
+  <div class="ico" title="Ara">🔎</div>
+  <div class="ico" title="Ayarlar">⚙️</div>
+</div>
+
+<!-- Quick add -->
+<div class="qwrap" id="qwrap">
+  <button class="qbtn left" id="qNote" title="Not">📝</button>
+  <button class="qbtn right" id="qCall" title="Çağrı">📞</button>
+  <button class="qbtn" style="left:0" id="qLoc" title="Konum">📍</button>
+</div>
+
+<!-- NOTE SHEET -->
+<div class="sheet" id="sheet-note" aria-hidden="true">
+  <div class="mask"></div>
+  <div class="panel">
+    <div class="toolbar">
+      <button class="tbtn" data-close="#sheet-note" aria-label="Geri">
+        <svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>
+      </button>
+      <div class="tlbl">Yeni Not</div>
+      <button class="tbtn" data-save="note" aria-label="Kaydet">
+        <svg viewBox="0 0 24 24"><path d="M5 12l4 4 10-10"/></svg>
+      </button>
+    </div>
+    <div class="field"><label>Başlık (opsiyonel)</label><input id="nTitle" type="text" placeholder="örn. Fikir, yapılacak..."></div>
+    <div class="field"><label>Not</label><textarea id="nText" placeholder="Metni yaz..."></textarea></div>
+    <div class="field"><label>Etiketler (virgülle)</label><input id="nTags" type="text" placeholder="iş, spor, aile"></div>
+  </div>
+</div>
+
+<!-- CALL SHEET -->
+<div class="sheet" id="sheet-call" aria-hidden="true">
+  <div class="mask"></div>
+  <div class="panel">
+    <div class="toolbar">
+      <button class="tbtn" data-close="#sheet-call" aria-label="Geri"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button>
+      <div class="tlbl">Yeni Çağrı</div>
+      <button class="tbtn" data-save="call" aria-label="Kaydet"><svg viewBox="0 0 24 24"><path d="M5 12l4 4 10-10"/></svg></button>
+    </div>
+    <div class="field"><label>Kişi adı</label><input id="cName" type="text" placeholder="örn. Ayşe Yılmaz"></div>
+    <div class="field"><label>Tür</label>
+      <div class="row">
+        <label><input type="radio" name="ctype" value="Gelen" checked> Gelen</label>
+        <label style="margin-left:14px"><input type="radio" name="ctype" value="Giden"> Giden</label>
+        <label style="margin-left:14px"><input type="radio" name="ctype" value="Cevapsız"> Cevapsız</label>
+      </div>
+    </div>
+    <div class="field"><label>Not (opsiyonel)</label><input id="cNote" type="text" placeholder="Kısa not..."></div>
+  </div>
+</div>
+
+<!-- LOCATION SHEET -->
+<div class="sheet" id="sheet-loc" aria-hidden="true">
+  <div class="mask"></div>
+  <div class="panel">
+    <div class="toolbar">
+      <button class="tbtn" data-close="#sheet-loc" aria-label="Geri"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button>
+      <div class="tlbl">Yeni Konum</div>
+      <button class="tbtn" data-save="loc" aria-label="Kaydet"><svg viewBox="0 0 24 24"><path d="M5 12l4 4 10-10"/></svg></button>
+    </div>
+    <div class="field"><label>Yer adı</label><input id="lName" type="text" placeholder="örn. Ev, İş, Kafe"></div>
+    <div class="field"><label>Adres</label><input id="lAddr" type="text" placeholder="Cadde, No, ilçe..."></div>
+    <div class="field"><label>Koordinat</label><input id="lCoord" type="text" placeholder="enlem, boylam"></div>
+    <div class="field"><button class="btn" id="pickOnMap">Haritada seç</button>
+      <div class="mapbox hidden" id="mapbox">
+        <!-- lightweight map via leaflet -->
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+        <div id="map" style="height:100%"></div>
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== Utilities =====
+const months = ["Ocak","Şubat","Mart","Nisan","Mayıs","Haziran","Temmuz","Ağustos","Eylül","Ekim","Kasım","Aralık"];
+const days = ["Pazar","Pazartesi","Salı","Çarşamba","Perşembe","Cuma","Cumartesi"];
+const $ = s=>document.querySelector(s);
+const $$ = s=>Array.from(document.querySelectorAll(s));
+
+function todayStr(d=new Date()){
+  return `${d.getDate()} ${months[d.getMonth()]} ${days[d.getDay()]}`;
+}
+function ymd(d=new Date()){
+  return d.toISOString().slice(0,10);
+}
+function saveEvents(arr){ localStorage.setItem("aj_events", JSON.stringify(arr)); }
+function loadEvents(){ try{ return JSON.parse(localStorage.getItem("aj_events"))||[] }catch{ return [] } }
+function haptic(){ if(navigator.vibrate) navigator.vibrate(10); }
+
+// ===== State =====
+let events = loadEvents();
+let selDate = ymd(new Date());
+
+function renderHeader(){
+  $("#dayTitle").textContent = todayStr(new Date(selDate));
+  const d = new Date(selDate);
+  $("#monthTitle").textContent = `${months[d.getMonth()]} ${d.getFullYear()}`;
+}
+function renderTimeline(){
+  const box = $("#timeline"); box.innerHTML="";
+  const list = events.filter(e=>e.date===selDate).sort((a,b)=>a.time.localeCompare(b.time));
+  if(list.length===0){ box.innerHTML = '<div class="item muted">Bu gün için kayıt yok.</div>'; return; }
+  for(const e of list){
+    const wrap = document.createElement("div"); wrap.className="item";
+    wrap.innerHTML = `
+      <div class="row">
+        <span class="dot ${e.type==='note'?'note':e.type==='call'?'call':'loc'}"></span>
+        <div class="time">${e.time}</div>
+        <div class="title" style="margin-left:8px">${e.title||e.kind||e.name||''}</div>
+      </div>
+      ${e.text?`<div class="muted" style="margin-top:6px">${e.text}</div>`:''}
+      ${e.addr?`<div class="muted" style="margin-top:6px">${e.addr}</div>`:''}
+    `;
+    box.appendChild(wrap);
+  }
+}
+
+function buildCalendar(){
+  const out = $("#calendar"); out.innerHTML="";
+  const d=new Date(selDate); const y=d.getFullYear(), m=d.getMonth();
+  const first = new Date(y,m,1); const start = (first.getDay()+6)%7; // Mon=0
+  const daysIn = new Date(y,m+1,0).getDate();
+  const grid = document.createElement("div"); grid.className="grid-7";
+  // weekdays
+  ["Pzt","Sal","Çar","Per","Cum","Cmt","Paz"].forEach(w=>{
+    const el=document.createElement("div"); el.textContent=w; el.className="small center muted"; grid.appendChild(el);
+  });
+  for(let i=0;i<start;i++){ const sp=document.createElement("div"); grid.appendChild(sp); }
+  for(let dnum=1; dnum<=daysIn; dnum++){
+    const el = document.createElement("button"); el.className="day btn"; el.textContent=dnum;
+    const dstr = new Date(y,m,dnum).toISOString().slice(0,10);
+    if(dstr===selDate) el.classList.add("sel");
+    el.onclick=()=>{ selDate=dstr; $("#calToggle").textContent="📅 Takvimi kapat"; $("#calendar").classList.remove("hidden"); renderHeader(); renderTimeline(); $$(".day").forEach(x=>x.classList.remove("sel")); el.classList.add("sel"); };
+    grid.appendChild(el);
+  }
+  out.appendChild(grid);
+}
+
+// ===== Quick add =====
+$("#fab").addEventListener("click",()=>{
+  haptic();
+  $("#qwrap").classList.toggle("show");
+});
+$("#qNote").onclick=()=>{ openSheet("#sheet-note"); };
+$("#qCall").onclick=()=>{ openSheet("#sheet-call"); };
+$("#qLoc").onclick=()=>{ openSheet("#sheet-loc"); };
+
+function openSheet(sel){
+  haptic();
+  $("#qwrap").classList.remove("show");
+  const sh = $(sel); sh.classList.add("show");
+  sh.querySelector(".mask").onclick=()=>closeSheet(sel);
+}
+function closeSheet(sel){ const sh=$(sel); sh.classList.remove("show"); }
+
+$$(".tbtn[data-close]").forEach(b=>b.addEventListener("click", e=>closeSheet(b.dataset.close)));
+
+// Save handlers
+$$(".tbtn[data-save]").forEach(b=>b.addEventListener("click", ()=>{
+  const type=b.dataset.save;
+  const now=new Date();
+  const base={ id:crypto.randomUUID(), type, date:selDate, time: now.toTimeString().slice(0,5) };
+  if(type==="note"){
+    const title=$("#nTitle").value.trim(), text=$("#nText").value.trim(), tags=$("#nTags").value.trim();
+    if(!title && !text){ alert("Lütfen bir şey yaz."); return; }
+    events.push({...base, title, text, tags});
+    closeSheet("#sheet-note");
+    $("#nTitle").value=""; $("#nText").value=""; $("#nTags").value="";
+  }else if(type==="call"){
+    const name=$("#cName").value.trim();
+    const kind=document.querySelector('input[name="ctype"]:checked').value;
+    const text=$("#cNote").value.trim();
+    if(!name){ alert("Kişi adı gir."); return; }
+    events.push({...base, type:"call", title:name, kind, text});
+    closeSheet("#sheet-call"); $("#cName").value=""; $("#cNote").value="";
+  }else if(type==="loc"){
+    const name=$("#lName").value.trim(), addr=$("#lAddr").value.trim(), coord=$("#lCoord").value.trim();
+    if(!name && !addr){ alert("En azından isim ya da adres gir."); return; }
+    events.push({...base, type:"loc", name, addr, coord, title:name, text:coord});
+    closeSheet("#sheet-loc"); $("#lName").value=""; $("#lAddr").value=""; $("#lCoord").value="";
+  }
+  saveEvents(events); renderTimeline(); haptic();
+}));
+
+// Map select
+let map, mapInit=false, pin;
+$("#pickOnMap").addEventListener("click", ()=>{
+  $("#mapbox").classList.toggle("hidden");
+  if(!mapInit){
+    map = L.map('map',{zoomControl:true}).setView([39.925,32.85], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19, attribution: '&copy; OpenStreetMap'
+    }).addTo(map);
+    map.on('click', async (e)=>{
+      const {lat,lng}=e.latlng;
+      if(!pin){ pin = L.marker([lat,lng]).addTo(map); } else { pin.setLatLng([lat,lng]); }
+      $("#lCoord").value = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+      try{
+        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`);
+        const js = await res.json();
+        if(js && js.display_name) $("#lAddr").value = js.display_name;
+      }catch(e){ console.log(e); }
+    });
+    mapInit=true;
+  }
+});
+
+// Calendar toggle
+$("#calToggle").addEventListener("click",()=>{
+  const c=$("#calendar"); c.classList.toggle("hidden");
+  $("#calToggle").textContent = c.classList.contains("hidden") ? "📅 Takvimi aç" : "📅 Takvimi kapat";
+});
+
+// Init
+function init(){
+  renderHeader(); buildCalendar(); renderTimeline();
+}
+init();
+</script>
+</body>
+</html>
