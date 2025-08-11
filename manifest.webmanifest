@@ -1,7 +1,7 @@
 {
   "name": "Ajanda",
   "short_name": "Ajanda",
-  "start_url": ".",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#0b1530",
   "theme_color": "#0b1530",
@@ -20,9 +20,7 @@
       "src": "icons/apple-touch-icon.png",
       "sizes": "180x180",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     }
   ]
-,
-  "scope": "."
 }
