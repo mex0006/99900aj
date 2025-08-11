@@ -1,93 +1,390 @@
 <!doctype html>
 <html lang="tr">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
-  <meta name="theme-color" content="#000000">
-  <title>Ajanda</title>
-  <link rel="manifest" href="manifest.webmanifest">
-  <link rel="apple-touch-icon" href="icons/icon-192.png">
-  <link rel="stylesheet" href="css/main.css">
-  <style>
-    /* Fallback for iOS backdrop-filter gaps */
-    @supports not ((-webkit-backdrop-filter: blur(10px)) or (backdrop-filter: blur(10px))) {
-      .glass, .glass-strong { background: rgba(255,255,255,0.06); }
-    }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Ajanda</title>
+<style>
+/*** ---------- iOS 26 Liquid Glass — Temel ---------- ***/
+:root{
+  --bg:#000; --glass:#0b0f14ee; --glass2:#0a0d12cc; --stroke:#1a1e24;
+  --txt:#e9edf3; --muted:#aab3c2; --accent:#3a86ff; --ok:#14c47a; --danger:#ff5b5b;
+  --r:22px; --r2:18px; --safe-b:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0; background:#000; color:var(--txt);
+  font:500 16px/1.45 ui-sans-serif,-apple-system,system-ui,"SF Pro","Inter",Roboto,Arial;
+  -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+}
+h1,h2,h3{margin:0 0 12px}
+.h2{font:800 26px/1.2 "SF Pro Display"}
+.h3{font:800 22px/1.2 "SF Pro Display"}
+.subtle{color:var(--muted)}
+.ic{width:22px;height:22px;fill:currentColor}
+button{appearance:none;border:0;background:none;color:inherit;cursor:pointer}
+button:focus-visible{outline:2px solid #5aa1ff;outline-offset:3px;border-radius:14px}
+
+/*** Appbar ***/
+.appbar{position:sticky;top:0;z-index:30;padding:12px 16px calc(8px + var(--safe-b));
+  display:flex;align-items:center;justify-content:space-between;
+  background:linear-gradient(180deg,#0b0f14aa,#000 70%); backdrop-filter:saturate(140%) blur(22px);
+  border-bottom:1px solid #0f1216}
+.title{font:800 34px/1 "SF Pro Display"}
+.icon-pill{width:46px;height:46px;border-radius:50%;
+  background:radial-gradient(120% 120% at 30% 20%, #2b2f36, #15171b 70%);
+  box-shadow: inset 0 1px 0 #ffffff22, 0 8px 24px #0008; display:grid;place-items:center}
+
+/*** Kart/Glass ***/
+main{padding:16px; padding-bottom:120px}
+.card{margin:14px 4px;padding:18px;border-radius:24px;border:1px solid var(--stroke);
+  background:linear-gradient(180deg,#0c1016cc,#0a0d12b0); box-shadow:0 10px 30px #000a, inset 0 1px 0 #ffffff18;
+  backdrop-filter:blur(20px) saturate(140%)}
+.row{display:flex;gap:12px}
+.between{justify-content:space-between}
+.center{align-items:center}
+.chip{display:inline-flex;gap:8px;align-items:center;border-radius:14px;padding:10px 14px;
+  background:#0d1116;border:1px solid var(--stroke);color:#dbe7ff}
+.chip.toggle{background:#0b1322;border-color:#1d2b46}
+.chip.toggle.active{background:#122c55;color:#fff;border-color:#2e5fc2}
+.input{display:block;width:100%;border-radius:16px;border:1px solid var(--stroke); padding:14px 16px;color:#fff;background:#0b0f14cc}
+.input.big{min-height:140px;resize:vertical}
+.input:focus{outline:none;border-color:#355dff;box-shadow:0 0 0 3px #2e5fc233}
+.list{display:flex;flex-direction:column;gap:12px}
+.list .item{padding:14px 16px;border-radius:16px;border:1px solid var(--stroke);background:#0c0f13}
+.list .empty{color:var(--muted);padding:14px 16px;border:1px dashed #2a2f36;border-radius:16px}
+
+/*** Dock & FAB ***/
+.dock{position:fixed;left:0;right:0;bottom:0;z-index:40;display:flex;justify-content:center;gap:22vw;align-items:end;
+  padding:12px max(12px,env(safe-area-inset-left)) calc(12px + var(--safe-b)) max(12px,env(safe-area-inset-right));
+  background:linear-gradient(180deg,transparent,#000 35%)}
+.dock-btn{width:64px;height:64px;border-radius:22px;background:linear-gradient(180deg,#14181e,#0b0e12);
+  border:1px solid var(--stroke); box-shadow:0 8px 24px #0009,inset 0 1px 0 #ffffff14; display:grid;place-items:center;color:#9fb0ff}
+.fab{width:78px;height:78px;border-radius:24px;color:#fff;
+  background: radial-gradient(120% 160% at 20% 10%, #5aa1ff, #1a48ff 70%);
+  box-shadow:0 20px 40px #1a48ff55, inset 0 1px 0 #ffffff55}
+
+/*** Radial (+) ***/
+.radial{position:fixed;bottom:110px;left:50%;transform:translateX(-50%);display:flex;gap:18px;z-index:45;pointer-events:none}
+.radial .rad-btn{pointer-events:auto;width:86px;height:86px;border-radius:22px;border:1px solid var(--stroke);
+  background:linear-gradient(180deg,#11161c,#0a0e13); color:#e6eeff;
+  box-shadow:0 10px 30px #000a, inset 0 1px 0 #ffffff18; display:flex;flex-direction:column;justify-content:center;align-items:center;gap:8px;
+  transform:translateY(20px) scale(.96); opacity:0; transition:transform .22s ease,opacity .22s}
+.radial.show .rad-btn{transform:translateY(0) scale(1);opacity:1}
+.radial span{font-size:12px;color:#cdd8ff}
+
+/*** Sheets (alt panel) ***/
+.sheet{position:fixed;inset:auto 0 0 0;transform:translateY(100%);z-index:50;min-height:65vh;
+  background:linear-gradient(180deg,#0b0f14ee,#090c10f0); border-top:1px solid var(--stroke);
+  backdrop-filter:blur(28px) saturate(140%); border-radius:28px 28px 0 0; transition:transform .28s ease}
+.sheet.active{transform:translateY(0)}
+.sheet-head{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid #0f1114}
+.sheet-title{font:800 22px/1.2 "SF Pro Display"}
+.circle{width:46px;height:46px;border-radius:50%;display:grid;place-items:center}
+.ghost{background:radial-gradient(100% 100% at 30% 20%, #2b2f36, #15171b 70%); box-shadow: inset 0 1px 0 #ffffff22}
+.primary{background:radial-gradient(120% 140% at 30% 20%, #6fd1ff, #1a58ff 70%); box-shadow: inset 0 1px 0 #ffffff55}
+.sheet-body{padding:14px 18px 24px;display:flex;flex-direction:column;gap:12px}
+.row>.input{flex:1}
+
+/*** Toast ***/
+.toast{position:fixed;left:50%;bottom:calc(110px + var(--safe-b));transform:translateX(-50%);z-index:60;
+  background:#0f1318;border:1px solid var(--stroke);color:#fff;padding:12px 16px;border-radius:14px;opacity:0;transition:opacity .2s}
+.toast.show{opacity:1}
+
+/*** Detail pop ***/
+.detail{position:fixed;inset:auto 12px calc(120px + var(--safe-b)) 12px;z-index:55;display:none}
+.detail .card{padding:16px;border-radius:22px}
+.detail.show{display:block}
+.detail .actions{display:flex;gap:12px;justify-content:flex-end}
+.action{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;border:1px solid var(--stroke);
+  background:linear-gradient(180deg,#14181e,#0b0e12)}
+
+/*** Reduced motion ***/
+@media (prefers-reduced-motion:reduce){.sheet,.radial .rad-btn{transition:none}}
+</style>
 </head>
 <body>
-  <div id="app">
-    <header class="app-header glass-strong">
-      <div class="header-left"></div>
-      <h1 class="title">Ajanda</h1>
-      <button class="circle-btn settings-btn" id="btnSettings" aria-label="Ayarlar">
-        <svg viewBox="0 0 24 24"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm8.94-4.07-.86-.5a7.76 7.76 0 0 0 0-1.86l.86-.5a1 1 0 0 0 .37-1.36l-1-1.73a1 1 0 0 0-1.26-.44l-.97.39a7.9 7.9 0 0 0-1.6-.93l-.15-1.04a1 1 0 0 0-1-.86h-2a1 1 0 0 0-1 .86l-.15 1.04c-.57.22-1.1.52-1.6.93l-.97-.39a1 1 0 0 0-1.26.44l-1 1.73a1 1 0 0 0 .37 1.36l.86.5a7.76 7.76 0 0 0 0 1.86l-.86.5a1 1 0 0 0-.37 1.36l1 1.73a1 1 0 0 0 1.26.44l.97-.39c.5.41 1.03.71 1.6.93l.15 1.04a1 1 0 0 0 1 .86h2a1 1 0 0 0 1-.86l.15-1.04c.57-.22 1.1-.52 1.6-.93l.97.39a1 1 0 0 0 1.26-.44l1-1.73a1 1 0 0 0-.37-1.36Z"/></svg>
+<header class="appbar">
+  <h1 class="title">Ajanda</h1>
+  <button id="btnSettings" class="icon-pill" aria-label="Ayarlar">
+    <svg class="ic" viewBox="0 0 24 24"><path d="M19.14 12.94a7.8 7.8 0 0 0 .05-.94c0-.32-.02-.63-.05-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.6-.22l-2.39.96a7.55 7.55 0 0 0-1.63-.95l-.36-2.55a.5.5 0 0 0-.5-.42h-3.84a.5.5 0 0 0-.5.42l-.36 2.55c-.57.23-1.12.54-1.63.95l-2.39-.96a.5.5 0 0 0-.6.22L2.7 7.84a.5.5 0 0 0 .12.64l2.03 1.58c-.03.31-.05.62-.05.94 0 .32.02.63.05.94L2.82 13.9a.5.5 0 0 0-.12.64l1.92 3.32c.13.22.39.31.6.22l2.39-.96c.51.4 1.06.72 1.63.95l.36 2.55c.05.24.26.42.5.42h3.84c.24 0 .45-.18.5-.42l.36-2.55c.57-.23 1.12-.54 1.63-.95l2.39.96c.22.09.47 0 .6-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.58ZM12 15.5A3.5 3.5 0 1 1 12 8.5a3.5 3.5 0 0 1 0 7Z"/></svg>
+  </button>
+</header>
+
+<main id="home">
+  <section class="card">
+    <div class="row between center">
+      <h2 id="humanDate" class="h2">—</h2>
+      <button id="btnCalendar" class="chip">
+        <svg class="ic" viewBox="0 0 24 24"><path d="M7 2v2H5a2 2 0 0 0-2 2v2h18V6a2 2 0 0 0-2-2h-2V2h-2v2H9V2H7Zm14 8H3v8a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-8Z"/></svg>
+        <span>Takvimi aç</span>
       </button>
-    </header>
-
-    <main id="content">
-      <section class="glass card">
-        <h2 id="headlineDate">11 Ağustos Pazartesi</h2>
-        <div class="row between muted">
-          <div id="headlineMonth">Ağustos 2025</div>
-          <button id="btnToggleCalendar" class="chip">
-            <svg viewBox="0 0 24 24"><path d="M7 2h2v3H7V2Zm8 0h2v3h-2V2Zm-9 5h12a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2Zm0 3v10h12V10H6Z"/></svg>
-            Takvimi aç
-          </button>
-        </div>
-        <div id="calendar" class="calendar hidden"></div>
-      </section>
-
-      <section class="glass card">
-        <h3>Günün Zaman Çizelgesi</h3>
-        <div id="timeline" class="list"></div>
-      </section>
-    </main>
-
-    <!-- Bottom bar -->
-    <nav class="bottom-bar glass-strong">
-      <button class="nav-btn" id="navHome" aria-label="Ana sayfa">
-        <svg viewBox="0 0 24 24"><path d="M12 3 2 12h3v8h6v-5h2v5h6v-8h3Z"/></svg>
-      </button>
-      <div class="spacer"></div>
-      <button class="fab" id="btnPlus" aria-label="Ekle">
-        <svg viewBox="0 0 24 24"><path d="M11 11V5h2v6h6v2h-6v6h-2v-6H5v-2h6Z"/></svg>
-      </button>
-    </nav>
-
-    <!-- Floating Search -->
-    <button id="btnSearch" class="circle-fab glass-strong" aria-label="Ara">
-      <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.5 6.5 0 1 0 14 15.5l.27.28v.79L20 21.5 21.5 20l-5.5-5.5ZM10 15a5 5 0 1 1 0-10 5 5 0 0 1 0 10Z"/></svg>
-    </button>
-
-    <!-- Speed dial overlay -->
-    <div id="dialOverlay" class="overlay hidden">
-      <div class="dial">
-        <button class="dial-item" data-type="note" aria-label="Yeni Not">
-          <svg viewBox="0 0 24 24"><path d="M5 3h14v14l-4 4H5V3Zm10 13h3.5L15 19.5V16Z"/></svg>
-          <span>Not</span>
-        </button>
-        <button class="dial-item" data-type="call" aria-label="Yeni Çağrı">
-          <svg viewBox="0 0 24 24"><path d="M6.62 10.79a15 15 0 0 0 6.59 6.59l2.2-2.2a1 1 0 0 1 1.01-.24c1.12.37 2.33.57 3.58.57a1 1 0 0 1 1 1v3.49a1 1 0 0 1-1 1A17 17 0 0 1 3 5a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.46.57 3.58a1 1 0 0 1-.24 1.01l-2.2 2.2Z"/></svg>
-          <span>Çağrı</span>
-        </button>
-        <button class="dial-item" data-type="place" aria-label="Yeni Konum">
-          <svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7Zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5Z"/></svg>
-          <span>Konum</span>
-        </button>
-      </div>
     </div>
+    <p id="monthLabel" class="subtle">—</p>
+  </section>
 
-    <!-- Sheets -->
-    <div id="sheetBackdrop" class="sheet-backdrop hidden"></div>
+  <section class="card">
+    <h3 class="h3">Günün Zaman Çizelgesi</h3>
+    <div id="timeline" class="list">
+      <div class="empty">Bu gün için kayıt yok.</div>
+    </div>
+  </section>
+</main>
 
-    <div id="sheet" class="sheet hidden" role="dialog" aria-modal="true" aria-labelledby="sheetTitle"></div>
+<!-- Dock -->
+<nav class="dock">
+  <button class="dock-btn" aria-label="Ana Sayfa">
+    <svg class="ic" viewBox="0 0 24 24"><path d="M12 3 2 12h3v8h6v-6h2v6h6v-8h3z"/></svg>
+  </button>
+  <button id="btnAdd" class="fab" aria-haspopup="true" aria-expanded="false" aria-label="Yeni">
+    <svg class="ic" viewBox="0 0 24 24"><path d="M11 11V6h2v5h5v2h-5v5h-2v-5H6v-2z"/></svg>
+  </button>
+</nav>
 
-    <div id="detailSheet" class="sheet hidden" role="dialog" aria-modal="true"></div>
+<!-- Arama floating -->
+<button id="btnSearch" class="icon-pill" style="position:fixed;right:16px;bottom:calc(94px + var(--safe-b));z-index:41">
+  <svg class="ic" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.5 6.5 0 1 0 14 15.5l.27.28v.79l5 4.99L21.49 19l-4.99-5Zm-6 0A4.5 4.5 0 1 1 14 9.5 4.5 4.5 0 0 1 9.5 14Z"/></svg>
+</button>
 
-    <div id="searchSheet" class="sheet hidden" role="dialog" aria-modal="true"></div>
+<!-- (+) Radial -->
+<div id="addMenu" class="radial" hidden>
+  <button class="rad-btn" data-sheet="note"><svg class="ic" viewBox="0 0 24 24"><path d="M4 4h14v10h-4a2 2 0 0 0-2 2v4H4zM14 20v-3h3z"/></svg><span>Not</span></button>
+  <button class="rad-btn" data-sheet="call"><svg class="ic" viewBox="0 0 24 24"><path d="M6.6 10.8a15.05 15.05 0 0 0 6.6 6.6l2.2-2.2c.2-.2.5-.3.8-.2 1 .3 2 .5 3.1.5.4 0 .7.3.7.7V20c0 .6-.5 1-1.1 1A17.9 17.9 0 0 1 3 6.1C3 5.5 3.4 5 4 5h3.7c.4 0 .7.3.7.7 0 1 .2 2.1.5 3.1.1.3 0 .6-.2.8l-2.1 2.2Z"/></svg><span>Çağrı</span></button>
+  <button class="rad-btn" data-sheet="place"><svg class="ic" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7Zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5Z"/></svg><span>Konum</span></button>
+</div>
 
+<!-- Sheets: Search / Note / Call / Place -->
+<section id="sheetSearch" class="sheet" aria-hidden="true">
+  <div class="sheet-head">
+    <button class="circle ghost close" data-close="sheetSearch"><svg class="ic" viewBox="0 0 24 24"><path d="M15 18 9 12l6-6"/></svg></button>
+    <div class="sheet-title">Arama</div><div class="circle ghost"></div>
   </div>
-  <script defer src="js/app.js"></script>
+  <div class="sheet-body">
+    <div class="input"><input id="q" type="search" placeholder="kelime, kişi..." style="width:100%;background:transparent;border:0;color:#fff;font:inherit"></div>
+    <div class="row">
+      <button class="chip toggle active" data-filter="note">Not</button>
+      <button class="chip toggle active" data-filter="call">Çağrı</button>
+      <button class="chip toggle active" data-filter="place">Konum</button>
+    </div>
+    <div id="searchResults" class="list"></div>
+  </div>
+</section>
+
+<section id="sheetNote" class="sheet" aria-hidden="true">
+  <div class="sheet-head">
+    <button class="circle ghost close" data-close="sheetNote"><svg class="ic" viewBox="0 0 24 24"><path d="M15 18 9 12l6-6"/></svg></button>
+    <div class="sheet-title">Yeni Not</div>
+    <button class="circle primary" id="saveNote"><svg class="ic" viewBox="0 0 24 24"><path d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg></button>
+  </div>
+  <div class="sheet-body">
+    <label>Başlık (opsiyonel)</label>
+    <input id="noteTitle" class="input" placeholder="örn. Fikir, yapılacak...">
+    <label>Not</label>
+    <textarea id="noteBody" class="input big" placeholder="Metni yaz..."></textarea>
+    <label>Etiketler (virgülle)</label>
+    <input id="noteTags" class="input" placeholder="iş, spor, aile">
+  </div>
+</section>
+
+<section id="sheetCall" class="sheet" aria-hidden="true">
+  <div class="sheet-head">
+    <button class="circle ghost close" data-close="sheetCall"><svg class="ic" viewBox="0 0 24 24"><path d="M15 18 9 12l6-6"/></svg></button>
+    <div class="sheet-title">Yeni Çağrı</div>
+    <button class="circle primary" id="saveCall"><svg class="ic" viewBox="0 0 24 24"><path d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg></button>
+  </div>
+  <div class="sheet-body">
+    <label>Kişi adı</label>
+    <input id="callWho" class="input" placeholder="örn. Ayşe Yılmaz">
+    <label>Tür</label>
+    <div class="row" id="callType">
+      <button class="chip toggle active" data-val="Gelen">Gelen</button>
+      <button class="chip toggle" data-val="Giden">Giden</button>
+      <button class="chip toggle" data-val="Cevapsız">Cevapsız</button>
+    </div>
+    <label>Not (opsiyonel)</label>
+    <input id="callNote" class="input" placeholder="Kısa not...">
+  </div>
+</section>
+
+<section id="sheetPlace" class="sheet" aria-hidden="true">
+  <div class="sheet-head">
+    <button class="circle ghost close" data-close="sheetPlace"><svg class="ic" viewBox="0 0 24 24"><path d="M15 18 9 12l6-6"/></svg></button>
+    <div class="sheet-title">Yeni Konum</div>
+    <button class="circle primary" id="savePlace"><svg class="ic" viewBox="0 0 24 24"><path d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg></button>
+  </div>
+  <div class="sheet-body">
+    <label>Yer adı</label>
+    <input id="placeName" class="input" placeholder="örn. Ev, İş, Kafe">
+    <label>Adres</label>
+    <input id="placeAddr" class="input" placeholder="Cadde, No, ilçe...">
+    <label>Koordinat</label>
+    <div class="row">
+      <input id="lat" class="input" placeholder="enlem">
+      <input id="lng" class="input" placeholder="boylam">
+      <button id="btnCurrent" class="chip">Mevcut</button>
+    </div>
+    <small class="subtle">Harita yok — “Mevcut” ile otomatik doldur.</small>
+  </div>
+</section>
+
+<!-- Kayıt detayı -->
+<div id="detail" class="detail">
+  <div class="card">
+    <div id="detailText" style="white-space:pre-wrap"></div>
+    <div class="actions" style="margin-top:12px">
+      <button id="editBtn" class="action" title="Düzenle">
+        <svg class="ic" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1.003 1.003 0 0 0 0-1.42l-2.34-2.34a1.003 1.003 0 0 0-1.42 0l-1.83 1.83 3.75 3.75 1.84-1.82z"/></svg>
+      </button>
+      <button id="delBtn" class="action" title="Sil" style="color:#ff8a8a">
+        <svg class="ic" viewBox="0 0 24 24"><path d="M6 7h12v2H6zm2 3h8v9a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2V10zm3-6h2l1 1h4v2H6V5h4l1-1z"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+/* ====== util ====== */
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const fmt = new Intl.DateTimeFormat("tr-TR",{dateStyle:"full"});
+
+const DBKEY="ajanda.items.v1";
+const load = () => JSON.parse(localStorage.getItem(DBKEY)||"[]");
+const save = d => localStorage.setItem(DBKEY, JSON.stringify(d));
+let items = load(); let currentId=null;
+
+function setToday(){
+  const now = new Date();
+  $("#humanDate").textContent = fmt.format(now);
+  $("#monthLabel").textContent = new Intl.DateTimeFormat("tr-TR",{month:"long",year:"numeric"}).format(now);
+}
+setToday();
+
+function toast(msg){ const t=$("#toast"); t.textContent=msg; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"),1400); }
+
+function render(){
+  const box=$("#timeline"); box.innerHTML="";
+  if(!items.length){ box.innerHTML = `<div class="empty">Bu gün için kayıt yok.</div>`; return; }
+  items.forEach(it=>{
+    const el=document.createElement("div");
+    el.className="item";
+    el.innerHTML=`<b>${it.type}</b><div class="subtle" style="margin-top:6px">${it.summary}</div>`;
+    el.onclick=()=>openDetail(it.id);
+    box.appendChild(el);
+  });
+}
+render();
+
+/* ====== Dock / Add ====== */
+const addMenu=$("#addMenu");
+$("#btnAdd").addEventListener("click",()=>{
+  const open=addMenu.hasAttribute("hidden");
+  if(open){addMenu.removeAttribute("hidden"); requestAnimationFrame(()=>addMenu.classList.add("show"));}
+  else{addMenu.classList.remove("show"); setTimeout(()=>addMenu.setAttribute("hidden",""),200);}
+});
+
+$("#addMenu").addEventListener("click",e=>{
+  const b=e.target.closest(".rad-btn"); if(!b) return;
+  addMenu.classList.remove("show"); setTimeout(()=>addMenu.setAttribute("hidden",""),180);
+  openSheet("#sheet"+b.dataset.sheet[0].toUpperCase()+b.dataset.sheet.slice(1));
+});
+
+/* ====== Sheets ====== */
+function openSheet(sel){ document.querySelector(sel).classList.add("active"); }
+$$(".close").forEach(b=>b.addEventListener("click",e=>e.currentTarget.closest(".sheet").classList.remove("active")));
+$("#btnSearch").addEventListener("click",()=>openSheet("#sheetSearch"));
+
+/* ====== Search ====== */
+$("#q").addEventListener("input",doSearch);
+$$(".chip.toggle").forEach(ch=>ch.addEventListener("click",()=>{ch.classList.toggle("active");doSearch();}));
+function doSearch(){
+  const q=$("#q").value.trim().toLowerCase();
+  const types = $$(".chip.toggle.active").map(b=>b.dataset.filter);
+  const out=$("#searchResults"); out.innerHTML="";
+  items.filter(it=>(!types.length||types.includes(it.kind)) &&
+    (it.summary.toLowerCase().includes(q) || (it.note||"").toLowerCase().includes(q)))
+  .forEach(it=>{
+    const d=document.createElement("div");
+    d.className="item";
+    d.innerHTML=`<b>${it.type}</b> <span class="subtle">— ${it.summary}</span>`;
+    d.onclick=()=>openDetail(it.id);
+    out.appendChild(d);
+  });
+}
+
+/* ====== Save handlers ====== */
+$("#saveNote").addEventListener("click",()=>{
+  const title=$("#noteTitle").value.trim(), body=$("#noteBody").value.trim(), tags=$("#noteTags").value.trim();
+  if(!title && !body) return toast("En azından bir şeyler yaz.");
+  addItem({kind:"note", type:"Not", summary:title||body.split("\n")[0].slice(0,50)||"Yeni not", note:body, tags});
+  $("#sheetNote").classList.remove("active");
+  $("#noteTitle").value=$("#noteBody").value=$("#noteTags").value="";
+});
+
+$("#saveCall").addEventListener("click",()=>{
+  const who=$("#callWho").value.trim(); if(!who) return toast("Kişi adı boş olamaz.");
+  const t=$$("#callType .toggle").find(b=>b.classList.contains("active"))?.dataset.val || "Bilinmeyen";
+  const note=$("#callNote").value.trim();
+  addItem({kind:"call", type:"Çağrı", summary:`${who} — ${t}`, note});
+  $("#sheetCall").classList.remove("active");
+  $("#callWho").value=$("#callNote").value=""; $$("#callType .toggle").forEach((b,i)=>b.classList.toggle("active",i===0));
+});
+
+$("#btnCurrent").addEventListener("click",()=>{
+  if(!navigator.geolocation){ toast("Konum desteklenmiyor"); return; }
+  navigator.geolocation.getCurrentPosition(p=>{
+    $("#lat").value = (+p.coords.latitude).toFixed(6);
+    $("#lng").value = (+p.coords.longitude).toFixed(6);
+  },()=>toast("Konum alınamadı"));
+});
+
+$("#savePlace").addEventListener("click",()=>{
+  const name=$("#placeName").value.trim(), addr=$("#placeAddr").value.trim();
+  const lat=$("#lat").value.trim(), lng=$("#lng").value.trim();
+  if(!name && !addr) return toast("En azından isim ya da adres gir.");
+  const subt=[name||"—", addr||"", (lat&&lng)?`(${lat}, ${lng})`:""].filter(Boolean).join(" • ");
+  addItem({kind:"place", type:"Konum", summary:subt, note:"", lat, lng});
+  $("#sheetPlace").classList.remove("active");
+  $("#placeName").value=$("#placeAddr").value=$("#lat").value=$("#lng").value="";
+});
+
+function addItem(it){
+  it.id = crypto.randomUUID?.() : Math.random().toString(36).slice(2);
+  it.ts = Date.now(); items.unshift(it); save(items); render(); toast("Kaydedildi");
+}
+
+/* ====== Detail / Edit / Delete ====== */
+function openDetail(id){
+  const it = items.find(x=>x.id===id); if(!it) return;
+  currentId=id;
+  $("#detailText").textContent = `${it.type}\n${it.summary}\n${it.note||""}`;
+  $("#detail").classList.add("show");
+  // kapatmak için dışa tık
+  $("#detail").onclick = e => { if(e.target.id==="detail") $("#detail").classList.remove("show"); };
+}
+$("#delBtn").onclick = ()=>{
+  if(!currentId) return;
+  items = items.filter(x=>x.id!==currentId); save(items); render();
+  $("#detail").classList.remove("show"); toast("Silindi");
+};
+$("#editBtn").onclick = ()=>{
+  const it = items.find(x=>x.id===currentId); if(!it) return;
+  $("#detail").classList.remove("show");
+  if(it.kind==="note"){ $("#noteTitle").value = it.summary; $("#noteBody").value = it.note||""; openSheet("#sheetNote"); }
+  else if(it.kind==="call"){ $("#callWho").value = it.summary.split(" — ")[0]; $("#callNote").value = it.note||""; openSheet("#sheetCall"); }
+  else { $("#placeName").value=""; $("#placeAddr").value=it.summary; openSheet("#sheetPlace"); }
+};
+
+/* ====== Init ====== */
+document.addEventListener("click",e=>{
+  // toggle chips group
+  const chip=e.target.closest(".chip.toggle"); if(!chip) return;
+  const group = chip.parentElement;
+  if(group && group.id==="callType"){ $$("#callType .toggle").forEach(b=>b.classList.remove("active")); chip.classList.add("active"); }
+});
+</script>
 </body>
 </html>
