@@ -1,8 +1,10 @@
-const CACHE = 'ajanda-v10-2-4';
+// sw.js
+const CACHE = 'ajanda-v10-2-4b';
 const ASSETS = [
-  './','./index.html','./css/main.css','./js/app.js','./manifest.webmanifest',
-  './icons/icon-192.png','./icons/icon-512.png','./icons/apple-touch-icon.png'
+  './','./index.html','./main.css','./app.js','./manifest.webmanifest',
+  './icon-192.png','./icon-512.png','./apple-touch-icon.png'
 ];
+
 
 self.addEventListener('install', e => {
   self.skipWaiting();
