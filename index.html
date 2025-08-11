@@ -14,16 +14,20 @@
 <style>
 :root{
   --bg:#000;
-  --panel:rgba(16,16,16,.72);
+  --glass:rgba(18,18,18,.66);
+  --glass-strong:rgba(18,18,18,.78);
   --edge:#1a1a1a;
   --ink:#eef2f7;
   --muted:#97a1b3;
-  --tint:#5aa8ff;
+  --tint:#69a7ff;
+  --ok:#22c55e;
+  --warn:#facc15;
+  --danger:#ef4444;
   --radius:18px;
-  --tabh:68px;
-  --fs-h1:clamp(20px,4.8vw,28px);
+  --tabh:70px;
+  --fs-h1:clamp(22px,5vw,30px);
   --fs-h2:clamp(18px,3.8vw,22px);
-  --fs-title:clamp(15px,2.9vw,18px);
+  --fs-title:clamp(15px,2.8vw,18px);
   --fs-body:clamp(14px,2.2vw,16px);
   --fs-cap:12px;
 }
@@ -36,43 +40,58 @@ body{
   padding-bottom:calc(var(--tabh) + env(safe-area-inset-bottom) + 10px);
 }
 body.noscroll{overflow:hidden}
-.bgfx{position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.85;
+/* Liquid glass background accents */
+.bgfx{position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.9;
   background:
-    radial-gradient(1200px 800px at 80% 8%, rgba(90,168,255,.22), transparent 60%),
-    radial-gradient(900px 700px at 15% 28%, rgba(168,85,247,.18), transparent 60%);
+    radial-gradient(1100px 800px at 75% -5%, rgba(105,167,255,.20), transparent 60%),
+    radial-gradient(900px 700px at 10% 20%, rgba(168,85,247,.16), transparent 60%);
 }
 
 /* layout */
-.container{position:relative; z-index:1; max-width:960px; margin:0 auto; padding:calc(6px + env(safe-area-inset-top)) 12px 0}
+.container{position:relative; z-index:1; max-width:980px; margin:0 auto; padding:calc(6px + env(safe-area-inset-top)) 12px 0}
 .header{position:sticky; top:0; z-index:20; display:flex; align-items:center; justify-content:center; gap:10px;
-  background:rgba(0,0,0,.35); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+  background:rgba(0,0,0,.35); backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px);
   padding:12px 10px; border-bottom:1px solid var(--edge);
 }
 .brand{font-size:var(--fs-h1); font-weight:900; letter-spacing:.2px}
 .beam{position:absolute; right:14px; top:50%; transform:translateY(-50%); width:18px; height:18px; border-radius:999px; border:1px solid rgba(255,255,255,.06);
-  background:radial-gradient(circle at 50% 50%, rgba(250,204,21,1) 0%, rgba(250,204,21,.25) 60%, transparent 70%);
+  background:radial-gradient(circle at 50% 50%, var(--warn) 0%, rgba(250,204,21,.25) 60%, transparent 70%);
   box-shadow:0 0 18px rgba(250,204,21,.6);
 }
-.card{background:var(--panel); border:1px solid var(--edge); border-radius:var(--radius); padding:14px; margin-top:12px; box-shadow:0 10px 40px rgba(0,0,0,.45); backdrop-filter:blur(18px)}
+
+/* cards (liquid glass) */
+.card{
+  background:var(--glass); border:1px solid var(--edge); border-radius:var(--radius); padding:14px; margin-top:12px;
+  box-shadow:0 10px 40px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.04); backdrop-filter:blur(20px);
+}
 .title{font-size:var(--fs-title); font-weight:800; letter-spacing:.2px}
 .sub{color:var(--muted); font-size:var(--fs-cap)}
 .hr{height:1px;background:#121212;margin:8px 0}
 
 .dayline{font-size:var(--fs-h2); font-weight:900; text-align:center}
 .month-head{display:flex; align-items:center; justify-content:space-between}
-.cal-toggle{cursor:pointer; display:flex; align-items:center; gap:8px; padding:8px 10px; border:1px solid var(--edge); border-radius:12px; background:rgba(12,12,12,.5)}
+.cal-toggle{cursor:pointer; display:flex; align-items:center; gap:8px; padding:8px 10px; border:1px solid var(--edge); border-radius:12px; background:var(--glass-strong)}
 .grid{display:grid; grid-template-columns:repeat(7,1fr); gap:6px}
 .weekday{color:var(--muted); text-align:center; font-size:var(--fs-cap); font-weight:700}
-.d{aspect-ratio:1/1; display:grid; place-items:center; border:1px solid var(--edge); border-radius:12px; background:rgba(13,13,13,.65); font-weight:900; cursor:pointer; font-size:14px}
+.d{aspect-ratio:1/1; display:grid; place-items:center; border:1px solid var(--edge); border-radius:12px; background:rgba(13,13,13,.6); font-weight:900; cursor:pointer; font-size:14px}
 .d.muted{opacity:.45}.d.sel{outline:2px solid var(--tint); outline-offset:-3px}.d.today{border-color:#2b2b2b}
-.collapsible{overflow:hidden; transition:max-height .25s ease, opacity .2s ease; opacity:0; max-height:0}.collapsible.open{opacity:1; max-height:1000px}
+.collapsible{overflow:hidden; transition:max-height .28s ease, opacity .24s ease; opacity:0; max-height:0}.collapsible.open{opacity:1; max-height:1000px}
 
 .list{display:grid; gap:10px}
 .item{background:rgba(16,16,16,.62); border:1px solid var(--edge); border-radius:14px; padding:12px}
 .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
 
-.btn,input,select,textarea{appearance:none; border:1px solid var(--edge); background:rgba(16,16,16,.62); color:var(--ink); padding:10px 12px; border-radius:12px; font-weight:700}
+/* modern line inputs */
+.field{display:grid; gap:6px; margin-bottom:14px}
+.field label{font-size:12px; color:var(--muted); font-weight:700}
+.line{background:transparent; border:none; border-bottom:1.5px solid rgba(255,255,255,.08); color:var(--ink); padding:10px 6px; font-weight:700}
+.line:focus{outline:none; border-bottom-color:var(--tint); box-shadow:0 8px 0 -6px var(--tint)}
+textarea.line{min-height:120px; resize:vertical}
+
+/* buttons */
+.btn{appearance:none; border:1px solid var(--edge); background:rgba(16,16,16,.62); color:var(--ink); padding:10px 12px; border-radius:12px; font-weight:800}
 .btn.primary{background:linear-gradient(180deg,#183022,#101a15); border-color:#254232}
+.btn.ghost{background:transparent}
 .btn:active{transform:translateY(1px)}
 
 .dot{width:10px;height:10px;border-radius:50%;background:var(--tint);margin-top:7px}
@@ -94,7 +113,7 @@ body.noscroll{overflow:hidden}
 .dial-overlay{position:fixed; inset:0; background:rgba(0,0,0,.25); backdrop-filter:blur(3px); display:none; z-index:65}
 .dial-overlay.open{display:block}
 .dial{position:fixed; display:flex; gap:12px; z-index:66}
-.mini{width:56px;height:56px;border-radius:16px;border:1px solid var(--edge);background:rgba(16,16,16,.7);display:grid;place-items:center;box-shadow:0 10px 28px rgba(0,0,0,.45);transform:scale(.9);opacity:0;transition:transform .18s ease,opacity .18s ease}
+.mini{width:56px;height:56px;border-radius:16px;border:1px solid var(--edge);background:rgba(16,16,16,.72);display:grid;place-items:center;box-shadow:0 10px 28px rgba(0,0,0,.45);transform:scale(.9);opacity:0;transition:transform .18s ease,opacity .18s ease}
 .mini.show{transform:scale(1);opacity:1}
 .mini svg{width:26px;height:26px;fill:var(--ink)}
 
@@ -105,13 +124,15 @@ body.noscroll{overflow:hidden}
 .sheet{position:absolute; left:0; right:0; bottom:0; top:0; padding:calc(10px + env(safe-area-inset-top)) 12px calc(var(--tabh) + env(safe-area-inset-bottom) + 12px);
   display:grid; grid-template-rows:auto 1fr auto; gap:12px}
 .sheet .head{display:flex; justify-content:space-between; align-items:center}
-.sheet .seg{display:flex; gap:8px}
-.segment{padding:8px 12px; border:1px solid var(--edge); background:rgba(16,16,16,.62); border-radius:999px; font-weight:800}
-.segment.active{outline:2px solid var(--tint); outline-offset:-2px}
-.sheet .panel{background:var(--panel); border:1px solid var(--edge); border-radius:18px; padding:14px; overflow:auto}
-.field{display:grid; gap:6px; margin-bottom:12px}
-.field label{font-size:12px; color:var(--muted); font-weight:700}
+.sheet .title{font-size:var(--fs-h2); font-weight:900; display:flex; align-items:center; gap:10px}
+.sheet .panel{background:var(--glass-strong); border:1px solid var(--edge); border-radius:18px; padding:14px; overflow:auto}
 .actions{display:flex; gap:10px; justify-content:flex-end}
+.icon-circle{width:34px;height:34px;border-radius:999px;display:grid;place-items:center;background:rgba(255,255,255,.06);border:1px solid var(--edge)}
+.icon-circle svg{width:20px;height:20px;fill:var(--ink)}
+/* chips */
+.chips{display:flex; gap:8px; flex-wrap:wrap}
+.chip{padding:8px 12px; border-radius:999px; border:1px solid var(--edge); background:rgba(16,16,16,.62); font-weight:800; cursor:pointer}
+.chip.sel{outline:2px solid var(--tint); outline-offset:-2px}
 </style>
 </head>
 <body>
@@ -168,7 +189,7 @@ body.noscroll{overflow:hidden}
     <section class="card">
       <div class="title">Ara</div>
       <div class="row">
-        <input id="q" class="btn" placeholder="kelime, kişi, adres…"/>
+        <input id="q" class="line" placeholder="kelime, kişi, adres…"/>
         <button id="searchBtn" class="btn">Ara</button>
       </div>
       <div class="hr"></div>
@@ -229,14 +250,10 @@ body.noscroll{overflow:hidden}
   <div class="scrim"></div>
   <div class="sheet">
     <div class="head">
-      <div class="seg" id="modeSeg">
-        <button data-m="note" class="segment active">Not</button>
-        <button data-m="call" class="segment">Çağrı</button>
-        <button data-m="place" class="segment">Konum</button>
-      </div>
-      <div class="seg">
-        <button id="cancelBtn" class="segment">Vazgeç</button>
-        <button id="saveBtn" class="segment" style="background:linear-gradient(180deg,#183022,#101a15); border-color:#254232">Kaydet</button>
+      <div class="title" id="composeTitle"><span class="icon-circle" id="composeIcon"></span><span id="composeText">Yeni</span></div>
+      <div class="actions">
+        <button id="cancelBtn" class="btn ghost">Vazgeç</button>
+        <button id="saveBtn" class="btn primary">Kaydet</button>
       </div>
     </div>
     <div class="panel" id="formPanel"></div>
@@ -245,16 +262,17 @@ body.noscroll{overflow:hidden}
 </div>
 
 <script>
-// basic utils
+// utils
 const $=(q)=>document.querySelector(q), $$=(q)=>Array.from(document.querySelectorAll(q));
 function haptic(ms=15){ if(navigator.vibrate){ navigator.vibrate(ms) } }
 const fmt=(t)=> new Date(t).toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'});
 const dayLong=(ts)=> new Date(ts).toLocaleDateString('tr-TR',{day:'2-digit',month:'long',weekday:'long'});
 const startDay=(ts)=>{const d=new Date(ts);d.setHours(0,0,0,0);return d.getTime()}; const endDay=(ts)=>{const d=new Date(ts);d.setHours(23,59,59,999);return d.getTime()};
 const todayKey=()=> new Date().toISOString().slice(0,10);
+const uid=()=> 'id'+Math.random().toString(36).slice(2)+Date.now().toString(36);
 
 // state & storage
-const Store={key:'agenda.v9.1', data:{notes:[],calls:[],places:[],addrCache:{}},
+const Store={key:'agenda.v9.2', data:{notes:[],calls:[],places:[],addrCache:{}},
   load(){const raw=localStorage.getItem(this.key); if(raw){this.data=JSON.parse(raw)}; renderAll()},
   save(){localStorage.setItem(this.key, JSON.stringify(this.data))}
 };
@@ -297,9 +315,9 @@ function renderTimeline(){
   const list=$('#timelineList'); list.innerHTML='';
   const base=new Date(selectedDay+'T00:00:00').getTime(); const from=startDay(base), to=endDay(base);
   const evs=[];
-  for(const n of Store.data.notes){ if(n.ts>=from&&n.ts<=to) evs.push({type:'note', sort:n.ts, ts:n.ts, title:n.title||'', text:n.text}) }
-  for(const c of Store.data.calls){ if(c.ts>=from&&c.ts<=to) evs.push({type:'call', sort:c.ts+0.1, ts:c.ts, who:c.who, callType:c.type, notes:c.notes}) }
-  for(const p of Store.data.places){ if(p.ts>=from&&p.ts<=to) evs.push({type:'place', sort:p.ts+0.2, ts:p.ts, name:p.name, addr:p.addr}) }
+  for(const n of Store.data.notes){ if(n.ts>=from&&n.ts<=to) evs.push({id:n.id,type:'note', sort:n.ts, ts:n.ts, title:n.title||'', text:n.text}) }
+  for(const c of Store.data.calls){ if(c.ts>=from&&c.ts<=to) evs.push({id:c.id,type:'call', sort:c.ts+0.1, ts:c.ts, who:c.who, callType:c.type, notes:c.notes}) }
+  for(const p of Store.data.places){ if(p.ts>=from&&p.ts<=to) evs.push({id:p.id,type:'place', sort:p.ts+0.2, ts:p.ts, name:p.name, addr:p.addr}) }
   evs.sort((a,b)=>a.sort-b.sort);
   if(!evs.length){ const empty=document.createElement('div'); empty.className='item'; empty.innerHTML='<div class="sub">Bu gün için kayıt yok.</div>'; list.appendChild(empty); return }
   const chunk=30; let i=0;
@@ -315,56 +333,89 @@ function renderTimeline(){
 function renderAll(){ renderTimeline(); if(window._map) updateMap() }
 setInterval(()=>$('#dayLine').textContent=dayLong(Date.now()),60*1000);
 
-// editor (full-screen modal)
-const modal=$('#modal'), formPanel=$('#formPanel'), nowTxt=$('#nowTxt');
-let mode='note';
-function openModal(m){ mode=m; document.body.classList.add('noscroll'); modal.classList.add('open'); buildForm(mode); nowTxt.textContent=fmt(Date.now()); modal.setAttribute('aria-hidden','false') }
-function closeModal(){ modal.classList.remove('open'); document.body.classList.remove('noscroll'); modal.setAttribute('aria-hidden','true') }
+// Editor (dedicated by type)
+const modal=$('#modal'), formPanel=$('#formPanel'), nowTxt=$('#nowTxt'), composeIcon=$('#composeIcon'), composeText=$('#composeText');
+let composeType='note', editId=null;
+function openModal(type, payload=null){
+  composeType=type; editId = payload && payload.id ? payload.id : null;
+  document.body.classList.add('noscroll'); modal.classList.add('open'); modal.setAttribute('aria-hidden','false');
+  nowTxt.textContent=fmt(Date.now());
+  // header icon & title
+  let svg=''; let title='Yeni';
+  if(type==='note'){ title = editId?'Notu Düzenle':'Yeni Not'; svg='<svg viewBox="0 0 24 24"><path d="M6 2h9l5 5v15a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2zm8 1.5V8h4.5L14 3.5zM7 12h10v2H7v-2zm0 4h10v2H7v-2zm0-8h6v2H7V8z"/></svg>'; }
+  if(type==='call'){ title = editId?'Çağrıyı Düzenle':'Yeni Çağrı'; svg='<svg viewBox="0 0 24 24"><path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2a1 1 0 011.01-.24 11.36 11.36 0 003.56.57 1 1 0 011 1v3.61a1 1 0 01-1 1A17 17 0 013 5a1 1 0 011-1h3.61a1 1 0 011 1 11.36 11.36 0 00.57 3.56 1 1 0 01-.24 1.01l-2.32 2.22z"/></svg>'; }
+  if(type==='place'){ title = editId?'Konumu Düzenle':'Yeni Konum'; svg='<svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 00-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 00-7-7zm0 9.5a2.5 2.5 0 112.5-2.5 2.5 2.5 0 01-2.5 2.5z"/></svg>'; }
+  composeIcon.innerHTML=svg; composeText.textContent=title;
+  // build dedicated form
+  if(type==='note') buildNoteForm(payload);
+  else if(type==='call') buildCallForm(payload);
+  else buildPlaceForm(payload);
+}
+function closeModal(){ modal.classList.remove('open'); document.body.classList.remove('noscroll'); modal.setAttribute('aria-hidden','true'); editId=null; composeType='note'; formPanel.innerHTML='' }
 $('#cancelBtn').onclick=closeModal;
-$('#modeSeg').addEventListener('click',(e)=>{const btn=e.target.closest('.segment'); if(!btn) return; $$('#modeSeg .segment').forEach(x=>x.classList.remove('active')); btn.classList.add('active'); mode=btn.dataset.m; buildForm(mode) });
 
-function buildForm(m){
-  formPanel.innerHTML='';
-  if(m==='note'){
-    formPanel.innerHTML=`
-      <div class="field"><label>Başlık (opsiyonel)</label><input id="f_title" class="btn" placeholder="Başlık"></div>
-      <div class="field"><label>Not</label><textarea id="f_text" rows="6" class="btn" placeholder="Bugün olanlar…"></textarea></div>
-      <div class="field"><label>Etiketler (virgülle)</label><input id="f_tags" class="btn" placeholder="iş, spor, aile"></div>`;
-  } else if(m==='call'){
-    formPanel.innerHTML=`
-      <div class="field"><label>Kişi</label><input id="f_who" class="btn" placeholder="Kişi adı"></div>
-      <div class="field"><label>Tür</label>
-        <div class="row"><button class="btn" data-t="gelen">Gelen</button><button class="btn" data-t="giden">Giden</button><button class="btn" data-t="cevapsız">Cevapsız</button></div>
-        <input id="f_type" value="gelen" hidden/>
+function buildNoteForm(p){
+  formPanel.innerHTML=`
+    <div class="field"><label>Başlık (opsiyonel)</label><input id="f_title" class="line" placeholder="Başlık"></div>
+    <div class="field"><label>Not</label><textarea id="f_text" class="line" placeholder="Bugün olanlar…"></textarea></div>
+    <div class="field"><label>Etiketler (virgülle)</label><input id="f_tags" class="line" placeholder="iş, spor, aile"></div>`;
+  if(p){ $('#f_title').value=p.title||''; $('#f_text').value=p.text||''; $('#f_tags').value=p.tags||'' }
+}
+function buildCallForm(p){
+  formPanel.innerHTML=`
+    <div class="field"><label>Kişi</label><input id="f_who" class="line" placeholder="Kişi adı"></div>
+    <div class="field"><label>Tür</label>
+      <div class="chips">
+        <div class="chip" data-t="gelen">Gelen</div>
+        <div class="chip" data-t="giden">Giden</div>
+        <div class="chip" data-t="cevapsız">Cevapsız</div>
       </div>
-      <div class="field"><label>Not (opsiyonel)</label><textarea id="f_notes" rows="4" class="btn" placeholder="Detay…"></textarea></div>`;
-    formPanel.querySelectorAll('.field .btn[data-t]').forEach(b=>b.onclick=()=>{formPanel.querySelectorAll('.field .btn[data-t]').forEach(x=>x.style.outline=''); b.style.outline='2px solid var(--tint)'; $('#f_type').value=b.dataset.t});
-  } else {
-    formPanel.innerHTML=`
-      <div class="field"><label>Yer adı</label><input id="p_name" class="btn" placeholder="örn. Ev, İş, Kafe"></div>
-      <div class="field"><label>Adres</label><input id="p_addr" class="btn" placeholder="Cadde, No, İlçe…"></div>
-      <div class="field"><button id="pickMap" class="btn">Haritada seç</button><div class="sub" id="pickHint">Enlem/Boylam: —</div></div>`;
-    $('#pickMap').onclick=openPicker;
-  }
+      <input id="f_type" value="gelen" hidden/>
+    </div>
+    <div class="field"><label>Not (opsiyonel)</label><textarea id="f_notes" class="line" placeholder="Detay…"></textarea></div>`;
+  let def='gelen';
+  if(p){ $('#f_who').value=p.who||''; $('#f_notes').value=p.notes||''; def=p.type||def }
+  $('#f_type').value=def; $$('.chip').forEach(c=>{c.classList.toggle('sel',c.dataset.t===def); c.onclick=()=>{$$('.chip').forEach(x=>x.classList.remove('sel')); c.classList.add('sel'); $('#f_type').value=c.dataset.t }});
+}
+function buildPlaceForm(p){
+  formPanel.innerHTML=`
+    <div class="field"><label>Yer adı</label><input id="p_name" class="line" placeholder="örn. Ev, İş, Kafe"></div>
+    <div class="field"><label>Adres</label><input id="p_addr" class="line" placeholder="Cadde, No, İlçe…"></div>
+    <div class="field"><label>Koordinat</label><div class="row"><input id="p_lat" class="line" placeholder="enlem"><input id="p_lon" class="line" placeholder="boylam"></div></div>
+    <div class="field"><button id="pickMap" class="btn">Haritada seç</button><div class="sub" id="pickHint">Seçim yapmadın.</div></div>`;
+  if(p){ $('#p_name').value=p.name||''; $('#p_addr').value=p.addr||''; if(p.lat){ $('#p_lat').value=p.lat; $('#p_lon').value=p.lon; $('#pickHint').textContent='Seçili: '+p.lat+', '+p.lon } }
+  $('#pickMap').onclick=openPicker;
 }
 
 $('#saveBtn').onclick=()=>{
-  const ts=Date.now();
-  if(mode==='note'){
+  const ts=Date.now(); let saved=false;
+  if(composeType==='note'){
     const text=$('#f_text').value.trim(); const title=$('#f_title').value.trim(); const tags=$('#f_tags').value;
     if(!text){alert('Not boş olamaz'); return}
-    Store.data.notes.push({ts,text,title,tags});
-  } else if(mode==='call'){
+    if(editId){ const it=Store.data.notes.find(x=>x.id===editId); if(it){it.text=text; it.title=title; it.tags=tags; saved=true} }
+    else { Store.data.notes.push({id:uid(), ts, text, title, tags}); saved=true }
+  } else if(composeType==='call'){
     const who=$('#f_who').value.trim(); const type=$('#f_type').value; const notes=$('#f_notes').value;
     if(!who && type!=='cevapsız'){alert('Kişi?'); return}
-    Store.data.calls.push({ts,who,type,notes});
+    if(editId){ const it=Store.data.calls.find(x=>x.id===editId); if(it){it.who=who; it.type=type; it.notes=notes; saved=true} }
+    else { Store.data.calls.push({id:uid(), ts, who, type, notes}); saved=true }
   } else {
-    const name=$('#p_name').value.trim(); const addr=$('#p_addr').value.trim(); const lat=window._pickLat||null; const lon=window._pickLon||null;
+    const name=$('#p_name').value.trim(); const addr=$('#p_addr').value.trim(); const lat=parseFloat($('#p_lat').value); const lon=parseFloat($('#p_lon').value);
     if(!name && !addr){alert('En azından isim ya da adres gir.'); return}
-    Store.data.places.push({ts,name,addr,lat,lon});
+    if(editId){ const it=Store.data.places.find(x=>x.id===editId); if(it){it.name=name; it.addr=addr; it.lat=isNaN(lat)?null:lat; it.lon=isNaN(lon)?null:lon; saved=true} }
+    else { Store.data.places.push({id:uid(), ts, name, addr, lat:isNaN(lat)?null:lat, lon:isNaN(lon)?null:lon}); saved=true }
   }
-  Store.save(); closeModal(); renderAll();
+  if(saved){ Store.save(); closeModal(); renderAll(); flashBeam() }
 };
+
+function openEditor(e){
+  if(e.type==='note'){ openModal('note', {id:e.id, title:e.title, text:e.text, tags:e.tags}) }
+  if(e.type==='call'){ openModal('call', {id:e.id, who:e.who, type:e.callType, notes:e.notes}) }
+  if(e.type==='place'){ openModal('place', {id:e.id, name:e.name, addr:e.addr}) } // coords lazy
+}
+
+// beam feedback
+function flashBeam(){ const b=$('.beam'); b.style.background='radial-gradient(circle at 50% 50%, var(--ok) 0%, rgba(34,197,94,.28) 60%, transparent 70%)'; b.style.boxShadow='0 0 22px rgba(34,197,94,.7)'; setTimeout(()=>{b.style.background='radial-gradient(circle at 50% 50%, var(--warn) 0%, rgba(250,204,21,.25) 60%, transparent 70%)'; b.style.boxShadow='0 0 18px rgba(250,204,21,.6)';},900) }
 
 // speed dial
 const dial=$('#dial'), dialOv=$('#dialOverlay'), addBtn=$('#addTab');
@@ -382,10 +433,14 @@ $('#miniPlace').onclick=()=>{closeDial(); openModal('place')}
 // map (view & picker)
 function initMapOnce(){
   if(window._map) return;
-  window._map=L.map('map',{zoomControl:true}).setView([39.93,32.86],12);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap'}).addTo(window._map);
-  window._placesLayer=L.layerGroup().addTo(window._map);
-  updateMap();
+  try{
+    window._map=L.map('map',{zoomControl:true}).setView([39.93,32.86],12);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap'}).addTo(window._map);
+    window._placesLayer=L.layerGroup().addTo(window._map);
+    updateMap();
+  }catch(e){
+    $('#map').innerHTML='<div class="sub" style="padding:14px">Harita yüklenemedi.</div>';
+  }
 }
 function updateMap(){
   if(!window._map) return;
@@ -395,18 +450,26 @@ function updateMap(){
   if(pts.length) window._map.fitBounds(pts,{padding:[20,20]});
 }
 function openPicker(){
-  // open small overlay map picker
   const ov=document.createElement('div'); ov.style.cssText='position:fixed;inset:0;z-index:1200;background:rgba(0,0,0,.55)';
-  const wrap=document.createElement('div'); wrap.style.cssText='position:absolute;left:12px;right:12px;top:calc(10px + env(safe-area-inset-top));bottom:calc(var(--tabh) + env(safe-area-inset-bottom) + 12px);background:#0a0a0a;border:1px solid var(--edge);border-radius:18px;overflow:hidden';
-  const mapdiv=document.createElement('div'); mapdiv.id='pickMapDiv'; mapdiv.style.cssText='position:absolute;inset:0';
-  wrap.appendChild(mapdiv); ov.appendChild(wrap); document.body.appendChild(ov);
-  const mp=L.map('pickMapDiv').setView([39.93,32.86],13);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mp);
-  let marker=null;
-  function setLatLng(latlng){ if(marker) marker.setLatLng(latlng); else marker=L.marker(latlng,{draggable:true}).addTo(mp); window._pickLat=latlng.lat; window._pickLon=latlng.lng; $('#pickHint').textContent='Enlem/Boylam: '+latlng.lat.toFixed(5)+', '+latlng.lng.toFixed(5) }
-  mp.on('click',e=>setLatLng(e.latlng));
-  const btn=document.createElement('button'); btn.textContent='Seç'; btn.className='btn'; btn.style.cssText='position:absolute;right:12px;bottom:12px;z-index:10';
-  btn.onclick=()=>{document.body.removeChild(ov)}; wrap.appendChild(btn);
+  const wrap=document.createElement('div'); wrap.style.cssText='position:absolute;left:12px;right:12px;top:calc(10px + env(safe-area-inset-top));bottom:calc(var(--tabh) + env(safe-area-inset-bottom) + 12px);background:#0a0a0a;border:1px solid var(--edge);border-radius:18px;overflow:hidden;display:grid;grid-template-rows:1fr auto';
+  const mapdiv=document.createElement('div'); mapdiv.id='pickMapDiv'; mapdiv.style.cssText='position:relative';
+  const actions=document.createElement('div'); actions.style.cssText='display:flex;gap:10px;justify-content:flex-end;padding:10px;border-top:1px solid #1a1a1a;background:rgba(18,18,18,.76)';
+  const btnCancel=document.createElement('button'); btnCancel.className='btn ghost'; btnCancel.textContent='İptal';
+  const btnOk=document.createElement('button'); btnOk.className='btn primary'; btnOk.textContent='Onayla';
+  actions.appendChild(btnCancel); actions.appendChild(btnOk);
+  wrap.appendChild(mapdiv); wrap.appendChild(actions); ov.appendChild(wrap); document.body.appendChild(ov);
+  let mp, marker=null, chosen=null;
+  try{
+    mp=L.map('pickMapDiv').setView([39.93,32.86],13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mp);
+    function setLatLng(latlng){ if(marker) marker.setLatLng(latlng); else marker=L.marker(latlng,{draggable:true}).addTo(mp); chosen=latlng; }
+    mp.on('click',e=>setLatLng(e.latlng));
+  }catch(e){ mapdiv.innerHTML='<div class="sub" style="padding:14px">Harita yüklenemedi.</div>'; }
+  btnCancel.onclick=()=>{ document.body.removeChild(ov) };
+  btnOk.onclick=()=>{
+    if(chosen){ $('#p_lat').value=chosen.lat.toFixed(6); $('#p_lon').value=chosen.lng.toFixed(6); $('#pickHint').textContent='Seçili: '+chosen.lat.toFixed(6)+', '+chosen.lng.toFixed(6) }
+    document.body.removeChild(ov);
+  };
 }
 
 // search
@@ -426,7 +489,7 @@ document.getElementById('exportBtn').onclick=()=>{
   Store.data.notes.forEach(n=>add(n.ts,'note',n.title||'Not',n.text||''));
   Store.data.calls.forEach(c=>add(c.ts,'call',c.type,(c.who||'')+' '+(c.notes||'')));
   Store.data.places.forEach(p=>add(p.ts,'place',p.name||'Konum',(p.addr||'')+' '+(p.lat? (p.lat+','+p.lon):'')));
-  const csv=rows.map(r=>r.map(x=>`"${String(x).replaceAll('"','""')}"`).join(',')).join('\n');
+  const csv=rows.map(r=>r.map(x=>`"${String(x).replaceAll('"','""')}"`).join(',')).join('\\n');
   const blob=new Blob([csv],{type:'text/csv'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='ajanda.csv'; a.click();
 };
 document.getElementById('importFile').onchange=(e)=>{
