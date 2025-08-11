@@ -1,442 +1,319 @@
-/* Ajanda v10.2.1 — liquid glass, TR takvim, PWA cache-safe */
 
-const VERSION = '10.2.1';
+const VERSION = 'v10.2.3';
+const dom = sel => document.querySelector(sel);
+const domAll = sel => Array.from(document.querySelectorAll(sel));
+const fmt2 = n => n.toString().padStart(2,'0');
 
-// ================== State & Storage ==================
-const storeKey = 'ajanda.items';
-const state = {
-  today: new Date(),
-  selected: new Date(),
-  items: [],
-  calCursor: null, // ay görünümü
+// State
+let state = {
+  date: new Date(),
+  editingId: null,
+  filterType: 'all'
 };
 
-const $ = sel => document.querySelector(sel);
-const $$ = sel => document.querySelectorAll(sel);
+// Records in localStorage
+const DBKEY = 'ajanda:records';
+const load = () => JSON.parse(localStorage.getItem(DBKEY) || '[]');
+const save = (arr) => localStorage.setItem(DBKEY, JSON.stringify(arr));
 
-function load() {
-  try { state.items = JSON.parse(localStorage.getItem(storeKey) || '[]'); }
-  catch { state.items = []; }
-}
-function save() {
-  localStorage.setItem(storeKey, JSON.stringify(state.items));
-}
-function uid() { return Math.random().toString(36).slice(2)+Date.now().toString(36); }
-function fmtDateISO(d){ return d.toISOString().slice(0,10); }
+// Dates & Calendar (TR, Monday first)
+const MONTHS = ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
+const DOW = ['Pzt','Sal','Çar','Per','Cum','Cmt','Paz'];
 
-// ================== Locale ==================
-const TR_MONTHS = ["Ocak","Şubat","Mart","Nisan","Mayıs","Haziran","Temmuz","Ağustos","Eylül","Ekim","Kasım","Aralık"];
-const TR_DOW = ["Paz","Pzt","Sal","Çar","Per","Cum","Cmt"]; // Görsel başlık için
-const TR_DOW_MON_FIRST = ["Pzt","Sal","Çar","Per","Cum","Cmt","Paz"]; // grid için
+function normalizeDate(d){ return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
 
-function prettyDayText(d){
-  const dowLong = ["Pazar","Pazartesi","Salı","Çarşamba","Perşembe","Cuma","Cumartesi"][d.getDay()];
-  return `${d.getDate()} ${TR_MONTHS[d.getMonth()]} ${d.getFullYear()} ${dowLong}`;
+function renderHeader(){
+  const d = state.date;
+  const dayName = ['Pazar','Pazartesi','Salı','Çarşamba','Perşembe','Cuma','Cumartesi'][d.getDay()];
+  dom('#dayText').textContent = `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()} ${dayName}`;
+  dom('#monthText').textContent = `${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
 }
 
-// ================== Calendar (Monday-first, TR-correct) ==================
-function buildCalendar(date){
-  const y = date.getFullYear();
-  const m = date.getMonth();
-  const first = new Date(y,m,1);
-  const last = new Date(y,m+1,0);
-  const firstDowSun0 = first.getDay();      // 0..6, 0=Sun
-  const lead = (firstDowSun0 + 6) % 7;      // Monday-first boşluk
+function renderCalendar(){
+  const view = new Date(state.date.getFullYear(), state.date.getMonth(), 1);
+  dom('#calMonthLabel').textContent = `${MONTHS[view.getMonth()]} ${view.getFullYear()}`;
 
-  const grid = $("#calGrid");
+  const grid = dom('#calGrid');
   grid.innerHTML = '';
 
-  // DOW header
-  TR_DOW_MON_FIRST.forEach(d => {
+  // DOW header Monday-first
+  DOW.forEach(d => {
     const el = document.createElement('div');
     el.className = 'dow';
     el.textContent = d;
     grid.appendChild(el);
   });
 
-  // lead blanks
-  for(let i=0;i<lead;i++){
-    const c = document.createElement('div');
-    c.className = 'cell muted';
-    grid.appendChild(c);
-  }
+  // offset: convert JS Sunday=0..Saturday=6 to Monday-first 0..6
+  const firstDay = (view.getDay() + 6) % 7;
+  const daysInMonth = new Date(view.getFullYear(), view.getMonth()+1, 0).getDate();
+  const prevMonthDays = new Date(view.getFullYear(), view.getMonth(), 0).getDate();
 
-  // days
-  const selISO = fmtDateISO(state.selected);
-  for(let d=1; d<=last.getDate(); d++){
-    const c = document.createElement('button');
-    c.className = 'cell glass';
-    const cur = new Date(y,m,d);
-    c.textContent = d;
-    c.dataset.date = cur.toISOString();
-    if(fmtDateISO(cur) === selISO) c.classList.add('sel');
-    c.addEventListener('click', () => {
-      state.selected = cur;
-      $('#prettyDay').textContent = prettyDayText(state.selected);
-      $('#prettyMonth').textContent = TR_MONTHS[state.selected.getMonth()] + ' ' + state.selected.getFullYear();
-      renderTimeline();
-      buildCalendar(state.calCursor); // yeniden çiz
-    });
-    grid.appendChild(c);
+  // previous month placeholders
+  for(let i=0;i<firstDay;i++){
+    const btn = document.createElement('button');
+    btn.className='other';
+    btn.textContent = (prevMonthDays - firstDay + 1 + i);
+    btn.addEventListener('click', () => { state.date = new Date(view.getFullYear(), view.getMonth()-1, parseInt(btn.textContent)); updateAll(); });
+    grid.appendChild(btn);
   }
-
-  $('#calTitle').textContent = `${TR_MONTHS[m]} ${y}`;
+  // month days
+  for(let d=1; d<=daysInMonth; d++){
+    const btn = document.createElement('button');
+    btn.textContent = d;
+    const today = normalizeDate(new Date());
+    const cur = new Date(view.getFullYear(), view.getMonth(), d);
+    if(+cur === +normalizeDate(state.date)) btn.classList.add('sel');
+    if(+cur === +today) btn.classList.add('today');
+    btn.addEventListener('click', ()=>{ state.date = cur; updateAll(); });
+    grid.appendChild(btn);
+  }
+  // fill remainder to full weeks
+  const total = 7 + firstDay + daysInMonth; // +7 for DOW header
+  const remain = Math.ceil(total/7)*7 - total;
+  for(let i=1;i<=remain;i++){
+    const btn = document.createElement('button');
+    btn.className='other';
+    btn.textContent = i;
+    btn.addEventListener('click', () => { state.date = new Date(view.getFullYear(), view.getMonth()+1, i); updateAll(); });
+    grid.appendChild(btn);
+  }
 }
 
-// ================== Timeline ==================
-function renderTimeline(){
-  const list = $('#timelineList');
-  const dayISO = fmtDateISO(state.selected);
-  const items = state.items.filter(it => it.date === dayISO)
-                  .sort((a,b)=> (a.time||'00:00').localeCompare(b.time||'00:00'));
-  list.classList.toggle('empty', items.length===0);
-  list.innerHTML = items.length? '' : `<div class="empty-note glass">Bu gün için kayıt yok.</div>`;
-
-  for(const it of items){
-    const row = document.createElement('button');
-    row.className = 'tli';
+function updateTimeline(){
+  const list = dom('#timeline');
+  const ds = load().filter(r => r.date.startsWith(dateKey(state.date)));
+  list.innerHTML = '';
+  if(ds.length===0){
+    const empty = document.createElement('div');
+    empty.className = 'item';
+    empty.innerHTML = `<div class="dot note"></div><div>Bu gün için kayıt yok.</div>`;
+    list.appendChild(empty);
+    return;
+  }
+  ds.sort((a,b)=> a.time.localeCompare(b.time));
+  for(const r of ds){
+    const row = document.createElement('div');
+    row.className = 'item';
+    row.dataset.id = r.id;
     const dot = document.createElement('div');
-    dot.className = 'dot';
-    dot.style.background = it.kind==='note' ? 'var(--dot-note)' :
-                           it.kind==='call' ? 'var(--dot-call)' : 'var(--dot-place)';
-    const body = document.createElement('div');
+    dot.className = `dot ${r.type}`;
     const title = document.createElement('div');
-    title.className='title'; title.textContent = it.title || (
-      it.kind==='note' ? 'Not' : it.kind==='call' ? (it.who || 'Çağrı') : 'Konum'
-    );
-    const meta = document.createElement('div');
-    meta.className='meta';
-    meta.textContent = [(it.time||''), it.kind==='call' ? (it.callType||'') : '', it.kind==='place' ? (it.address||'') : '']
-      .filter(Boolean).join(' • ');
-    body.appendChild(title); body.appendChild(meta);
-    row.appendChild(dot); row.appendChild(body);
-    row.addEventListener('click', ()=>openDetail(it.id));
+    title.innerHTML = `<strong>${r.title || (r.type==='call' ? (r.person || 'Çağrı') : r.type==='place' ? (r.place || 'Konum') : 'Not')}</strong>`;
+    const right = document.createElement('div');
+    right.className = 'right';
+    right.textContent = r.time || '';
+    row.append(dot, title, right);
+    row.addEventListener('click', ()=>openDetail(r.id));
     list.appendChild(row);
   }
 }
 
-// ================== FAB & Quick Add ==================
-const overlay = $('#quickAdd');
-$('#fab').addEventListener('click', openQuickAdd);
-overlay.addEventListener('click', (e)=> { if(e.target.classList.contains('overlay-bg')) closeQuickAdd(); });
+function dateKey(d){
+  return `${d.getFullYear()}-${fmt2(d.getMonth()+1)}-${fmt2(d.getDate())}`;
+}
 
-function openQuickAdd(){
-  overlay.classList.remove('hidden');
-  requestAnimationFrame(()=>{
-    $$('.qa-btn').forEach((el,i)=>{
-      el.style.transitionDelay = `${60*i}ms`;
-      el.style.transform = 'translateY(0)';
-      el.style.opacity = '1';
-    });
-  });
+// ---- Panels & Sheets
+function openBackdrop(show){
+  const bd = dom('#backdrop');
+  bd.classList.toggle('hidden', !show);
+  if(show){ setTimeout(()=>bd.classList.add('show'), 0); }
+  else{ bd.classList.remove('show'); }
 }
-function closeQuickAdd(){
-  $$('.qa-btn').forEach(el=>{ el.style.transitionDelay='0ms'; el.style.transform='translateY(40px)'; el.style.opacity='0'; });
-  setTimeout(()=>overlay.classList.add('hidden'), 200);
+function openSheet(id, show=true){
+  const el = dom('#'+id);
+  el.classList.toggle('show', show);
+  el.classList.toggle('hidden', !show);
+  openBackdrop(show);
 }
-$$('.qa-btn').forEach(btn=>{
-  btn.addEventListener('click', ()=>{
-    closeQuickAdd();
-    const kind = btn.dataset.kind;
-    openForm(kind);
-  });
+dom('#backdrop').addEventListener('click', ()=>{
+  ['sheetPlus','sheetSearch','sheetForm','sheetDetail','sheetSettings'].forEach(id=>openSheet(id,false));
 });
 
-// ================== Forms ==================
-const formHost = $('#formHost');
-function openForm(kind, existing){
-  formHost.classList.add('active');
-  const isEdit = !!existing;
-  const ttl = isEdit ? 'Düzenle' : (`Yeni ${kind==='note'?'Not':kind==='call'?'Çağrı':'Konum'}`);
-  const saveId = existing?.id;
+// ---- Event wiring
+dom('#btnPlus').addEventListener('click', ()=> openSheet('sheetPlus', true));
+dom('#btnSearch').addEventListener('click', ()=>{
+  renderSearch(); openSheet('sheetSearch', true);
+});
+dom('#btnSettings').addEventListener('click', ()=> openSheet('sheetSettings', true));
+dom('#btnOpenCalendar').addEventListener('click', ()=>{
+  const cal = dom('#calendar');
+  cal.classList.toggle('hidden');
+  if(!cal.classList.contains('hidden')) renderCalendar();
+});
+dom('#calPrev').addEventListener('click', ()=>{ state.date = new Date(state.date.getFullYear(), state.date.getMonth()-1, 1); renderCalendar();});
+dom('#calNext').addEventListener('click', ()=>{ state.date = new Date(state.date.getFullYear(), state.date.getMonth()+1, 1); renderCalendar();});
 
-  const html = `
-    <div class="sheet enter" role="dialog" aria-modal="true">
-      <div class="bar">
-        <button class="glass icon-btn" id="fBack"><svg><use href="#i-back"/></svg></button>
-        <div class="ttl">${ttl}</div>
-        <button class="glass icon-btn" id="fSave"><svg><use href="#i-check"/></svg></button>
-      </div>
+// plus menu actions
+domAll('#sheetPlus .action').forEach(btn=> btn.addEventListener('click', ()=>{
+  const kind = btn.dataset.action;
+  buildForm(kind);
+  openSheet('sheetPlus', false);
+  setTimeout(()=>openSheet('sheetForm', true), 50);
+}));
 
-      ${kind==='note'? `
-        <div class="field"><div class="label">Başlık (opsiyonel)</div>
-          <input id="fTitle" class="input" placeholder="örn. Fikir, yapılacak..."></div>
-        <div class="field"><div class="label">Not</div>
-          <textarea id="fBody" class="textarea" placeholder="Metni yaz..."></textarea></div>
-        <div class="field"><div class="label">Etiketler (virgülle)</div>
-          <input id="fTags" class="input" placeholder="iş, spor, aile"></div>
-      `: kind==='call'? `
-        <div class="field"><div class="label">Kişi adı</div>
-          <input id="fWho" class="input" placeholder="örn. Ayşe Yılmaz"></div>
-        <div class="field"><div class="label">Tür</div>
-          <div class="chips">
-            <button class="chip" data-val="Gelen">Gelen</button>
-            <button class="chip" data-val="Giden">Giden</button>
-            <button class="chip" data-val="Cevapsız">Cevapsız</button>
-          </div>
-        </div>
-        <div class="field"><div class="label">Not (opsiyonel)</div>
-          <input id="fBody" class="input" placeholder="Kısa not..."></div>
-      `: `
-        <div class="field"><div class="label">Yer adı</div>
-          <input id="fTitle" class="input" placeholder="örn. Ev, İş, Kafe"></div>
-        <div class="field"><div class="label">Adres</div>
-          <input id="fAddress" class="input" placeholder="Cadde, No, ilçe..."></div>
-        <div class="field"><div class="label">Koordinat</div>
-          <input id="fCoord" class="input mono" placeholder="enlem,boylam"></div>
-      `}
-      <div class="field">
-        <div class="label">Saat</div>
-        <input id="fTime" class="input" type="time">
-      </div>
-    </div>
-  `;
-  formHost.innerHTML = html;
-
-  // prefills for edit
-  if(existing){
-    $('#fTitle') && ($('#fTitle').value = existing.title || '');
-    $('#fBody') && ($('#fBody').value = existing.body || '');
-    $('#fTags') && ($('#fTags').value = (existing.tags||[]).join(', '));
-    $('#fWho') && ($('#fWho').value = existing.who || '');
-    $('#fAddress') && ($('#fAddress').value = existing.address || '');
-    $('#fCoord') && ($('#fCoord').value = existing.coord || '');
-    $('#fTime') && ($('#fTime').value = existing.time || '');
-    if(existing.callType){
-      $$('.chip').forEach(c => { if(c.dataset.val===existing.callType) c.classList.add('sel'); });
-    }
+// form save
+dom('#formSave').addEventListener('click', ()=>{
+  const body = dom('#formBody');
+  const kind = body.dataset.kind;
+  const rec = { id: state.editingId || 'id_'+Date.now(), type: kind, date: dateKey(state.date), time: dom('#fTime').value || '' };
+  if(kind==='note'){
+    rec.title = dom('#fTitle').value.trim();
+    rec.text = dom('#fText').value.trim();
+    rec.tags = dom('#fTags').value.trim();
+  }else if(kind==='call'){
+    rec.person = dom('#fPerson').value.trim();
+    rec.callType = dom('input[name=fCallType]:checked')?.value || 'missed';
+    rec.note = dom('#fCallNote').value.trim();
+  }else if(kind==='place'){
+    rec.place = dom('#fPlaceName').value.trim();
+    rec.address = dom('#fAddress').value.trim();
+    rec.coord = dom('#fCoord').value.trim();
   }
+  const arr = load().filter(x => x.id !== rec.id);
+  arr.push(rec); save(arr);
+  openSheet('sheetForm', false);
+  updateTimeline();
+});
 
-  // Call chips
-  $$('.chip').forEach(c=> c.addEventListener('click', ()=>{
-    $$('.chip').forEach(x=>x.classList.remove('sel'));
-    c.classList.add('sel');
-  }));
-
-  $('#fBack').addEventListener('click', closeForm);
-  $('#fSave').addEventListener('click', ()=>{
-    const date = fmtDateISO(state.selected);
-    if(kind==='note'){
-      const title = $('#fTitle').value.trim();
-      const body = $('#fBody').value.trim();
-      const tags = $('#fTags').value.split(',').map(s=>s.trim()).filter(Boolean);
-      if(!body){ toast("Not boş olamaz."); return; }
-      upsert({ id: saveId||uid(), kind, title, body, tags,
-               date, time: $('#fTime').value || null });
-    } else if(kind==='call'){
-      const who = $('#fWho').value.trim();
-      const callType = $('.chip.sel')?.dataset.val || 'Gelen';
-      const body = $('#fBody').value.trim();
-      upsert({ id: saveId||uid(), kind, who, callType, body,
-               date, time: $('#fTime').value || null, title: who });
-    } else {
-      const title = $('#fTitle').value.trim();
-      const address = $('#fAddress').value.trim();
-      const coord = $('#fCoord').value.trim();
-      if(!(title || address)){ toast("En azından isim ya da adres gir."); return; }
-      upsert({ id: saveId||uid(), kind, title, address, coord,
-               date, time: $('#fTime').value || null });
-    }
-    closeForm();
-    renderTimeline();
-  });
-}
-function closeForm(){ formHost.classList.remove('active'); formHost.innerHTML=''; }
-function upsert(obj){
-  const idx = state.items.findIndex(it=>it.id===obj.id);
-  if(idx>=0) state.items[idx] = {...state.items[idx], ...obj};
-  else state.items.push(obj);
-  save();
-}
-
-// ================== Detail ==================
-const detailHost = $('#detailHost');
+// details
 function openDetail(id){
-  const it = state.items.find(x=>x.id===id); if(!it) return;
-  detailHost.classList.add('active');
-  const ttl = it.title || (it.kind==='note'?'Not':it.kind==='call'?'Çağrı':'Konum');
-  const color = it.kind==='note'?'var(--dot-note)':it.kind==='call'?'var(--dot-call)':'var(--dot-place)';
-  detailHost.innerHTML = `
-    <div class="sheet enter">
-      <div class="bar">
-        <button class="glass icon-btn" id="dBack"><svg><use href="#i-back"/></svg></button>
-        <div class="ttl">${ttl}</div>
-        <div style="display:flex; gap:8px">
-          <button class="glass icon-btn" id="dEdit"><svg><use href="#i-edit"/></svg></button>
-          <button class="glass icon-btn" id="dDel"><svg><use href="#i-trash"/></svg></button>
-        </div>
-      </div>
-      <div class="field">
-        <div class="label">Tarih & Saat</div>
-        <div class="input" style="display:flex; gap:8px; align-items:center;">
-          <span class="dot" style="background:${color}"></span>
-          <span>${prettyDayText(new Date(it.date))} ${it.time? ('• '+it.time):''}</span>
-        </div>
-      </div>
-      ${it.kind==='note' ? `
-        ${it.title? `<div class="field"><div class="label">Başlık</div><div class="input">${esc(it.title)}</div></div>`:''}
-        ${it.body? `<div class="field"><div class="label">Not</div><div class="input">${nl2br(esc(it.body))}</div></div>`:''}
-        ${(it.tags&&it.tags.length)? `<div class="chips">${it.tags.map(t=>`<span class="chip">${esc(t)}</span>`).join('')}</div>`:''}
-      `: it.kind==='call' ? `
-        <div class="field"><div class="label">Kişi</div><div class="input">${esc(it.who||'—')}</div></div>
-        <div class="field"><div class="label">Tür</div><div class="input">${esc(it.callType||'—')}</div></div>
-        ${it.body? `<div class="field"><div class="label">Not</div><div class="input">${esc(it.body)}</div></div>`:''}
-      `: `
-        ${it.title? `<div class="field"><div class="label">Yer</div><div class="input">${esc(it.title)}</div></div>`:''}
-        ${it.address? `<div class="field"><div class="label">Adres</div><div class="input">${esc(it.address)}</div></div>`:''}
-        ${it.coord? `<div class="field"><div class="label">Koordinat</div><div class="input mono">${esc(it.coord)}</div></div>`:''}
-      `}
-    </div>
-  `;
-  $('#dBack').addEventListener('click', ()=>{ detailHost.classList.remove('active'); detailHost.innerHTML=''; });
-  $('#dEdit').addEventListener('click', ()=>{ detailHost.classList.remove('active'); detailHost.innerHTML=''; openForm(it.kind, it); });
-  $('#dDel').addEventListener('click', ()=>{
-    if(confirm('Silinsin mi?')){
-      state.items = state.items.filter(x=>x.id!==id); save(); renderTimeline();
-      detailHost.classList.remove('active'); detailHost.innerHTML='';
-    }
-  });
+  const rec = load().find(x=>x.id===id);
+  if(!rec) return;
+  dom('#detailBody').innerHTML = detailHTML(rec);
+  dom('#detailEdit').onclick = ()=>{ buildForm(rec.type, rec); openSheet('sheetDetail', false); setTimeout(()=>openSheet('sheetForm', true),50)};
+  dom('#detailDelete').onclick = ()=>{
+    const arr = load().filter(x=>x.id!==id); save(arr); openSheet('sheetDetail', false); updateTimeline();
+  };
+  openSheet('sheetDetail', true);
 }
-function esc(s){ return s.replace(/[&<>"]/g,m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' })[m]); }
-function nl2br(s){ return s.replace(/\n/g,'<br>'); }
+function detailHTML(r){
+  const rows = [];
+  rows.push(`<div class="row"><div class="dot ${r.type}"></div><div class="value" style="font-weight:800">${r.title || r.person || r.place || (r.type==='note'?'Not':'Kayıt')}</div><div class="right">${r.date} • ${r.time||''}</div></div>`);
+  if(r.text) rows.push(`<div class="row"><div class="label">Not</div><div class="value">${escapeHtml(r.text)}</div></div>`);
+  if(r.tags) rows.push(`<div class="row"><div class="label">Etiketler</div><div class="value">${escapeHtml(r.tags)}</div></div>`);
+  if(r.person) rows.push(`<div class="row"><div class="label">Kişi</div><div class="value">${escapeHtml(r.person)} (${r.callType})</div></div>`);
+  if(r.note) rows.push(`<div class="row"><div class="label">Not</div><div class="value">${escapeHtml(r.note)}</div></div>`);
+  if(r.place) rows.push(`<div class="row"><div class="label">Yer</div><div class="value">${escapeHtml(r.place)}</div></div>`);
+  if(r.address) rows.push(`<div class="row"><div class="label">Adres</div><div class="value">${escapeHtml(r.address)}</div></div>`);
+  if(r.coord) rows.push(`<div class="row"><div class="label">Koordinat</div><div class="value">${escapeHtml(r.coord)}</div></div>`);
+  return rows.join('');
+}
 
-// ================== Search ==================
-const searchHost = $('#searchHost');
-$('#btnSearch').addEventListener('click', openSearch);
-function openSearch(){
-  searchHost.classList.add('active');
-  searchHost.innerHTML = `
-    <div class="sheet enter">
-      <div class="bar">
-        <button class="glass icon-btn" id="sBack"><svg><use href="#i-back"/></svg></button>
-        <div class="ttl">Arama</div>
-        <span style="width:40px"></span>
-      </div>
-      <div class="field"><input id="sQuery" class="input" placeholder="kelime, kişi..."></div>
-      <div class="chips">
-        <button class="chip sel" data-k="all">Tümü</button>
-        <button class="chip" data-k="note">Not</button>
-        <button class="chip" data-k="call">Çağrı</button>
-        <button class="chip" data-k="place">Konum</button>
-      </div>
-      <div id="sResults" class="tl-list" style="margin-top:12px"></div>
+// build form
+function input(label, id, placeholder=''){
+  return `<div class="row"><div class="label">${label}</div><input id="${id}" class="field" placeholder="${placeholder}"/></div>`;
+}
+function texta(label, id, placeholder=''){
+  return `<div class="row"><div class="label">${label}</div><textarea id="${id}" class="field" placeholder="${placeholder}"></textarea></div>`;
+}
+function buildForm(kind, rec=null){
+  dom('#formBody').dataset.kind = kind;
+  state.editingId = rec?.id || null;
+  dom('#formTitle').textContent = rec ? 'Düzenle' : (kind==='note'?'Yeni Not': kind==='call'?'Yeni Çağrı':'Yeni Konum');
+  let html = '';
+  if(kind==='note'){
+    html += input('Başlık (opsiyonel)','fTitle','örn. Fikir, yapılacak...');
+    html += texta('Not','fText','Metni yaz...');
+    html += input('Etiketler (virgülle)','fTags','iş, spor, aile');
+  }else if(kind==='call'){
+    html += input('Kişi adı','fPerson','örn. Ayşe Yılmaz');
+    html += `<div class="row"><div class="label">Tür</div>
+      <label class="chip"><input type="radio" name="fCallType" value="incoming"> Gelen</label>
+      <label class="chip"><input type="radio" name="fCallType" value="outgoing"> Giden</label>
+      <label class="chip"><input type="radio" name="fCallType" value="missed" checked> Cevapsız</label>
     </div>`;
-  const q = $('#sQuery'), r = $('#sResults');
-  const chips = $$('.chip');
-  chips.forEach(c=>c.addEventListener('click', ()=>{ chips.forEach(x=>x.classList.remove('sel')); c.classList.add('sel'); doSearch(); }));
-  q.addEventListener('input', doSearch);
-  $('#sBack').addEventListener('click', ()=>{ searchHost.classList.remove('active'); searchHost.innerHTML=''; });
-  doSearch();
-  function doSearch(){
-    const text = q.value.trim().toLowerCase();
-    const filt = $('.chip.sel').dataset.k;
-    const items = state.items.filter(it => (filt==='all'||it.kind===filt) &&
-      (text==='' || JSON.stringify(it).toLowerCase().includes(text)));
-    r.innerHTML = '';
-    for(const it of items){
-      const row = document.createElement('button');
-      row.className='tli';
-      const dot = document.createElement('div'); dot.className='dot';
-      dot.style.background = it.kind==='note' ? 'var(--dot-note)' :
-                             it.kind==='call' ? 'var(--dot-call)' : 'var(--dot-place)';
-      const meta = document.createElement('div'); meta.className='meta';
-      meta.textContent = `${it.date}${it.time? ' • '+it.time:''}`;
-      const title = document.createElement('div'); title.className='title'; title.textContent = it.title || (it.kind==='call'?(it.who||'Çağrı'): (it.kind==='note'?'Not':'Konum'));
-      const body = document.createElement('div'); body.appendChild(title); body.appendChild(meta);
-      row.appendChild(dot); row.appendChild(body);
-      row.addEventListener('click', ()=>openDetail(it.id));
-      r.appendChild(row);
-    }
-    if(!items.length) r.innerHTML = `<div class="empty-note glass">Sonuç yok.</div>`;
+    html += input('Not (opsiyonel)','fCallNote','Kısa not...');
+  }else if(kind==='place'){
+    html += input('Yer adı','fPlaceName','örn. Ev, İş, Kafe');
+    html += input('Adres','fAddress','Cadde, No, ilçe...');
+    html += input('Koordinat','fCoord','enlem, boylam');
+  }
+  html += input('Saat','fTime','09:30');
+  dom('#formBody').innerHTML = html;
+  // set values if editing
+  if(rec){
+    if(rec.title) dom('#fTitle').value = rec.title;
+    if(rec.text) dom('#fText').value = rec.text;
+    if(rec.tags) dom('#fTags').value = rec.tags;
+    if(rec.person) dom('#fPerson').value = rec.person;
+    if(rec.callType) { const r = domAll('input[name=fCallType]').find(x=>x.value===rec.callType); if(r) r.checked = true; }
+    if(rec.note) dom('#fCallNote').value = rec.note;
+    if(rec.place) dom('#fPlaceName').value = rec.place;
+    if(rec.address) dom('#fAddress').value = rec.address;
+    if(rec.coord) dom('#fCoord').value = rec.coord;
+    if(rec.time) dom('#fTime').value = rec.time;
   }
 }
 
-// ================== Settings ==================
-$('#btnSettings').addEventListener('click', openSettings);
-function openSettings(){
-  const host = $('#formHost'); host.classList.add('active');
-  host.innerHTML = `
-    <div class="sheet enter">
-      <div class="bar">
-        <button class="glass icon-btn" id="stBack"><svg><use href="#i-back"/></svg></button>
-        <div class="ttl">Ayarlar</div>
-        <span style="width:40px"></span>
-      </div>
-      <div class="field"><div class="label">Sürüm</div><div class="input mono">v${VERSION}</div></div>
-      <div class="field"><button id="btnExport" class="chip">Verileri JSON olarak indir</button></div>
-      <div class="field">
-        <label class="chip" for="imp">JSON içe aktar</label>
-        <input id="imp" type="file" accept="application/json" style="display:none">
-      </div>
-      <div class="field"><button id="btnClear" class="chip" style="background:#3b82f6;border-color:#3b82f6;">Önbelleği Temizle (SW + Cache)</button></div>
-      <div class="field"><button id="btnWipe" class="chip" style="background:#ef4444;border-color:#ef4444;">Tüm Kayıtları Sil</button></div>
-    </div>
-  `;
-  $('#stBack').addEventListener('click', closeForm);
-  $('#btnExport').addEventListener('click', ()=>{
-    const blob = new Blob([JSON.stringify(state.items,null,2)],{type:'application/json'});
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'ajanda-data.json'; a.click();
-  });
-  $('#imp').addEventListener('change', async e=>{
-    const f = e.target.files[0]; if(!f) return;
-    try{
-      const txt = await f.text(); const arr = JSON.parse(txt);
-      if(Array.isArray(arr)){ state.items = arr; save(); renderTimeline(); toast('İçe aktarıldı.'); }
-    }catch{ toast('Dosya okunamadı.'); }
-  });
-  $('#btnWipe').addEventListener('click', ()=>{
-    if(confirm('Tüm kayıtlar silinsin mi?')){ state.items=[]; save(); renderTimeline(); toast('Silindi.'); }
-  });
-  $('#btnClear').addEventListener('click', clearAppCache);
+// Search
+function renderSearch(){
+  const type = state.filterType || 'all';
+  domAll('.filter').forEach(b=> b.classList.toggle('active', b.dataset.type===type));
+  const q = (dom('#searchInput').value || '').toLowerCase();
+  const data = load().filter(x => type==='all' || x.type===type)
+    .filter(x => {
+      const s = [x.title, x.text, x.tags, x.person, x.place, x.address].filter(Boolean).join(' ').toLowerCase();
+      return s.includes(q);
+    });
+  const wrap = dom('#searchResults');
+  wrap.innerHTML = '';
+  for(const r of data){
+    const row = document.createElement('div');
+    row.className = 'row-card';
+    row.innerHTML = `<div class="dot ${r.type}"></div><div class="title">${escapeHtml(r.title || r.person || r.place || r.type)}</div><div class="time">${r.date} • ${r.time||''}</div>`;
+    row.addEventListener('click', ()=>openDetail(r.id));
+    wrap.appendChild(row);
+  }
 }
+domAll('.filter').forEach(b=> b.addEventListener('click', ()=>{ state.filterType = b.dataset.type; renderSearch(); }));
+dom('#searchInput').addEventListener('input', renderSearch);
 
-async function clearAppCache(){
+// Settings handlers
+dom('#appVersion').textContent = 'v10.2.3';
+dom('#btnExport').addEventListener('click', ()=>{
+  const blob = new Blob([localStorage.getItem(DBKEY) || '[]'], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'ajanda-data.json';
+  a.click();
+});
+dom('#importFile').addEventListener('change', (e)=>{
+  const f = e.target.files[0]; if(!f) return;
+  const rd = new FileReader();
+  rd.onload = ()=>{ localStorage.setItem(DBKEY, rd.result); updateTimeline(); alert('İçe aktarıldı.'); };
+  rd.readAsText(f);
+});
+dom('#btnClearCaches').addEventListener('click', async()=>{
   try{
-    const regs = await navigator.serviceWorker.getRegistrations(); for(const r of regs) await r.unregister();
-    const keys = await caches.keys(); await Promise.all(keys.map(k=>caches.delete(k)));
-    toast('Önbellek temizlendi. Sayfa yenileniyor...');
-    setTimeout(()=>location.reload(), 400);
-  }catch{
-    location.reload();
-  }
+    if('caches' in window){
+      const keys = await caches.keys();
+      await Promise.all(keys.map(k=>caches.delete(k)));
+    }
+    if('serviceWorker' in navigator){
+      const regs = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.map(r=>r.unregister()));
+    }
+    alert('Önbellek temizlendi. Sayfayı yenileyin.');
+  }catch(e){ alert('Temizleme sırasında hata: '+e); }
+});
+dom('#btnWipe').addEventListener('click', ()=>{
+  if(confirm('Tüm kayıtlar silinsin mi?')){ localStorage.removeItem(DBKEY); updateTimeline(); }
+});
+
+function escapeHtml(s){ return s?.replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m])) || ''; }
+
+function updateAll(){
+  renderHeader();
+  renderCalendar();
+  updateTimeline();
 }
 
-// ================== Toast ==================
-function toast(msg){
-  const t = document.createElement('div');
-  t.className='glass'; t.style.position='fixed'; t.style.left='50%'; t.style.bottom='calc(env(safe-area-inset-bottom,0) + 90px)';
-  t.style.transform='translateX(-50%)'; t.style.padding='12px 16px'; t.style.borderRadius='14px'; t.textContent=msg;
-  t.style.zIndex='2147483900'; document.body.appendChild(t);
-  setTimeout(()=>{ t.style.transition='opacity .3s ease, transform .3s ease'; t.style.opacity='0'; t.style.transform='translateX(-50%) translateY(6px)'; }, 1300);
-  setTimeout(()=>t.remove(), 1700);
-}
-
-// ================== Init ==================
-function init(){
-  // header date lines
-  $('#prettyDay').textContent = prettyDayText(state.selected);
-  $('#prettyMonth').textContent = `${TR_MONTHS[state.selected.getMonth()]} ${state.selected.getFullYear()}`;
-
-  // Calendar
-  state.calCursor = new Date(state.selected.getFullYear(), state.selected.getMonth(), 1);
-  buildCalendar(state.calCursor);
-  $('#btnToggleCal').addEventListener('click', ()=>{
-    $('#calendarWrap').classList.toggle('hidden');
+// Service worker
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
   });
-  $('#calPrev').addEventListener('click', ()=>{ state.calCursor = new Date(state.calCursor.getFullYear(), state.calCursor.getMonth()-1, 1); buildCalendar(state.calCursor); });
-  $('#calNext').addEventListener('click', ()=>{ state.calCursor = new Date(state.calCursor.getFullYear(), state.calCursor.getMonth()+1, 1); buildCalendar(state.calCursor); });
-
-  renderTimeline();
-
-  // register SW
-  if('serviceWorker' in navigator){
-    navigator.serviceWorker.register('./sw.js?v=10.2.1');
-  }
 }
 
-// Load
-load();
-document.addEventListener('DOMContentLoaded', init);
-
-// ================== Helpers for demo ==================
-// (İstersen ilk açılışta örnek kayıtlar için buraya seed ekleyebilirsin)
+updateAll();

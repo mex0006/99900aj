@@ -1,111 +1,135 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link rel="manifest" href="manifest.webmanifest?v=10.2.1">
-  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=10.2.1">
-  <link rel="icon" href="icons/icon-192.png?v=10.2.1">
-  <link rel="stylesheet" href="css/main.css?v=10.2.1">
-  <title>Ajanda</title>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>Ajanda</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="theme-color" content="#000000"/>
+<link rel="stylesheet" href="css/main.css">
 </head>
 <body>
+  <div id="app">
+    <header class="app-header">
+      <h1 class="title">Ajanda</h1>
+      <button id="btnSettings" class="glass round icon-btn" aria-label="Ayarlar">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true">
+          <path d="M19.14,12.94a7.43,7.43,0,0,0,.05-.94,7.43,7.43,0,0,0-.05-.94l2.11-1.65a.5.5,0,0,0,.12-.63l-2-3.46a.5.5,0,0,0-.6-.22l-2.49,1a7.28,7.28,0,0,0-1.63-.94l-.38-2.65A.5.5,0,0,0,13.8,1H10.2a.5.5,0,0,0-.49.41L9.33,4.06a7.28,7.28,0,0,0-1.63.94l-2.49-1a.5.5,0,0,0-.6.22l-2,3.46a.5.5,0,0,0,.12.63L5,11.06a7.43,7.43,0,0,0-.05.94,7.43,7.43,0,0,0,.05.94L2.86,14.59a.5.5,0,0,0-.12.63l2,3.46a.5.5,0,0,0,.6.22l2.49-1a7.28,7.28,0,0,0,1.63.94l.38,2.65a.5.5,0,0,0,.49.41h3.6a.5.5,0,0,0,.49-.41l.38-2.65a7.28,7.28,0,0,0,1.63-.94l2.49,1a.5.5,0,0,0,.6-.22l2-3.46a.5.5,0,0,0-.12-.63ZM12,15.5A3.5,3.5,0,1,1,15.5,12,3.5,3.5,0,0,1,12,15.5Z"/>
+        </svg>
+      </button>
+    </header>
 
-  <!-- SVG ikonlar (tek dosyada, yerde kullanılacak) -->
-  <svg style="display:none" xmlns="http://www.w3.org/2000/svg">
-    <symbol id="i-settings" viewBox="0 0 24 24"><path fill="currentColor" d="M12 8.5a3.5 3.5 0 1 1 0 7a3.5 3.5 0 0 1 0-7m9.34 3.5a7.8 7.8 0 0 0-.07-1l2.12-1.65l-2-3.46l-2.55.75a7.8 7.8 0 0 0-1.76-1.02L16.7 2h-3.4l-.38 2.57a7.8 7.8 0 0 0-1.76 1.02l-2.55-.75l-2 3.46l2.12 1.65a7.8 7.8 0 0 0-.07 1c0 .34.03.67.07 1L4.3 14.65l2 3.46l2.55-.75c.53.44 1.12.8 1.76 1.02L13.3 21h3.4l.38-2.57c.64-.22 1.23-.58 1.76-1.02l2.55.75l2-3.46L21.27 13c.04-.33.07-.66.07-1Z"/></symbol>
-    <symbol id="i-plus" viewBox="0 0 24 24"><path fill="currentColor" d="M11 11V5h2v6h6v2h-6v6h-2v-6H5v-2z"/></symbol>
-    <symbol id="i-search" viewBox="0 0 24 24"><path fill="currentColor" d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5A6.5 6.5 0 1 0 9.5 16a6.471 6.471 0 0 0 4.23-1.57l.27.28v.79L20 21.5L21.5 20zm-6 0A4.5 4.5 0 1 1 14 9.5A4.5 4.5 0 0 1 9.5 14Z"/></symbol>
-    <symbol id="i-note" viewBox="0 0 24 24"><path fill="currentColor" d="M6 2h9l5 5v15a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2m8 1.5V8h4.5"/></symbol>
-    <symbol id="i-call" viewBox="0 0 24 24"><path fill="currentColor" d="M20 15.5c-1.2 0-2.4-.2-3.5-.6a1 1 0 0 0-1 .3l-1.6 1.6a16 16 0 0 1-7.2-7.2l1.6-1.6c.3-.3.4-.7.3-1A10.8 10.8 0 0 1 8.5 4A1 1 0 0 0 7.5 3H5a2 2 0 0 0-2 2a17 17 0 0 0 17 17a2 2 0 0 0 2-2v-2.5a1 1 0 0 0-1-1z"/></symbol>
-    <symbol id="i-pin" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7m0 9.5a2.5 2.5 0 1 1 0-5a2.5 2.5 0 0 1 0 5Z"/></symbol>
-    <symbol id="i-back" viewBox="0 0 24 24"><path fill="currentColor" d="M15.41 7.41L14 6l-6 6l6 6l1.41-1.41L10.83 12z"/></symbol>
-    <symbol id="i-check" viewBox="0 0 24 24"><path fill="currentColor" d="M9 16.17L4.83 12l-1.42 1.41L9 19l12-12l-1.41-1.41z"/></symbol>
-    <symbol id="i-edit" viewBox="0 0 24 24"><path fill="currentColor" d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75zM20.71 7.04a1.004 1.004 0 0 0 0-1.42l-2.34-2.34a1.004 1.004 0 0 0-1.42 0l-1.83 1.83l3.75 3.75z"/></symbol>
-    <symbol id="i-trash" viewBox="0 0 24 24"><path fill="currentColor" d="M6 19a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7H6zm3.46-8.12l1.41-1.41L12 10.59l1.12-1.12l1.41 1.41L13.41 12l1.12 1.12l-1.41 1.41L12 13.41l-1.12 1.12l-1.41-1.41L10.59 12zM15.5 4l-1-1h-5l-1 1H5v2h14V4z"/></symbol>
-  </svg>
+    <main id="content" class="content">
+      <section class="cardless">
+        <div class="headline">
+          <div id="dayText" class="day-text"></div>
+        </div>
 
-  <!-- Arkaplan -->
-  <div class="bg"></div>
+        <div class="meta-row">
+          <div id="monthText" class="meta"></div>
+          <button id="btnOpenCalendar" class="chip"><span class="i-cal"></span>Takvimi aç</button>
+        </div>
 
-  <!-- Üst bar (sola hizalı başlık + sağda ayar butonu) -->
-  <header class="topbar">
-    <h1 class="title">Ajanda</h1>
-    <button class="glass icon-btn" id="btnSettings" aria-label="Ayarlar">
-      <svg><use href="#i-settings"/></svg>
+        <div id="calendar" class="calendar hidden" aria-hidden="true">
+          <div class="cal-head">
+            <button class="nav" id="calPrev" aria-label="Önceki ay">‹</button>
+            <div id="calMonthLabel" class="cal-label"></div>
+            <button class="nav" id="calNext" aria-label="Sonraki ay">›</button>
+          </div>
+          <div class="cal-grid" id="calGrid"></div>
+        </div>
+
+        <h2 class="section-title">Günün Zaman Çizelgesi</h2>
+        <div id="timeline" class="timeline"></div>
+      </section>
+    </main>
+
+    <!-- Floating search -->
+    <button id="btnSearch" class="fab small" aria-label="Arama">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 5 1.5-1.5-5-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
     </button>
-  </header>
 
-  <!-- İçerik -->
-  <main id="app" class="content">
-    <section class="hero">
-      <div class="date-head">
-        <h2 id="prettyDay" class="dayline">—</h2>
-        <div class="month-line">
-          <span id="prettyMonth">—</span>
-          <button id="btnToggleCal" class="glass pill">
-            <svg class="mr-8"><use href="#i-note"/></svg>Takvimi aç
-          </button>
-        </div>
+    <!-- Center FAB -->
+    <button id="btnPlus" class="fab main" aria-label="Kayıt ekle">+</button>
+
+    <!-- PLUS Menu -->
+    <div id="sheetPlus" class="sheet hidden" aria-hidden="true">
+      <div class="sheet-actions">
+        <button class="action" data-action="note"><span class="i-note"></span>Not</button>
+        <button class="action" data-action="call"><span class="i-call"></span>Çağrı</button>
+        <button class="action" data-action="place"><span class="i-pin"></span>Konum</button>
       </div>
-
-      <!-- Takvim (açılır/kapanır) -->
-      <div id="calendarWrap" class="calendar-wrap hidden">
-        <div class="cal-head">
-          <button class="glass icon-btn" id="calPrev"><svg><use href="#i-back"/></svg></button>
-          <div id="calTitle" class="cal-title">—</div>
-          <button class="glass icon-btn" id="calNext"><svg style="transform:rotate(180deg)"><use href="#i-back"/></svg></button>
-        </div>
-        <div class="cal-grid" id="calGrid" aria-label="Ay takvimi"></div>
-      </div>
-    </section>
-
-    <!-- Zaman Çizelgesi -->
-    <section class="timeline">
-      <h3 class="section-title">Günün Zaman Çizelgesi</h3>
-      <div id="timelineList" class="tl-list empty">
-        <div class="empty-note glass">Bu gün için kayıt yok.</div>
-      </div>
-    </section>
-  </main>
-
-  <!-- Alt: Arama butonu (sağ alt) -->
-  <button id="btnSearch" class="glass icon-floater" aria-label="Arama">
-    <svg><use href="#i-search"/></svg>
-  </button>
-
-  <!-- Orta FAB (+) -->
-  <button id="fab" class="fab" aria-label="Yeni">
-    <svg><use href="#i-plus"/></svg>
-  </button>
-
-  <!-- FAB overlay: Not / Çağrı / Konum -->
-  <div id="quickAdd" class="overlay hidden">
-    <div class="overlay-bg"></div>
-    <div class="sheet">
-      <button class="glass qa-btn" data-kind="note">
-        <svg><use href="#i-note"/></svg><span>Not</span>
-      </button>
-      <button class="glass qa-btn" data-kind="call">
-        <svg><use href="#i-call"/></svg><span>Çağrı</span>
-      </button>
-      <button class="glass qa-btn" data-kind="place">
-        <svg><use href="#i-pin"/></svg><span>Konum</span>
-      </button>
     </div>
+
+    <!-- Search modal -->
+    <div id="sheetSearch" class="panel hidden" aria-hidden="true">
+      <div class="panel-head">
+        <button class="panel-back" data-close="sheetSearch">‹</button>
+        <div class="panel-title">Arama</div>
+      </div>
+      <div class="panel-body">
+        <input id="searchInput" class="field" placeholder="kelime, kişi..."/>
+        <div class="filter-row">
+          <button class="chip filter active" data-type="all">Tümü</button>
+          <button class="chip filter" data-type="note">Not</button>
+          <button class="chip filter" data-type="call">Çağrı</button>
+          <button class="chip filter" data-type="place">Konum</button>
+        </div>
+        <div id="searchResults" class="list"></div>
+      </div>
+    </div>
+
+    <!-- Form panel -->
+    <div id="sheetForm" class="panel hidden" aria-hidden="true">
+      <div class="panel-head">
+        <button class="panel-back" data-close="sheetForm">‹</button>
+        <div id="formTitle" class="panel-title">Yeni</div>
+        <button id="formSave" class="panel-ok">✓</button>
+      </div>
+      <div class="panel-body" id="formBody"></div>
+    </div>
+
+    <!-- Detail panel -->
+    <div id="sheetDetail" class="panel hidden" aria-hidden="true">
+      <div class="panel-head">
+        <button class="panel-back" data-close="sheetDetail">‹</button>
+        <div class="panel-title">Detay</div>
+        <div class="panel-tools">
+          <button id="detailEdit" class="icon-btn">✎</button>
+          <button id="detailDelete" class="icon-btn">🗑</button>
+        </div>
+      </div>
+      <div class="panel-body" id="detailBody"></div>
+    </div>
+
+    <!-- Settings panel -->
+    <div id="sheetSettings" class="panel hidden" aria-hidden="true">
+      <div class="panel-head">
+        <button class="panel-back" data-close="sheetSettings">‹</button>
+        <div class="panel-title">Ayarlar</div>
+      </div>
+      <div class="panel-body">
+        <div class="row">
+          <div class="label">Sürüm</div>
+          <div class="value" id="appVersion">v10.2.3</div>
+        </div>
+
+        <div class="row"><button id="btnExport" class="chip ghost">Verileri JSON olarak indir</button></div>
+        <div class="row">
+          <label class="chip ghost">
+            JSON içe aktar
+            <input id="importFile" type="file" accept="application/json" hidden>
+          </label>
+        </div>
+        <div class="row"><button id="btnClearCaches" class="pill">Önbelleği Temizle (SW + Cache)</button></div>
+        <div class="row"><button id="btnWipe" class="pill danger">Tüm Kayıtları Sil</button></div>
+      </div>
+    </div>
+
+    <div id="backdrop" class="backdrop hidden" aria-hidden="true"></div>
   </div>
 
-  <!-- Form sayfaları (dinamik) -->
-  <div id="formHost" class="sheet-host"></div>
-
-  <!-- Arama sayfası -->
-  <div id="searchHost" class="sheet-host"></div>
-
-  <!-- Detay sayfası -->
-  <div id="detailHost" class="sheet-host"></div>
-
-  <script defer src="js/app.js?v=10.2.1"></script>
+<script src="js/app.js"></script>
 </body>
 </html>
