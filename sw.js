@@ -1,5 +1,5 @@
 // sw.js
-const CACHE = 'ajanda-v10-2-4b';
+const CACHE = 'ajanda-v10-2-4h';
 const ASSETS = [
   './','./index.html','./main.css','./app.js','./manifest.webmanifest',
   './icon-192.png','./icon-512.png','./apple-touch-icon.png'
