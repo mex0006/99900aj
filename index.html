@@ -1,323 +1,174 @@
+
 <!doctype html>
 <html lang="tr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <title>Ajanda</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Crect width='256' height='256' rx='56' fill='black'/%3E%3Cpath d='M64 64h128v128H64z' fill='%23b3e5fc'/%3E%3C/svg%3E">
-<style>
-:root{
-  --bg:#000; /* AMOLED */
-  --card:rgba(255,255,255,.06);
-  --card-2:rgba(255,255,255,.04);
-  --stroke:rgba(255,255,255,.08);
-  --text:#f6f6f6;
-  --text-dim:#bdbdbd;
-  --accent:#2f8cff;
-  --ok:#15c37e;
-  --warn:#f2c94c;
-  --nav-h:76px;
-  --blur:18px;
-  --radius:22px;
-  --shadow:0 14px 30px rgba(0,0,0,.45), 0 6px 18px rgba(0,0,0,.35);
-  -webkit-tap-highlight-color: transparent;
-}
-*{box-sizing:border-box}
-html,body{height:100%}
-body{
-  margin:0;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display","SF Pro Text", "Segoe UI", Roboto, Ubuntu, Arial, sans-serif;
-  color:var(--text);
-  background: var(--bg);
-  background-attachment: fixed;
-}
-.header-plume{
-  position:fixed; inset:0 0 auto 0; height:180px;
-  background: radial-gradient(1200px 320px at 50% -80px, rgba(60,90,200,.18), transparent 60%);
-  pointer-events:none; z-index:0;
-}
-.wrap{position:relative; z-index:1; padding:26px 18px calc(var(--nav-h) + 24px); max-width:820px; margin:0 auto;}
-h1{ margin:12px 4px 10px; font-size:38px; letter-spacing:.2px; font-weight:800;}
-.status-dot{
-  position:fixed; right:18px; top:16px;
-  width:16px; height:16px; border-radius:50%;
-  box-shadow: 0 0 0 3px rgba(0,0,0,.35), 0 0 10px 2px rgba(240,220,90,.65), 0 0 28px 10px rgba(240,220,90,.3);
-  background: radial-gradient(circle at 40% 40%, #ffe98a, #f2c94c 60%, #9a7a00 100%);
-  filter: saturate(110%);
-}
-.card{
-  background: var(--card);
-  backdrop-filter: blur(var(--blur));
-  -webkit-backdrop-filter: blur(var(--blur));
-  border:1px solid var(--stroke);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  padding:18px;
-  margin:16px 4px;
-}
-.card h2{margin:0 0 10px; font-weight:800; letter-spacing:.2px; font-size:28px}
-.sub{color:var(--text-dim); font-weight:600; margin:2px 0 8px; font-size:16px}
-.btn{
-  display:inline-flex; align-items:center; gap:10px;
-  border-radius:16px; padding:10px 14px;
-  border:1px solid var(--stroke);
-  background:var(--card-2);
-  color:var(--text); font-weight:700; font-size:16px;
-}
-.btn svg{width:18px; height:18px}
-#calWrap{overflow:hidden; transition:max-height .36s cubic-bezier(.2,.8,.2,1)}
-.cal-grid{ display:grid; grid-template-columns: repeat(7,1fr); gap:10px; padding-top:12px;}
-.day{border-radius:16px; padding:10px 0; text-align:center; border:1px solid var(--stroke); background:var(--card-2); font-weight:700; color:var(--text-dim)}
-.day.active{outline:2px solid var(--accent); color:var(--text)}
-.empty{color:var(--text-dim); background:var(--card-2); padding:16px; border-radius:16px; border:1px solid var(--stroke); font-weight:600}
-.nav{ position:fixed; left:0; right:0; bottom:0; height:var(--nav-h); display:flex; align-items:center; justify-content:space-around; background: rgba(255,255,255,.06); backdrop-filter: blur(24px) saturate(140%); -webkit-backdrop-filter: blur(24px) saturate(140%); border-top:1px solid var(--stroke); z-index:50;}
-.icon-btn{ width:58px; height:58px; border-radius:20px; display:grid; place-items:center; border:1px solid var(--stroke); background:var(--card-2); box-shadow: var(--shadow);}
-.icon-btn svg{width:24px; height:24px}
-.fab{ width:64px; height:64px; border-radius:22px; background:linear-gradient(180deg,#2f8cff,#1660ff); border:1px solid rgba(255,255,255,.18); display:grid; place-items:center; box-shadow: 0 10px 30px rgba(47,140,255,.45); transform: translateY(-10px);}
-.fab svg{width:28px; height:28px; color:white}
-.scrim{ position:fixed; inset:0; background:rgba(0,0,0,.35); backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); opacity:0; pointer-events:none; transition: opacity .25s ease; z-index:99;}
-.scrim.show{opacity:1; pointer-events:auto}
-.fab-menu{ position:fixed; left:50%; bottom: calc(var(--nav-h) + 14px); transform: translate(-50%, 20px) scale(.96); display:flex; gap:12px; padding:10px; border-radius:26px; background: rgba(20,20,20,.7); border:1px solid var(--stroke); backdrop-filter: blur(18px) saturate(130%); -webkit-backdrop-filter: blur(18px) saturate(130%); box-shadow: var(--shadow); opacity:0; pointer-events:none; transition: all .28s cubic-bezier(.2,.8,.2,1); z-index:100;}
-.fab-menu.show{opacity:1; pointer-events:auto; transform: translate(-50%, 0) scale(1)}
-.fab-action{ width:60px; height:60px; border-radius:18px; display:grid; place-items:center; border:1px solid var(--stroke); background:var(--card);}
-.fab-action svg{width:26px; height:26px}
-.sheet{ position:fixed; left:0; right:0; bottom:0; top:10%; transform: translateY(110%); background: rgba(16,16,16,.86); border-top-left-radius:26px; border-top-right-radius:26px; border:1px solid var(--stroke); border-bottom:none; backdrop-filter: blur(18px) saturate(140%); -webkit-backdrop-filter: blur(18px) saturate(140%); z-index:120; transition: transform .42s cubic-bezier(.2,.8,.2,1); display:flex; flex-direction:column;}
-.sheet.open{transform: translateY(0)}
-.sheet-head{position:relative; padding:16px 18px 6px}
-.sheet-title{font-size:24px; font-weight:800}
-.round{ position:absolute; top:10px; width:44px; height:44px; display:grid; place-items:center; border-radius:50%; background: rgba(255,255,255,.08); border:1px solid var(--stroke);}
-.round svg{width:22px; height:22px}
-.round.left{left:12px}
-.round.right{right:12px}
-.sheet-body{padding:4px 18px 18px; overflow:auto}
-.label{font-size:14px; color:var(--text-dim); margin:14px 2px 6px}
-.input, textarea, select{ width:100%; border-radius:16px; padding:14px 14px; font-size:16px; border:1px solid var(--stroke); background:rgba(255,255,255,.04); color:var(--text);}
-textarea{min-height:120px; resize:vertical}
-.row{display:flex; gap:12px}
-.tag{padding:8px 12px; border-radius:12px; background:var(--card-2); border:1px solid var(--stroke); font-weight:700}
-.small{font-size:13px; color:var(--text-dim)}
-</style>
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="apple-touch-icon" href="./icons/icon-192.png">
+<meta name="theme-color" content="#000000">
+<link rel="stylesheet" href="./main.css">
 </head>
 <body>
-<div class="header-plume"></div>
-<div class="wrap">
-  <h1>Ajanda</h1>
-  <div class="status-dot" id="statusDot" title="Durum"></div>
+<div class="app">
+  <header>
+    <div class="hrow">
+      <h1>Ajanda</h1>
+      <div class="beam" title="Durum"></div>
+    </div>
+  </header>
 
-  <section class="card">
-    <h2 id="dayTitle">—</h2>
-    <div class="row" style="justify-content:space-between; align-items:center">
-      <div class="sub" id="monthTitle">—</div>
-      <button id="toggleCal" class="btn" type="button" aria-expanded="false">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4" width="18" height="18" rx="4" ry="4" stroke-width="1.6"/><line x1="16" y1="2" x2="16" y2="6" stroke-width="1.6"/><line x1="8" y1="2" x2="8" y2="6" stroke-width="1.6"/><line x1="3" y1="10" x2="21" y2="10" stroke-width="1.6"/></svg>
-        <span>Takvimi aç</span>
+  <section id="tab-home" class="tab active">
+    <div class="card">
+      <h2 id="titleDate">—</h2>
+      <div class="row subtle">
+        <div id="titleMonth">—</div>
+        <button class="button" id="btnCal">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M7 2h2v3H7V2zm8 0h2v3h-2V2zM5 6h14a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2zm0 4v8h14v-8H5z"/></svg>
+          <span>Takvimi aç</span>
+        </button>
+      </div>
+      <div id="cal" class="calendar">
+        <div class="grid">
+          <div class="cell">Pzt</div><div class="cell">Sal</div><div class="cell">Çar</div><div class="cell">Per</div><div class="cell">Cum</div><div class="cell">Cmt</div><div class="cell">Paz</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Günün Zaman Çizelgesi</h2>
+      <div id="timeline"></div>
+    </div>
+  </section>
+
+  <section id="tab-map" class="tab">
+    <div class="card"><h2>Harita</h2><div class="subtle">Harita entegrasyonu daha sonra eklenecek.</div></div>
+  </section>
+
+  <section id="tab-search" class="tab">
+    <div class="card">
+      <h2>Ara</h2>
+      <input type="text" id="searchInput" placeholder="kelime, kişi, etiket..." />
+    </div>
+    <div class="card"><div id="searchResults"></div></div>
+  </section>
+
+  <section id="tab-settings" class="tab">
+    <div class="card"><h2>Ayarlar</h2><div class="subtle">Görünüm ve veri seçenekleri yakında.</div></div>
+  </section>
+</div>
+
+<!-- FAB radial -->
+<div id="fabMenu" class="fab-menu">
+  <div id="act-note" class="bubble" title="Not">
+    <svg class="icon" viewBox="0 0 24 24"><path d="M5 3h10l4 4v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zm10 0v4h4"/></svg>
+  </div>
+  <div id="act-place" class="bubble" title="Konum">
+    <svg class="icon" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z"/></svg>
+  </div>
+  <div id="act-call" class="bubble" title="Çağrı">
+    <svg class="icon" viewBox="0 0 24 24"><path d="M6.6 10.8a15 15 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1.1-.23 11 11 0 0 0 3.5.56 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 7a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1 11 11 0 0 0 .56 3.5 1 1 0 0 1-.23 1.1L6.6 10.8z"/></svg>
+  </div>
+</div>
+
+<!-- SHEETS -->
+<div id="sheet-note" class="sheet">
+  <div class="panel">
+    <div class="bar">
+      <button class="glass-btn btn-close" aria-label="Geri">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>
+      </button>
+      <h3>Yeni Not</h3>
+      <button id="save-note" class="glass-btn" aria-label="Kaydet">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"/></svg>
       </button>
     </div>
-    <div id="calWrap" style="max-height:0">
-      <div class="cal-grid" id="calGrid"></div>
+    <div class="form">
+      <label>Başlık (opsiyonel)</label>
+      <input type="text" id="note-title" placeholder="ör. Fikir, yapılacak...">
+      <label>Not</label>
+      <textarea id="note-body" placeholder="Metni yaz..."></textarea>
+      <label class="tags">Etiketler (virgülle)</label>
+      <input type="text" id="note-tags" placeholder="iş, spor, aile">
     </div>
-  </section>
-
-  <section class="card">
-    <h2>Günün Zaman Çizelgesi</h2>
-    <div id="timeline">
-      <div class="empty">Bu gün için kayıt yok.</div>
-    </div>
-  </section>
+  </div>
 </div>
 
-<nav class="nav" aria-label="Alt menü">
-  <button class="icon-btn" title="Ana"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 10.5 12 3l9 7.5" stroke-width="1.6"/><path d="M5 10v10h14V10" stroke-width="1.6"/></svg></button>
-  <button class="icon-btn" title="Harita"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 6l7-3 4 3 7-3v14l-7 3-4-3-7 3z" stroke-width="1.6"/><path d="M10 3v14" stroke-width="1.2"/><path d="M14 6v14" stroke-width="1.2"/></svg></button>
-  <button class="icon-btn fab" id="fab" aria-expanded="false" title="Ekle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14M5 12h14" stroke="white" stroke-width="2.2" stroke-linecap="round"/></svg></button>
-  <button class="icon-btn" title="Ara"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="11" cy="11" r="7" stroke-width="1.6"/><path d="M20 20l-4-4" stroke-width="1.6" stroke-linecap="round"/></svg></button>
-  <button class="icon-btn" title="Ayarlar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3" stroke-width="1.6"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06A2 2 0 1 1 7.04 3.3l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c0 .66.39 1.26 1 1.51H21a2 2 0 1 1 0 4h-.09c-.66 0-1.26.39-1.51 1z" stroke-width=".9"/></svg></button>
+<div id="sheet-call" class="sheet">
+  <div class="panel">
+    <div class="bar">
+      <button class="glass-btn btn-close" aria-label="Geri">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>
+      </button>
+      <h3>Yeni Çağrı</h3>
+      <button id="save-call" class="glass-btn" aria-label="Kaydet">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"/></svg>
+      </button>
+    </div>
+    <div class="form">
+      <label>Kişi adı</label>
+      <input type="text" id="call-person" placeholder="örn. Ayşe Yılmaz">
+      <label>Tür</label>
+      <div class="row">
+        <label><input type="radio" name="call-type" value="gelen" checked> Gelen</label>
+        <label><input type="radio" name="call-type" value="giden"> Giden</label>
+        <label><input type="radio" name="call-type" value="cevapsız"> Cevapsız</label>
+      </div>
+      <label>Not (opsiyonel)</label>
+      <input type="text" id="call-note" placeholder="Kısa not...">
+    </div>
+  </div>
+</div>
+
+<div id="sheet-place" class="sheet">
+  <div class="panel">
+    <div class="bar">
+      <button class="glass-btn btn-close" aria-label="Geri">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>
+      </button>
+      <h3>Yeni Konum</h3>
+      <button id="save-place" class="glass-btn" aria-label="Kaydet">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"/></svg>
+      </button>
+    </div>
+    <div class="form">
+      <label>Yer adı</label>
+      <input type="text" id="pl-name" placeholder="örn. Ev, İş, Kafe">
+      <label>Adres</label>
+      <input type="text" id="pl-addr" placeholder="Cadde, No, ilçe...">
+      <label>Koordinat</label>
+      <input type="text" id="pl-coord" placeholder="enlem, boylam">
+    </div>
+  </div>
+</div>
+
+<!-- Dock -->
+<nav class="dock">
+  <div class="dock-inner">
+    <button class="btn" id="btn-home" aria-label="Ajanda">
+      <svg class="icon" viewBox="0 0 24 24"><path d="M12 3l9 8h-3v9H6v-9H3l9-8z"/></svg>
+    </button>
+    <button class="btn" id="btn-map" aria-label="Harita">
+      <svg class="icon" viewBox="0 0 24 24"><path d="M9.5 5l5 2 5-2v14l-5 2-5-2-5 2V7l5-2zM9.5 5v14"/></svg>
+    </button>
+    <button class="fab" id="fab" aria-label="Ekle">
+      <svg class="icon" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
+    </button>
+    <button class="btn" id="btn-search" aria-label="Ara">
+      <svg class="icon" viewBox="0 0 24 24"><path d="M10 4a6 6 0 1 1 0 12 6 6 0 0 1 0-12zm10 16l-5.2-5.2"/></svg>
+    </button>
+    
+    
+    <button class="btn" id="btn-settings" aria-label="Ayarlar">
+      <svg class="icon" viewBox="0 0 24 24">
+        <path d="M4 6h16v2H4V6zm4 5h12v2H8v-2zm-4 5h16v2H4v-2z"/>
+      </svg>
+    </button>
+
+  </div>
 </nav>
 
-<div class="scrim" id="scrim"></div>
-<div class="fab-menu" id="fabMenu" role="menu" aria-label="Hızlı ekle">
-  <button class="fab-action" data-action="note" title="Not">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 4h12a2 2 0 0 1 2 2v12l-4-4H6a2 2 0 0 1-2-2z" stroke-width="1.6"/></svg>
-  </button>
-  <button class="fab-action" data-action="call" title="Çağrı">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.63A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.66 12.66 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8 9a16 16 0 0 0 6 6l.36-.36a2 2 0 0 1 2.11-.45 12.66 12.66 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" stroke-width="1.6"/></svg>
-  </button>
-  <button class="fab-action" data-action="place" title="Konum">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 21s-6-5.33-6-10a6 6 0 0 1 12 0c0 4.67-6 10-6 10z" stroke-width="1.6"/><circle cx="12" cy="11" r="2.5" stroke-width="1.6"/></svg>
-  </button>
-</div>
-
-<section class="sheet" id="sheet-note" aria-hidden="true">
-  <div class="sheet-head">
-    <div class="round left" data-close="sheet-note" title="Geri">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M15 6l-6 6 6 6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    </div>
-    <div class="round right" data-save="note" title="Kaydet">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 6l-11 11-5-5" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    </div>
-    <div class="sheet-title">Yeni Not</div>
-  </div>
-  <div class="sheet-body">
-    <label class="label">Başlık (opsiyonel)</label>
-    <input class="input" id="noteTitle" placeholder="örn. Fikir, yapılacak..." />
-    <label class="label">Not</label>
-    <textarea id="noteText" placeholder="Metni yaz..."></textarea>
-    <label class="label">Etiketler (virgülle)</label>
-    <input class="input" id="noteTags" placeholder="iş, spor, aile" />
-  </div>
-</section>
-
-<section class="sheet" id="sheet-call" aria-hidden="true">
-  <div class="sheet-head">
-    <div class="round left" data-close="sheet-call" title="Geri">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M15 6l-6 6 6 6" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    </div>
-    <div class="round right" data-save="call" title="Kaydet">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 6l-11 11-5-5" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    </div>
-    <div class="sheet-title">Yeni Çağrı</div>
-  </div>
-  <div class="sheet-body">
-    <label class="label">Kişi adı</label>
-    <input class="input" id="callWho" placeholder="örn. Ayşe Yılmaz" />
-    <label class="label">Tür</label>
-    <div class="row">
-      <button class="tag" data-calltype="Gelen">Gelen</button>
-      <button class="tag" data-calltype="Giden">Giden</button>
-      <button class="tag" data-calltype="Cevapsız">Cevapsız</button>
-    </div>
-    <label class="label">Not (opsiyonel)</label>
-    <input class="input" id="callNote" placeholder="Kısa not..." />
-  </div>
-</section>
-
-<section class="sheet" id="sheet-place" aria-hidden="true">
-  <div class="sheet-head">
-    <div class="round left" data-close="sheet-place" title="Geri">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M15 6l-6 6 6 6" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    </div>
-    <div class="round right" data-save="place" title="Kaydet">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 6l-11 11-5-5" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    </div>
-    <div class="sheet-title">Yeni Konum</div>
-  </div>
-  <div class="sheet-body">
-    <label class="label">Yer adı</label>
-    <input class="input" id="placeName" placeholder="örn. Ev, İş, Kafe" />
-    <label class="label">Adres</label>
-    <input class="input" id="placeAddr" placeholder="Cadde, No, İlçe..." />
-    <label class="label">Koordinat</label>
-    <input class="input" id="placeCoord" placeholder="enlem, boylam" />
-    <div class="small">Harita seçimi yakında eklenecek.</div>
-  </div>
-</section>
-
-<script>
-const $ = sel => document.querySelector(sel);
-const $$ = sel => Array.from(document.querySelectorAll(sel));
-const formatTR = d => new Intl.DateTimeFormat('tr-TR', {dateStyle:'full'}).format(d);
-const monthTR = d => new Intl.DateTimeFormat('tr-TR',{month:'long', year:'numeric'}).format(d);
-let current = new Date();
-const dayTitle = $('#dayTitle');
-const monthTitle = $('#monthTitle');
-const calWrap = $('#calWrap');
-const calGrid = $('#calGrid');
-const toggleCal = $('#toggleCal');
-const scrim = $('#scrim');
-const fab = $('#fab');
-const fabMenu = $('#fabMenu');
-function setHeaderDate(d){
-  dayTitle.textContent = formatTR(d);
-  monthTitle.textContent = monthTR(d).replace(/(^\w)/, c=>c.toLocaleUpperCase('tr-TR'));
-}
-setHeaderDate(current);
-function buildCalendar(d){
-  calGrid.innerHTML='';
-  const year = d.getFullYear();
-  const month = d.getMonth();
-  const first = new Date(year, month, 1);
-  const last = new Date(year, month+1, 0);
-  const offset = (first.getDay()+6)%7;
-  const days = last.getDate();
-  for(let i=0;i<offset;i++){
-    const ph=document.createElement('div'); ph.className='day'; ph.style.visibility='hidden'; calGrid.appendChild(ph);
-  }
-  for(let i=1;i<=days;i++){
-    const el=document.createElement('button'); el.className='day'; el.textContent=i;
-    if(i===d.getDate()) el.classList.add('active');
-    el.addEventListener('click',()=>{
-      current = new Date(year, month, i);
-      setHeaderDate(current);
-      $$('.day.active').forEach(x=>x.classList.remove('active'));
-      el.classList.add('active');
-    });
-    calGrid.appendChild(el);
-  }
-}
-buildCalendar(current);
-toggleCal.addEventListener('click',()=>{
-  const open = calWrap.style.maxHeight && calWrap.style.maxHeight !== '0px';
-  if(open){
-    calWrap.style.maxHeight = '0px';
-    toggleCal.setAttribute('aria-expanded','false');
-  }else{
-    calWrap.style.maxHeight = calGrid.scrollHeight + 12 + 'px';
-    toggleCal.setAttribute('aria-expanded','true');
-  }
-});
-function openMenu(){
-  scrim.classList.add('show');
-  fabMenu.classList.add('show');
-  fab.setAttribute('aria-expanded','true');
-}
-function closeMenu(){
-  scrim.classList.remove('show');
-  fabMenu.classList.remove('show');
-  fab.setAttribute('aria-expanded','false');
-}
-fab.addEventListener('click', e=>{
-  const open = fab.getAttribute('aria-expanded')==='true';
-  if(open) closeMenu(); else openMenu();
-});
-scrim.addEventListener('click', ()=>{
-  closeMenu();
-  $$('.sheet.open').forEach(s=>s.classList.remove('open'));
-});
-const sheets = { note: $('#sheet-note'), call: $('#sheet-call'), place: $('#sheet-place') };
-function openSheet(key){ sheets[key].classList.add('open'); scrim.classList.add('show'); }
-function closeSheetById(id){ const el=document.getElementById(id); if(el) el.classList.remove('open'); scrim.classList.remove('show'); }
-$$('.fab-action').forEach(btn=> btn.addEventListener('click', ()=>{ closeMenu(); openSheet(btn.dataset.action); }));
-$$('.round.left').forEach(b=> b.addEventListener('click', ()=>{ b.closest('.sheet').classList.remove('open'); scrim.classList.remove('show'); }));
-const timeline = $('#timeline');
-function addItem(type, title, sub){
-  const item = document.createElement('div');
-  item.className='card';
-  item.innerHTML = '<div class="sub">'+type+'</div><div style="font-weight:800;font-size:18px">'+(title||'—')+'</div><div class="small" style="margin-top:6px">'+(sub||'')+'</div>';
-  if(timeline.querySelector('.empty')) timeline.innerHTML='';
-  timeline.prepend(item);
-}
-$$('[data-save="note"]').forEach(b=> b.addEventListener('click', ()=>{
-  addItem('Not', $('#noteTitle').value || 'Yeni not', $('#noteText').value.slice(0,140));
-  closeSheetById('sheet-note');
-}));
-$$('[data-save="call"]').forEach(b=> b.addEventListener('click', ()=>{
-  addItem('Çağrı', $('#callWho').value || 'Bilinmeyen', $('#callNote').value.slice(0,140));
-  closeSheetById('sheet-call');
-}));
-$$('[data-save="place"]').forEach(b=> b.addEventListener('click', ()=>{
-  const t = $('#placeName').value || 'Konum';
-  const s = $('#placeAddr').value || $('#placeCoord').value;
-  addItem('Konum', t, s);
-  closeSheetById('sheet-place');
-}));
-const dot = $('#statusDot'); let on=false;
-setInterval(()=>{
-  on=!on;
-  dot.style.background = on ? 'radial-gradient(circle at 40% 40%, #b6ffcc, #15c37e 60%, #0b6a47 100%)' :
-    'radial-gradient(circle at 40% 40%, #ffe98a, #f2c94c 60%, #9a7a00 100%)';
-  dot.style.boxShadow = on ? "0 0 0 3px rgba(0,0,0,.35), 0 0 10px 2px rgba(21,195,126,.65), 0 0 28px 10px rgba(21,195,126,.3)" :
-    "0 0 0 3px rgba(0,0,0,.35), 0 0 10px 2px rgba(240,220,90,.65), 0 0 28px 10px rgba(240,220,90,.3)";
-}, 4000);
-</script>
+<script src="./app.js"></script>
 </body>
 </html>
