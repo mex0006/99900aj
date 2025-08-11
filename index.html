@@ -8,124 +8,119 @@
   <meta name="theme-color" content="#0b0c0f"/>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icons/icon-192.png" sizes="192x192">
-  <!-- Leaflet for Map tab -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="" crossorigin=""/>
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="" crossorigin=""></script>
-  <title>Ajanda — Zaman Çizelgesi</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <title>Ajanda</title>
   <style>
+    /* ===== Reset & Theme ===== */
     :root{
-      --bg:#0a0c10; --panel:#0e1117; --ink:#e9edf2; --muted:#9aa4b2; --edge:#1b2432;
-      --brand:#7dd3fc; --brand2:#60a5fa; --ok:#34d399; --warn:#f59e0b; --bad:#ef4444;
-      --glass: rgba(255,255,255,.03); --radius:20px;
+      --bg:#0b0c0f; --panel:#11151b; --ink:#e7ecf2; --muted:#a8b0bd; --edge:#1d2633;
+      --tint:#5aa7ff; --ok:#22c55e; --bad:#ef4444; --note:#a78bfa;
+      --radius:18px; --tabh:70px;
     }
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    html{background:var(--bg)}
+    *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+    html,body{height:100%; background:var(--bg);}
     body{
       margin:0; color:var(--ink);
-      background:radial-gradient(1200px 600px at 10% -10%, rgba(96,165,250,.12), transparent 60%),
-                 radial-gradient(1000px 600px at 110% 0%, rgba(125,211,252,.12), transparent 70%),
-                 var(--bg);
       font:500 16px/1.45 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Inter,Helvetica,Arial;
       -webkit-font-smoothing:antialiased;
-      padding: max(10px, calc(10px + env(safe-area-inset-top))) 12px calc(24px + env(safe-area-inset-bottom)) 12px;
       min-height:100svh;
+      padding-bottom:calc(var(--tabh) + env(safe-area-inset-bottom));
     }
-    .app{width:min(1120px,100%); margin:0 auto; display:grid; gap:12px;}
-    .hdr{position:sticky; top:0; z-index:30; background:linear-gradient(180deg, rgba(14,17,23,.9), rgba(14,17,23,.6)); backdrop-filter:blur(10px);
-         border:1px solid var(--edge); border-radius:var(--radius); padding:10px 12px; display:flex; align-items:center; gap:10px}
-    .logo{display:flex; align-items:center; gap:8px; font-weight:900}
-    .logo .i{width:22px; height:22px; border-radius:6px; background:linear-gradient(135deg,var(--brand),var(--brand2))}
-    .spacer{flex:1}
-    .pill{background:var(--glass); border:1px solid var(--edge); border-radius:999px; padding:8px 12px}
-    .btn, input, select{appearance:none; border:1px solid var(--edge); background:var(--glass); color:var(--ink); padding:10px 12px; border-radius:12px; font-weight:700; cursor:pointer}
+    .container{max-width:980px; margin:0 auto; padding: max(12px, calc(12px + env(safe-area-inset-top))) 12px 0 12px}
+    .header{display:flex; align-items:center; gap:10px; padding:10px 12px; border:1px solid var(--edge); border-radius:16px; background:#0f1319; position:sticky; top:0; z-index:20}
+    .appname{font-weight:900; letter-spacing:.2px}
+    .pill{background:#0e1217; border:1px solid var(--edge); padding:6px 10px; border-radius:999px; color:var(--muted)}
+    .title{font-weight:900; letter-spacing:.2px; font-size:clamp(16px, 2.6vw, 18px)}
+    .sub{color:var(--muted); font-size:13px}
+    .card{background:linear-gradient(180deg,#11151b, #0d1016); border:1px solid var(--edge); border-radius:var(--radius); padding:14px; margin-top:12px}
+    .list{display:grid; gap:10px}
+    .item{background:#0f1319; border:1px solid var(--edge); border-radius:14px; padding:12px}
+    .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+    .btn, input, select{appearance:none; border:1px solid var(--edge); background:#0f1319; color:var(--ink); padding:10px 12px; border-radius:12px; font-weight:700; cursor:pointer}
     .btn:active{transform:translateY(1px)}
     .btn.primary{background:linear-gradient(180deg,#183022,#101a15); border-color:#254232}
     .btn.danger{background:linear-gradient(180deg,#341f1f,#241515); border-color:#3a2626}
-    .tabs{display:flex; gap:8px; flex-wrap:wrap}
-    .tab{background:var(--glass); border:1px solid var(--edge); border-radius:10px; padding:8px 12px; cursor:pointer}
-    .tab.active{outline:2px solid var(--brand2); outline-offset:-2px}
-    .content{display:none}
-    .content.active{display:block}
-    .card{background:linear-gradient(180deg,#0e1117, #0b0d12); border:1px solid var(--edge); border-radius:var(--radius); padding:14px; box-shadow:0 20px 60px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.02)}
-    .title{font-weight:900}
-    .sub{color:var(--muted); font-size:13px}
-    .list{display:grid; gap:10px}
-    .item{background:var(--glass); border:1px solid var(--edge); border-radius:16px; padding:12px}
     .hr{height:1px; background:linear-gradient(90deg,transparent,#1f2834,transparent); margin:10px 0}
-    .calendar{display:grid; gap:8px}
-    .cal-head{display:flex; align-items:center; justify-content:space-between}
-    .cal-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:6px}
+    .dot{width:10px; height:10px; border-radius:50%; background:var(--tint); margin-top:7px}
+    .dot.ok{background:var(--ok)} .dot.bad{background:var(--bad)} .dot.note{background:var(--note)}
+    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Courier New', monospace; font-size:12px; color:#93a0b3}
+    /* Compact month calendar */
+    .month{display:grid; gap:8px}
+    .month-head{display:flex; align-items:center; justify-content:space-between}
+    .grid{display:grid; grid-template-columns:repeat(7,1fr); gap:6px}
     .weekday{color:var(--muted); text-align:center; font-size:12px}
     .d{aspect-ratio:1/1; display:grid; place-items:center; border:1px solid var(--edge); border-radius:12px; background:#0f141c; font-weight:800; cursor:pointer; font-size:14px}
-    .d.muted{opacity:.45} .d.sel{outline:2px solid var(--brand2); outline-offset:-3px} .d.today{border-color:#2a3a52}
+    .d.muted{opacity:.45} .d.sel{outline:2px solid var(--tint); outline-offset:-3px} .d.today{border-color:#2a3a52}
+    /* Timeline */
     .timeline .event{display:grid; grid-template-columns:auto 1fr; gap:10px; align-items:flex-start}
-    .dot{width:10px; height:10px; border-radius:50%; background:var(--brand2); margin-top:7px}
-    .dot.ok{background:var(--ok)} .dot.bad{background:var(--bad)} .dot.note{background:#a78bfa}
-    .grid2{display:grid; grid-template-columns:1fr 1fr; gap:10px}
-    @media (max-width:820px){ .grid2{grid-template-columns:1fr} }
-    .pad-bottom{height:max(24px, calc(24px + env(safe-area-inset-bottom)))}
+    .timeline .event .h{font-weight:800}
+    .empty{color:var(--muted); text-align:center; padding:16px}
     /* Map */
-    #map{height:480px; border-radius:14px; overflow:hidden; border:1px solid var(--edge)}
+    #map{height:calc(60vh); border-radius:14px; overflow:hidden; border:1px solid var(--edge);}
     .legend{display:flex; gap:8px; align-items:center; color:var(--muted); font-size:12px}
-    .chip{width:10px; height:10px; border-radius:50%}
-    .chip.ok{background:var(--ok)} .chip.path{background:var(--brand2)}
-    /* Search */
-    .searchbar{display:flex; gap:8px; align-items:center}
-    .tag{display:inline-block; padding:2px 8px; border-radius:999px; border:1px solid var(--edge); background:var(--glass); margin-right:6px; font-size:12px}
+    .chip{width:10px; height:10px; border-radius:50%} .chip.route{background:var(--tint)} .chip.visit{background:var(--ok)}
+    /* Bottom Tab Bar */
+    .tabbar{
+      position:fixed; left:0; right:0; bottom:0;
+      height:var(--tabh);
+      padding-bottom:env(safe-area-inset-bottom);
+      background:#0f1319; border-top:1px solid var(--edge);
+      display:grid; grid-template-columns:repeat(5,1fr);
+      z-index:50;
+    }
+    .tabbtn{display:grid; place-items:center; gap:4px; color:var(--muted); font-size:12px; text-decoration:none}
+    .tabbtn .ico{font-size:20px}
+    .tabbtn.active{color:var(--ink)}
+    /* pages */
+    .page{display:none}
+    .page.active{display:block}
   </style>
 </head>
 <body>
-  <div class="app">
-    <div class="hdr">
-      <div class="logo"><div class="i"></div> Ajanda</div>
+  <div class="container">
+    <div class="header">
+      <div class="appname">Ajanda</div>
       <div class="pill">Gün: <b id="dayText">—</b></div>
       <div class="pill">Durum: <b id="statusText">Hazır</b></div>
-      <div class="spacer"></div>
-      <div class="tabs">
-        <div class="tab active" data-tab="timeline">Zaman</div>
-        <div class="tab" data-tab="map">Harita</div>
-        <div class="tab" data-tab="search">Arama</div>
-        <div class="tab" data-tab="stats">İstatistik</div>
-        <div class="tab" data-tab="settings">Ayarlar</div>
+      <div style="margin-left:auto" class="row">
+        <button id="exportBtn" class="btn">CSV</button>
+        <label for="importFile" class="btn" style="cursor:pointer">İçe Aktar</label>
+        <input id="importFile" type="file" accept="application/json" style="display:none"/>
       </div>
-      <div class="spacer"></div>
-      <button id="exportBtn" class="btn">Dışa Aktar</button>
-      <label for="importFile" class="btn" style="cursor:pointer">İçe Aktar</label>
-      <input id="importFile" type="file" accept="application/json" style="display:none" />
     </div>
 
-    <!-- Timeline -->
-    <div id="timeline" class="content active">
+    <!-- Timeline Page -->
+    <div id="pg-timeline" class="page active">
       <section class="card">
-        <div class="calendar">
-          <div class="cal-head">
+        <div class="month">
+          <div class="month-head">
             <button class="btn" id="prevMonth">‹</button>
             <div class="title" id="calTitle">—</div>
             <button class="btn" id="nextMonth">›</button>
           </div>
-          <div class="cal-grid" id="calWeekdays"></div>
-          <div class="cal-grid" id="calGrid"></div>
+          <div class="grid" id="calWeekdays"></div>
+          <div class="grid" id="calGrid"></div>
         </div>
-        <div class="hr"></div>
+      </section>
+      <section class="card">
         <div class="title">Günün Zaman Çizelgesi</div>
         <div class="list timeline" id="timelineList"></div>
       </section>
-
       <section class="card">
         <div class="title">Konum Takibi</div>
         <div class="sub">Uygulama açıkken konumunu izler ve kalışları oluşturur.</div>
         <div class="hr"></div>
-        <div class="grid2">
+        <div class="list" style="grid-template-columns:1fr 1fr; display:grid">
           <div class="item">
             <div class="sub">Son Konum</div>
             <div class="title" id="lastFix">—</div>
             <div class="sub" id="lastAddr">—</div>
-            <div class="sub" id="lastCoords" style="opacity:.6"></div>
+            <div class="mono" id="lastCoords"></div>
           </div>
           <div class="item">
             <div class="sub">Takip</div>
-            <div class="grid2">
+            <div class="row">
               <button id="toggleBtn" class="btn primary">Takibi Başlat</button>
               <select id="accuracySel" class="btn">
                 <option value="balanced">Dengeli</option>
@@ -133,30 +128,49 @@
                 <option value="low">Düşük</option>
               </select>
             </div>
-            <div class="sub" id="wakeInfo" style="margin-top:6px"></div>
+            <div class="sub" id="wakeInfo"></div>
           </div>
         </div>
       </section>
     </div>
 
-    <!-- Map -->
-    <div id="mapTab" class="content">
+    <!-- Map Page -->
+    <div id="pg-map" class="page">
       <section class="card">
         <div class="title">Harita</div>
         <div class="sub">Günün hareketleri ve kalış noktaları</div>
         <div class="hr"></div>
         <div id="map"></div>
         <div class="hr"></div>
-        <div class="legend"><div class="chip path"></div> Güzergâh &nbsp; <div class="chip ok"></div> Kalış</div>
+        <div class="legend"><span class="chip route"></span> Güzergâh &nbsp; <span class="chip visit"></span> Kalış</div>
       </section>
     </div>
 
-    <!-- Search -->
-    <div id="searchTab" class="content">
+    <!-- Add Page (Quick) -->
+    <div id="pg-add" class="page">
+      <section class="card">
+        <div class="title">Hızlı Ekle</div>
+        <div class="hr"></div>
+        <div class="row">
+          <button id="noteBtn" class="btn">Not</button>
+          <button id="callBtn" class="btn">Arama</button>
+          <button id="wakeBtn" class="btn">Ekranı Açık Tut</button>
+        </div>
+      </section>
+      <section class="card">
+        <div class="title">Ayarlar (Kısa)</div>
+        <div class="sub">Kalış Algılama</div>
+        <div>Yarıçap <input id="radiusInp" class="btn" type="number" min="30" max="300" step="10" value="120" style="width:90px"> m ·
+          Eşik <input id="dwellInp" class="btn" type="number" min="1" max="60" step="1" value="8" style="width:70px"> dk</div>
+      </section>
+    </div>
+
+    <!-- Search Page -->
+    <div id="pg-search" class="page">
       <section class="card">
         <div class="title">Arama & Filtre</div>
-        <div class="searchbar">
-          <input id="q" class="btn" placeholder="kelime, etiket, kişi...">
+        <div class="row">
+          <input id="q" class="btn" placeholder="kelime, kişi...">
           <select id="typeSel" class="btn">
             <option value="">Tümü</option>
             <option value="visit">Kalış</option>
@@ -170,58 +184,31 @@
       </section>
     </div>
 
-    <!-- Stats -->
-    <div id="statsTab" class="content">
+    <!-- Settings Page -->
+    <div id="pg-settings" class="page">
       <section class="card">
-        <div class="title">İstatistikler</div>
-        <div class="sub">Son 30 gün</div>
-        <div class="hr"></div>
-        <div class="list" id="statsList"></div>
-      </section>
-    </div>
-
-    <!-- Settings -->
-    <div id="settingsTab" class="content">
-      <section class="card">
-        <div class="title">Ayarlar</div>
-        <div class="hr"></div>
-        <div class="list">
-          <div class="item">
-            <div class="title">Kalış Algılama</div>
-            <div class="sub">Yarıçap <input id="radiusInp" class="btn" type="number" min="30" max="300" step="10" value="120" style="width:90px"> m ·
-              Eşik <input id="dwellInp" class="btn" type="number" min="1" max="60" step="1" value="8" style="width:70px"> dk</div>
-          </div>
-          <div class="item">
-            <div class="title">Ekranı açık tut</div>
-            <div class="sub">Uygulama açıksa konum toplama daha kararlı olur.</div>
-            <button id="wakeBtn" class="btn">Etkinleştir</button>
-          </div>
-          <div class="item">
-            <div class="title">Veri Kilidi (şifre)</div>
-            <div class="sub">Verileri cihazda AES‑GCM ile şifrele.</div>
-            <div class="grid2">
-              <input id="passInp" class="btn" type="password" placeholder="Yeni şifre">
-              <button id="setPassBtn" class="btn">Şifreyi Ayarla</button>
-            </div>
-            <div class="grid2" style="margin-top:6px">
-              <button id="lockBtn" class="btn danger">Kilitle</button>
-              <button id="unlockBtn" class="btn">Kilidi Aç</button>
-            </div>
-          </div>
-          <div class="item">
-            <div class="title">Temizle</div>
-            <button id="clearBtn" class="btn danger">Tüm verileri sil</button>
-          </div>
+        <div class="title">Veri</div>
+        <div class="row">
+          <label for="importFile" class="btn" style="cursor:pointer">İçe Aktar</label>
+          <button id="clearBtn" class="btn danger">Temizle</button>
         </div>
       </section>
     </div>
 
-    <div class="pad-bottom"></div>
   </div>
 
-  <!-- overlays -->
+  <!-- Bottom Tabs -->
+  <nav class="tabbar">
+    <a class="tabbtn active" data-tab="timeline"><div class="ico">🗓️</div><div>Zaman</div></a>
+    <a class="tabbtn" data-tab="map"><div class="ico">🗺️</div><div>Harita</div></a>
+    <a class="tabbtn" data-tab="add"><div class="ico">➕</div><div>Ekle</div></a>
+    <a class="tabbtn" data-tab="search"><div class="ico">🔎</div><div>Arama</div></a>
+    <a class="tabbtn" data-tab="settings"><div class="ico">⚙️</div><div>Ayarlar</div></a>
+  </nav>
+
+  <!-- Permission overlay -->
   <div id="permOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:1000; align-items:center; justify-content:center; padding:20px">
-    <div style="max-width:540px; width:100%; background:var(--panel); border:1px solid var(--edge); border-radius:20px; padding:16px">
+    <div style="max-width:540px; width:100%; background:#11151b; border:1px solid var(--edge); border-radius:20px; padding:16px">
       <div class="title">Konum izni gerekiyor</div>
       <div class="sub" style="margin:6px 0 12px 0">Safari için “aA → Site Ayarları → Konum: İzin ver”. PWA ise Ayarlar → Konum Servisleri.</div>
       <div style="display:flex; justify-content:flex-end"><button class="btn" id="permOverlayClose">Tamam</button></div>
@@ -229,18 +216,26 @@
   </div>
 
   <script>
-    /* ===== Tabs ===== */
-    const showTab = (name)=>{
-      document.querySelectorAll('.content').forEach(el=> el.classList.remove('active'));
-      if(name==='timeline') document.getElementById('timeline').classList.add('active');
-      if(name==='map') document.getElementById('mapTab').classList.add('active');
-      if(name==='search') document.getElementById('searchTab').classList.add('active');
-      if(name==='stats') document.getElementById('statsTab').classList.add('active');
-      if(name==='settings') document.getElementById('settingsTab').classList.add('active');
-      document.querySelectorAll('.tab').forEach(t=> t.classList.toggle('active', t.dataset.tab===name));
-      if(name==='map') setTimeout(initMapOnce, 50);
+    /* ===== Navigation ===== */
+    const tabs = document.querySelectorAll('.tabbtn');
+    const pages = {
+      timeline: document.getElementById('pg-timeline'),
+      map: document.getElementById('pg-map'),
+      add: document.getElementById('pg-add'),
+      search: document.getElementById('pg-search'),
+      settings: document.getElementById('pg-settings')
     };
-    document.querySelectorAll('.tab').forEach(t=> t.onclick=()=> showTab(t.dataset.tab));
+    function showTab(name){
+      Object.values(pages).forEach(p=> p.classList.remove('active'));
+      pages['pg-'+name] && pages['pg-'+name].classList.add('active'); // not used
+      (pages[name]||pages.timeline).classList.add('active');
+      tabs.forEach(t=> t.classList.toggle('active', t.dataset.tab===name));
+      if(name==='map') setTimeout(initMapOnce, 50);
+      if(name==='map') setTimeout(updateMap, 80);
+    }
+    tabs.forEach(t=> t.addEventListener('click', ()=> showTab(t.dataset.tab)));
+    // init default
+    showTab('timeline');
 
     /* ===== Utilities ===== */
     const $ = (q)=>document.querySelector(q);
@@ -253,74 +248,26 @@
     const endOfDay=(ts)=>{ const d=new Date(ts); d.setHours(23,59,59,999); return d.getTime(); };
     function haversine(a,b){ const R=6371000; const toRad=(x)=>x*Math.PI/180; const dLat=toRad(b.lat-a.lat), dLon=toRad(b.lon-a.lon);
       const s=Math.sin(dLat/2)**2 + Math.cos(toRad(a.lat))*Math.cos(toRad(b.lat))*Math.sin(dLon/2)**2; return 2*R*Math.asin(Math.sqrt(s)); }
-    function dl(filename, text){ const blob=new Blob([text],{type:'text/plain'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=filename; a.click(); }
 
-    /* ===== IndexedDB (simple) ===== */
-    const DB_NAME='ajanda-db', STORE='kv';
-    function idbProm(req){ return new Promise((res,rej)=>{ req.onsuccess=()=>res(req.result); req.onerror=()=>rej(req.error); }); }
-    const DB = {
-      db:null,
-      async open(){ if(this.db) return this.db; const req=indexedDB.open(DB_NAME,1); req.onupgradeneeded=(e)=> e.target.result.createObjectStore(STORE); this.db=await idbProm(req); return this.db; },
-      async get(k){ const db=await this.open(); const tx=db.transaction(STORE,'readonly'); return idbProm(tx.objectStore(STORE).get(k)); },
-      async set(k,v){ const db=await this.open(); const tx=db.transaction(STORE,'readwrite'); tx.objectStore(STORE).put(v,k); return idbProm(tx); },
-      async del(k){ const db=await this.open(); const tx=db.transaction(STORE,'readwrite'); tx.objectStore(STORE).delete(k); return idbProm(tx); }
-    };
-
-    /* ===== Store with optional encryption ===== */
+    /* ===== Store (localStorage) ===== */
     const Store = {
-      key:'agenda.v4',
-      data:{ points:[], visits:[], calls:[], notes:[], addrCache:{}, tags:{} },
-      passSaltKey:'pass.salt', encKey:'data.enc', plainKey:'data.json',
-      async load(){
-        // try encrypted first
-        const enc = await DB.get(this.encKey);
-        if(enc){ const pass = prompt('Veri kilitli. Şifre?'); if(pass){ try{ const json=await decrypt(enc, pass); this.data=JSON.parse(json); }catch{ alert('Şifre hatalı'); } } }
-        if(!enc){ const raw = await DB.get(this.plainKey); if(raw){ try{ this.data=JSON.parse(raw);}catch{} } }
-        renderAll();
-      },
-      async save(){ const json = JSON.stringify(this.data); if(await DB.get(this.passSaltKey)){ /* encrypted mode */ const pass='__CACHE_PASS__'; const cached=window.localStorage.getItem('pass.cache'); if(!cached){ /* no pass in memory, store plain fallback */ await DB.set(this.plainKey, json); } else { const enc=await encrypt(json, cached, await DB.get(this.passSaltKey)); await DB.set(this.encKey, enc); } } else { await DB.set(this.plainKey, json); } },
-      async setPass(pass){
-        const salt = crypto.getRandomValues(new Uint8Array(16)); await DB.set(this.passSaltKey, Array.from(salt));
-        const json = JSON.stringify(this.data); const enc = await encrypt(json, pass, salt); await DB.set(this.encKey, enc); await DB.del(this.plainKey); localStorage.setItem('pass.cache', pass);
-        alert('Şifre ayarlandı. Uygulama veri kasasını şifreli tutacak.');
-      },
-      async lock(){ await DB.del(this.plainKey); localStorage.removeItem('pass.cache'); alert('Kilitlendi. Tekrar açmak için şifre gerekecek.'); location.reload(); },
-      async unlock(pass){ const enc = await DB.get(this.encKey); if(!enc){ alert('Şifreli veri bulunamadı'); return; } try{ const json=await decrypt(enc, pass); this.data=JSON.parse(json); localStorage.setItem('pass.cache', pass); await DB.set(this.plainKey, json); renderAll(); alert('Kilidi açıldı'); }catch{ alert('Şifre hatalı'); }
-      }
+      key:'agenda.v5',
+      data:{ points:[], visits:[], calls:[], notes:[], addrCache:{} },
+      load(){ try{ const raw=localStorage.getItem(this.key); if(raw){ this.data=JSON.parse(raw); } }catch{} renderAll(); },
+      save(){ localStorage.setItem(this.key, JSON.stringify(this.data)); }
     };
-
-    async function getKey(pass, saltArr){ const enc=new TextEncoder(); const keyMaterial=await crypto.subtle.importKey('raw', enc.encode(pass), {name:'PBKDF2'}, false, ['deriveKey']); const key=await crypto.subtle.deriveKey({name:'PBKDF2', salt:new Uint8Array(saltArr), iterations:120000, hash:'SHA-256'},{name:'AES-GCM', length:256}, false, ['encrypt','decrypt']); return key; }
-    async function encrypt(plaintext, pass, saltArr){ const iv=crypto.getRandomValues(new Uint8Array(12)); const key=await getKey(pass, saltArr); const enc=new TextEncoder(); const ct=await crypto.subtle.encrypt({name:'AES-GCM', iv}, key, enc.encode(plaintext)); return {iv:Array.from(iv), ct:Array.from(new Uint8Array(ct))}; }
-    async function decrypt(encObj, pass){ const saltArr = await DB.get(Store.passSaltKey); const key=await getKey(pass, saltArr); const iv=new Uint8Array(encObj.iv); const ct=new Uint8Array(encObj.ct); const pt=await crypto.subtle.decrypt({name:'AES-GCM', iv}, key, ct); return new TextDecoder().decode(pt); }
-
-    /* ===== Reverse Geocoding ===== */
-    async function reverseGeocode(lat, lon){
-      const key = lat.toFixed(5)+','+lon.toFixed(5);
-      if(Store.data.addrCache[key]) return Store.data.addrCache[key];
-      try{
-        const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}&accept-language=tr`;
-        const res = await fetch(url, { headers:{ 'Accept':'application/json', 'User-Agent':'AjandaPWA/1.0 (personal use)' } });
-        const j = await res.json();
-        const a = j.address||{};
-        const parts = [ [a.road, a.house_number].filter(Boolean).join(' '), a.neighbourhood || a.suburb || a.district || a.borough, a.town || a.city || a.county, a.state ];
-        const s = parts.filter(Boolean).join(', ');
-        Store.data.addrCache[key] = s || (j.display_name || key);
-        await Store.save();
-        return Store.data.addrCache[key];
-      }catch(e){ console.warn('geocode fail', e); return key; }
-    }
 
     /* ===== State ===== */
     let watchId=null, currentAnchor=null, lastPoint=null, wakeLock=null;
-    let selectedDay = todayKey();
+    let selectedDay=todayKey();
     $('#dayText').textContent = fmtDateShort(Date.now());
     const statusText=$('#statusText'), lastFix=$('#lastFix'), lastAddr=$('#lastAddr'), lastCoords=$('#lastCoords');
 
-    /* ===== Calendar (smaller) ===== */
+    /* ===== Calendar ===== */
     const weekdays=['Pzt','Sal','Çar','Per','Cum','Cmt','Paz'];
     function buildWeekdays(){ const root=$('#calWeekdays'); root.innerHTML=''; for(const w of weekdays){ const d=document.createElement('div'); d.className='weekday'; d.textContent=w; root.appendChild(d);}}
     function daysInMonth(y,m){ return new Date(y,m+1,0).getDate(); }
-    function firstWeekday(y,m){ const d=new Date(y,m,1).getDay(); return (d+6)%7; } // Mon=0
+    function firstWeekday(y,m){ const d=new Date(y,m,1).getDay(); return (d+6)%7; }
     let calYear=new Date().getFullYear(), calMonth=new Date().getMonth();
     function renderCalendar(){
       $('#calTitle').textContent = new Date(calYear, calMonth, 1).toLocaleDateString('tr-TR',{month:'long',year:'numeric'});
@@ -348,74 +295,51 @@
     $('#nextMonth').onclick=()=>{ calMonth++; if(calMonth>11){calMonth=0; calYear++;} renderCalendar(); };
     buildWeekdays(); renderCalendar();
 
-    /* ===== Tracking ===== */
-    function requestOneShotPermission(){
-      return new Promise((resolve,reject)=>{
-        if(!('geolocation' in navigator)) return reject(new Error('Tarayıcı konum desteği yok'));
-        navigator.geolocation.getCurrentPosition(resolve, reject, {enableHighAccuracy:true, timeout:10000, maximumAge:0});
-      });
+    /* ===== Reverse Geocoding (OSM) ===== */
+    async function reverseGeocode(lat, lon){
+      const key = lat.toFixed(5)+','+lon.toFixed(5); if(Store.data.addrCache[key]) return Store.data.addrCache[key];
+      try{ const url=`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}&accept-language=tr`; const res=await fetch(url,{headers:{'Accept':'application/json','User-Agent':'AjandaPWA/1.0'}}); const j=await res.json(); const a=j.address||{}; const parts=[[a.road,a.house_number].filter(Boolean).join(' '), a.neighbourhood||a.suburb||a.district||a.borough, a.town||a.city||a.county, a.state].filter(Boolean); const s=parts.join(', '); Store.data.addrCache[key]=s||j.display_name||key; Store.save(); return Store.data.addrCache[key]; } catch{ return key; }
     }
+
+    /* ===== Tracking ===== */
+    function requestOneShotPermission(){ return new Promise((resolve,reject)=>{ if(!('geolocation' in navigator)) return reject(new Error('konum yok')); navigator.geolocation.getCurrentPosition(resolve, reject, {enableHighAccuracy:true, timeout:10000, maximumAge:0}); }); }
     async function startTracking(){
-      try{ await requestOneShotPermission(); }
-      catch(e){ if(e.code===1){ $('#permOverlay').style.display='flex'; return; } }
-      const optSel=$('#accuracySel').value;
-      const options={ enableHighAccuracy: optSel==='high', maximumAge: optSel==='low'?120000:30000, timeout:20000 };
+      try{ await requestOneShotPermission(); }catch(e){ if(e.code===1) $('#permOverlay').style.display='flex'; return; }
+      const optSel=$('#accuracySel').value; const options={ enableHighAccuracy: optSel==='high', maximumAge: optSel==='low'?120000:30000, timeout:20000 };
       watchId = navigator.geolocation.watchPosition(onPos, onErr, options);
       statusText.textContent='Takip Açık'; $('#toggleBtn').textContent='Durdur';
     }
-    function stopTracking(){
-      if(watchId!==null){ navigator.geolocation.clearWatch(watchId); watchId=null; }
-      statusText.textContent='Hazır'; $('#toggleBtn').textContent='Takibi Başlat';
-      finalizeAnchorIfNeeded(true); Store.save(); renderAll();
-    }
+    function stopTracking(){ if(watchId!==null){ navigator.geolocation.clearWatch(watchId); watchId=null; } statusText.textContent='Hazır'; $('#toggleBtn').textContent='Takibi Başlat'; finalizeAnchorIfNeeded(true); Store.save(); renderAll(); }
     function onErr(err){ if(err && err.code===1) $('#permOverlay').style.display='flex'; }
     async function onPos(pos){
-      const {latitude:lat, longitude:lon, accuracy} = pos.coords;
-      const ts=Date.now(); if(accuracy>150) return;
-      const p={lat,lon,acc:Math.round(accuracy),ts};
-      lastFix.textContent = `${fmtDateShort(ts)} • ${fmtTime(ts)} • ±${p.acc}m`;
-      lastCoords.textContent = `${lat.toFixed(5)}, ${lon.toFixed(5)}`;
-      lastAddr.textContent = 'adres aranıyor…'; reverseGeocode(lat,lon).then(s=> lastAddr.textContent = s);
-      // throttled store
+      const {latitude:lat, longitude:lon, accuracy} = pos.coords; const ts=Date.now(); if(accuracy>150) return;
+      const p={lat,lon,acc:Math.round(accuracy),ts}; lastFix.textContent=`${fmtDateShort(ts)} • ${fmtTime(ts)} • ±${p.acc}m`; lastCoords.textContent=`${lat.toFixed(5)}, ${lon.toFixed(5)}`; lastAddr.textContent='adres aranıyor…'; reverseGeocode(lat,lon).then(s=> lastAddr.textContent=s);
       if(!lastPoint || haversine(lastPoint,p)>15 || (ts-lastPoint.ts)>120000){ Store.data.points.push(p); lastPoint=p; }
-      // dwell detection
-      const R = Number($('#radiusInp').value || 120), MIN=(Number($('#dwellInp').value||8))*60*1000;
-      if(!currentAnchor){ currentAnchor={lat,lon,startedAt:ts,lastAt:ts}; }
-      else{ const d=haversine(currentAnchor,{lat,lon}); if(d<=R){ currentAnchor.lastAt=ts; } else { finalizeAnchorIfNeeded(false); currentAnchor={lat,lon,startedAt:ts,lastAt:ts}; } }
-      await Store.save(); renderAll();
+      const R=Number($('#radiusInp').value||120), MIN=(Number($('#dwellInp').value||8))*60*1000;
+      if(!currentAnchor){ currentAnchor={lat,lon,startedAt:ts,lastAt:ts}; } else { const d=haversine(currentAnchor,{lat,lon}); if(d<=R){ currentAnchor.lastAt=ts; } else { finalizeAnchorIfNeeded(false); currentAnchor={lat,lon,startedAt:ts,lastAt:ts}; } }
+      Store.save(); renderAll();
     }
     function finalizeAnchorIfNeeded(force){
-      if(!currentAnchor) return;
-      const MIN=(Number($('#dwellInp').value||8))*60*1000;
-      const dur=currentAnchor.lastAt - currentAnchor.startedAt;
-      if(force || dur>=MIN){
-        if(dur>=MIN){
-          Store.data.visits.push({ id:'v_'+currentAnchor.startedAt, lat:currentAnchor.lat, lon:currentAnchor.lon, start:currentAnchor.startedAt, end:currentAnchor.lastAt, notes:[], tags:[] });
-        }
-        currentAnchor=null;
-      }
+      if(!currentAnchor) return; const MIN=(Number($('#dwellInp').value||8))*60*1000; const dur=currentAnchor.lastAt - currentAnchor.startedAt;
+      if(force || dur>=MIN){ if(dur>=MIN){ Store.data.visits.push({ id:'v_'+currentAnchor.startedAt, lat:currentAnchor.lat, lon:currentAnchor.lon, start:currentAnchor.startedAt, end:currentAnchor.lastAt }); } currentAnchor=null; }
     }
 
     /* ===== Wake Lock ===== */
-    async function requestWake(){ if('wakeLock' in navigator){ try{ wakeLock = await navigator.wakeLock.request('screen'); $('#wakeInfo').textContent='Ekran uyanık tutuluyor'; wakeLock.addEventListener('release',()=> $('#wakeInfo').textContent=''); }catch(e){ $('#wakeInfo').textContent='Wake Lock reddedildi'; } } else { $('#wakeInfo').textContent='Wake Lock bu tarayıcıda yok'; } }
+    async function requestWake(){ if('wakeLock' in navigator){ try{ wakeLock = await navigator.wakeLock.request('screen'); $('#wakeInfo').textContent='Ekran uyanık tutuluyor'; wakeLock.addEventListener('release',()=> $('#wakeInfo').textContent=''); }catch(e){ $('#wakeInfo').textContent='Wake Lock reddedildi'; } } else { $('#wakeInfo').textContent='Wake Lock yok'; } }
     $('#wakeBtn').onclick = requestWake;
 
-    /* ===== Notes & Calls & Tags ===== */
-    function addQuickNote(text){ const ts=Date.now(); const note={id:'n_'+ts, ts, text, tags:[]}; const v=nearestVisit(ts); if(v && Math.abs((v.end||ts)-ts)<30*60*1000){ v.notes.push(note); } else { Store.data.notes.push(note); } Store.save().then(renderAll); }
-    function logCall(obj){ const ts=obj.ts||Date.now(); Store.data.calls.push({ id:'c_'+ts, ts, who:obj.who, type:obj.type||'gelen', notes:obj.notes||'', tags:[] }); Store.save().then(renderAll); }
-    function nearestVisit(ts){ if(Store.data.visits.length===0) return null; let best=null, bestDt=1e15; for(const v of Store.data.visits){ const mid=(v.start+(v.end||v.start))/2; const dt=Math.abs(ts-mid); if(dt<bestDt){ best=v; bestDt=dt; } } return best; }
+    /* ===== Add buttons ===== */
+    $('#noteBtn').onclick=()=>{ const t=prompt('Not:'); if(!t) return; const ts=Date.now(); Store.data.notes.push({id:'n_'+ts, ts, text:t}); Store.save(); renderAll(); };
+    $('#callBtn').onclick=()=>{ const who=prompt('Kim?'); if(who===null) return; const type=prompt('Tür: gelen / giden / cevapsız', 'gelen')||'gelen'; const notes=prompt('Not (opsiyonel)','')||''; const ts=Date.now(); Store.data.calls.push({id:'c_'+ts, ts, who, type, notes}); Store.save(); renderAll(); };
 
-    /* ===== Render Timeline ===== */
-    function renderAll(){ renderDaySummary(); renderTimeline(); updateMapIfVisible(); renderStats(); }
-    function renderDaySummary(){
-      // no separate summary cards in v4 to keep compact
-    }
+    /* ===== Timeline Render ===== */
+    function renderAll(){ renderTimeline(); if(mapInited) updateMap(); }
     function renderTimeline(){
       const tl=$('#timelineList'); tl.innerHTML='';
       const dayTS = new Date(selectedDay+'T00:00:00').getTime();
       const from = startOfDay(dayTS), to=endOfDay(dayTS);
       const events=[];
-      for(const v of Store.data.visits){ if(v.end<from || v.start>to) continue; events.push({ts:v.start, sort:v.start, type:'visit', lat:v.lat, lon:v.lon, dur:((v.end-v.start)/60000|0)}); for(const n of v.notes||[]){ if(n.ts>=from && n.ts<=to) events.push({ts:n.ts, sort:n.ts+0.05, type:'note', text:n.text}); } }
+      for(const v of Store.data.visits){ if(v.end<from || v.start>to) continue; events.push({ts:v.start, sort:v.start, type:'visit', lat:v.lat, lon:v.lon, dur:((v.end-v.start)/60000|0)}); }
       for(const n of Store.data.notes){ if(n.ts>=from && n.ts<=to) events.push({ts:n.ts, sort:n.ts+0.1, type:'note', text:n.text}); }
       for(const c of Store.data.calls){ if(c.ts>=from && c.ts<=to) events.push({ts:c.ts, sort:c.ts+0.2, type:'call', who:c.who, callType:c.type, notes:c.notes}); }
       events.sort((a,b)=> a.sort-b.sort);
@@ -423,57 +347,46 @@
       for(const ev of events){
         const el=document.createElement('div'); el.className='item event';
         const dotClass = ev.type==='visit'?'ok': ev.type==='call'?(ev.callType==='cevapsız'?'bad':'') : 'note';
-        el.innerHTML = `<div class="dot ${dotClass}"></div><div><div class="title">${fmtTime(ev.ts)} — ${label(ev)}</div><div class="sub">${sub(ev)}</div></div>`;
+        el.innerHTML = `<div class="dot ${dotClass}"></div><div><div class="h">${fmtTime(ev.ts)} — ${label(ev)}</div><div class="sub">${sub(ev)}</div></div>`;
         tl.appendChild(el);
-        if(ev.type==='visit'){ (async()=>{ const addr = await reverseGeocode(ev.lat, ev.lon); el.querySelector('.sub').textContent = `${addr} • ${ev.dur} dk`; })(); }
+        if(ev.type==='visit'){ (async()=>{ const addr = await reverseGeocode(ev.lat, ev.lon); el.querySelector('.sub').textContent = `${addr} • ${Math.max(1, ev.dur)} dk`; })(); }
       }
       function label(ev){ if(ev.type==='visit') return 'Kalış'; if(ev.type==='call') return (ev.callType==='giden'?'Giden':ev.callType==='cevapsız'?'Cevapsız':'Gelen')+' arama'; return 'Not'; }
       function sub(ev){ if(ev.type==='note') return ev.text; if(ev.type==='call') return [ev.who||'Bilinmeyen', ev.notes||''].filter(Boolean).join(' • '); return 'adres alınıyor…'; }
     }
 
     /* ===== Map (Leaflet) ===== */
-    let map, mapInited=false, pathLayer, visitsLayer;
+    let map, mapInited=false, routeLayer, visitLayer;
     function initMapOnce(){ if(mapInited) return; mapInited=true; map=L.map('map',{zoomControl:true}).setView([39.93,32.86], 12);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap'}).addTo(map);
-      pathLayer=L.polyline([], {color:'#60a5fa', weight:3, opacity:0.8}).addTo(map);
-      visitsLayer=L.layerGroup().addTo(map);
-      updateMapIfVisible();
+      routeLayer=L.polyline([], {color:'#5aa7ff', weight:3, opacity:0.85}).addTo(map);
+      visitLayer=L.layerGroup().addTo(map);
+      updateMap();
     }
-    function updateMapIfVisible(){ if(!mapInited || !document.getElementById('mapTab').classList.contains('active')) return;
+    function updateMap(){
+      if(!mapInited) return;
       const dayTS = new Date(selectedDay+'T00:00:00').getTime(); const from=startOfDay(dayTS), to=endOfDay(dayTS);
       const pts=(Store.data.points||[]).filter(p=> p.ts>=from && p.ts<=to);
       const vs=(Store.data.visits||[]).filter(v=> (v.end>=from && v.start<=to));
-      pathLayer.setLatLngs(pts.map(p=>[p.lat,p.lon]));
-      visitsLayer.clearLayers();
-      for(const v of vs){ L.circleMarker([v.lat,v.lon],{radius:6,color:'#34d399',fill:true,fillOpacity:.9}).addTo(visitsLayer).bindPopup('Kalış • '+new Date(v.start).toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'})+' — '+new Date(v.end).toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'})); }
-      if(pts.length){ map.fitBounds(pathLayer.getBounds(), {padding:[20,20]}); }
+      routeLayer.setLatLngs(pts.map(p=>[p.lat,p.lon]));
+      visitLayer.clearLayers();
+      const bounds=[];
+      for(const p of pts){ bounds.push([p.lat,p.lon]); }
+      for(const v of vs){ const m=L.circleMarker([v.lat,v.lon],{radius:6,color:'#22c55e',fill:true,fillOpacity:.95}).addTo(visitLayer); m.bindPopup('Kalış • '+new Date(v.start).toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'})+' — '+new Date(v.end).toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'})); bounds.push([v.lat,v.lon]); }
+      // Fit to available data (visits or points). If none, keep last point
+      if(bounds.length){ map.fitBounds(bounds, {padding:[20,20]}); }
+      else if(lastPoint){ map.setView([lastPoint.lat,lastPoint.lon], 14); }
     }
 
-    /* ===== Search / Filter ===== */
+    /* ===== Search ===== */
     $('#searchBtn').onclick = ()=>{
-      const q=$('#q').value.trim().toLowerCase(); const type=$('#typeSel').value;
-      const out=$('#searchResults'); out.innerHTML='';
-      function push(res, label, sub){ const el=document.createElement('div'); el.className='item'; el.innerHTML=`<div class="title">${label}</div><div class="sub">${sub}</div>`; out.appendChild(el); }
-      // visit
-      for(const v of Store.data.visits){ const addrKey=(v.lat.toFixed(5)+','+v.lon.toFixed(5)); const addr=Store.data.addrCache[addrKey]||''; const text=addr.toLowerCase(); if((!type || type==='visit') && (!q || text.includes(q))){ push(v, 'Kalış — '+new Date(v.start).toLocaleDateString('tr-TR'), addr); } }
-      // calls
-      for(const c of Store.data.calls){ const text=((c.who||'')+' '+(c.notes||'')).toLowerCase(); if((!type || type==='call') && (!q || text.includes(q))){ push(c, (c.type==='giden'?'Giden':c.type==='cevapsız'?'Cevapsız':'Gelen')+' arama — '+new Date(c.ts).toLocaleDateString('tr-TR'), (c.who||'Bilinmeyen')+(c.notes?' • '+c.notes:'')); } }
-      // notes
-      for(const n of Store.data.notes){ const text=(n.text||'').toLowerCase(); if((!type || type==='note') && (!q || text.includes(q))){ push(n, 'Not — '+new Date(n.ts).toLocaleDateString('tr-TR'), n.text); } }
-      if(!out.children.length){ out.innerHTML='<div class="sub">Sonuç yok</div>'; }
+      const q=$('#q').value.trim().toLowerCase(); const type=$('#typeSel').value; const out=$('#searchResults'); out.innerHTML='';
+      function push(label, sub){ const el=document.createElement('div'); el.className='item'; el.innerHTML=`<div class="title">${label}</div><div class="sub">${sub}</div>`; out.appendChild(el); }
+      for(const v of Store.data.visits){ if(type && type!=='visit') continue; const addrKey=(v.lat.toFixed(5)+','+v.lon.toFixed(5)); const addr=Store.data.addrCache[addrKey]||''; const text=addr.toLowerCase(); if(!q || text.includes(q)) push('Kalış — '+new Date(v.start).toLocaleDateString('tr-TR'), addr); }
+      for(const c of Store.data.calls){ if(type && type!=='call') continue; const text=((c.who||'')+' '+(c.notes||'')).toLowerCase(); if(!q || text.includes(q)) push((c.type==='giden'?'Giden':c.type==='cevapsız'?'Cevapsız':'Gelen')+' arama — '+new Date(c.ts).toLocaleDateString('tr-TR'), (c.who||'Bilinmeyen')+(c.notes?' • '+c.notes:'')); }
+      for(const n of Store.data.notes){ if(type && type!=='note') continue; const text=(n.text||'').toLowerCase(); if(!q || text.includes(q)) push('Not — '+new Date(n.ts).toLocaleDateString('tr-TR'), n.text); }
+      if(!out.children.length) out.innerHTML='<div class="sub">Sonuç yok</div>';
     };
-
-    /* ===== Stats (last 30 days) ===== */
-    function renderStats(){
-      const box=$('#statsList'); if(!box) return; box.innerHTML='';
-      const now=Date.now(); const from=now-30*86400000;
-      const visits=(Store.data.visits||[]).filter(v=> v.end>=from);
-      const mins=visits.reduce((a,v)=> a + Math.max(0, (Math.min(v.end,now)-Math.max(v.start,from))/60000 ), 0);
-      const calls=(Store.data.calls||[]).filter(c=> c.ts>=from).length;
-      const notes=(Store.data.notes||[]).filter(n=> n.ts>=from).length;
-      const items=[['Toplam kalış (dk)', Math.round(mins)], ['Arama sayısı', calls], ['Not sayısı', notes]];
-      for(const [k,v] of items){ const el=document.createElement('div'); el.className='item'; el.innerHTML=`<div class="sub">${k}</div><div class="title">${v}</div>`; box.appendChild(el); }
-    }
 
     /* ===== Export ===== */
     function exportCSVDay(){
@@ -484,28 +397,17 @@
       for(const c of Store.data.calls){ if(c.ts<from||c.ts>to) continue; addRow(c.ts,'call',c.type,(c.who||'')+' '+(c.notes||'')); }
       for(const n of Store.data.notes){ if(n.ts<from||n.ts>to) continue; addRow(n.ts,'note','Not', n.text||''); }
       const csv = rows.map(r=> r.map(x=> `"${String(x).replaceAll('"','""')}"`).join(',')).join('\n');
-      dl(`ajanda-${day}.csv`, csv);
+      const blob=new Blob([csv],{type:'text/csv'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`ajanda-${day}.csv`; a.click();
     }
     document.getElementById('exportBtn').onclick = exportCSVDay;
 
-    /* ===== Settings actions ===== */
-    document.getElementById('setPassBtn').onclick = async ()=>{
-      const pass = document.getElementById('passInp').value; if(!pass) return alert('Şifre gir');
-      await Store.setPass(pass);
-    };
-    document.getElementById('lockBtn').onclick = ()=> Store.lock();
-    document.getElementById('unlockBtn').onclick = async ()=>{
-      const pass = prompt('Şifre?'); if(!pass) return; await Store.unlock(pass);
-    };
-    document.getElementById('clearBtn').onclick = async ()=>{ if(confirm('Tüm verileri sil?')){ await DB.del(Store.plainKey); await DB.del(Store.encKey); Store.data={ points:[], visits:[], calls:[], notes:[], addrCache:{}, tags:{} }; await Store.save(); renderAll(); } };
+    /* ===== Import/Clear ===== */
+    document.getElementById('importFile').onchange = (e)=>{ const f=e.target.files[0]; if(!f) return; const rd=new FileReader(); rd.onload=()=>{ try{ const obj=JSON.parse(rd.result); if(obj && obj.visits && obj.calls){ Store.data=obj; Store.save(); renderAll(); } }catch{ alert('Hatalı dosya'); } }; rd.readAsText(f); };
+    document.getElementById('clearBtn').onclick = ()=>{ if(confirm('Tüm verileri sil?')){ localStorage.removeItem(Store.key); Store.data={ points:[], visits:[], calls:[], notes:[], addrCache:{} }; renderAll(); } };
 
-    /* ===== Import ===== */
-    document.getElementById('importFile').onchange = (e)=>{
-      const f=e.target.files[0]; if(!f) return; const rd=new FileReader(); rd.onload=async()=>{ try{ const obj=JSON.parse(rd.result); if(obj && obj.visits && obj.calls){ Store.data=obj; await Store.save(); renderAll(); } }catch{ alert('Hatalı dosya'); } }; rd.readAsText(f);
-    };
-
-    /* ===== Tracker buttons ===== */
+    /* ===== Buttons ===== */
     document.getElementById('toggleBtn').onclick = ()=> watchId ? stopTracking() : startTracking();
+    document.getElementById('permOverlayClose').onclick = ()=>{ document.getElementById('permOverlay').style.display='none'; };
 
     /* ===== Init ===== */
     Store.load();
